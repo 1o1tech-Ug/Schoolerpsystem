@@ -29,7 +29,9 @@ def protected():
         "school_id": current_user.school_id
     }), 200
 
-
+@app.route("/")
+def home():
+    return "School ERP is running 🚀"
 # =========================================================
 # BASE ROUTE (non-superadmin roles)
 # =========================================================
