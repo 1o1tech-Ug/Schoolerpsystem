@@ -30,7 +30,7 @@ def protected():
     }), 200
 @views_bp.route("/")
 def home():
-    redirect(url_for("auth.login_page"))
+    return redirect(url_for("auth.login_page"))
 
 # =========================================================
 # BASE ROUTE (non-superadmin roles)
