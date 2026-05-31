@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin</title>
+
+<!-- Modern Typography Font Engine -->
+<link rel="preconnect" href="googleapis.com">
+<link rel="preconnect" href="gstatic.com" crossorigin>
+<link href="googleapis.com" rel="stylesheet">
+
+<style>
+/* ================= SYSTEM COLOR SCENARIO VARIABLES ================= */
+:root {
+    --bg-main: #f8fafc;
+    --sidebar-grad-start: #0f172a;
+    --sidebar-grad-end: #1e293b;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #f1f5f9;
+    --primary: #0b2ea8;
+    --primary-hover: #061b61;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    
+    /* Semantic Status Accents */
+    --edit-color: #eab308;
+    --edit-bg: #fef9c3;
+    --delete-color: #ef4444;
+    --delete-bg: #fef2f2;
+}
+
+/* ================= COMPONENT RESET ARCHITECTURE ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', Arial, sans-serif;
+}
+
+body {
+    background: var(--bg-main);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ================= SIDEBAR PROFILE ================= */
+.sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, var(--sidebar-grad-start), var(--sidebar-grad-end));
+    color: var(--text-light);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    z-index: 1000;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar.hide {
+    transform: translateX(-260px);
+}
+
+.logo {
+    padding: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.logo h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+}
+
+.logo p {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 4px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.menu {
+    padding: 20px 14px;
+}
+
+.menu-title {
+    padding: 12px 12px 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+}
+
+.menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    color: #94a3b8;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 4px;
+}
+
+.menu a:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: #f1f5f9;
+}
+
+.menu a.active {
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(11, 46, 168, 0.25);
+}
+
+.logout {
+    margin-top: 24px !important;
+    background: rgba(239, 68, 68, 0.08) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.logout:hover {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #ffffff !important;
+}
+
+/* ================= MAIN ENGINE ================= */
+.main {
+    margin-left: 260px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+}
+
+.main.expand {
+    margin-left: 0;
+}
+
+/* ================= NAV HUD INTERACTIVE TOGGLE ================= */
+.floating-toggle {
+    position: fixed;
+    top: 16px;
+    left: 276px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: #475569;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s, color 0.2s;
+    font-size: 16px;
+}
+
+.floating-toggle:hover {
+    background: #f8fafc;
+    color: var(--primary);
+    border-color: #cbd5e1;
+}
+
+.sidebar.hide ~ .floating-toggle {
+    left: 16px;
+}
+
+.content {
+    padding: 84px 40px 40px 40px;
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+/* ================= DESIGN SYSTEM CARDS ================= */
+.card {
+    background: var(--card-bg);
+    padding: 28px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 4px 16px 0 rgba(0, 0, 0, 0.02);
+}
+
+.card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 22px;
+    letter-spacing: 0.3px;
+    position: relative;
+    display: inline-block;
+}
+
+/* Modern clean architectural indicator line under header entries */
+.card h3::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 24px;
+    height: 2.5px;
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+/* Field input wrapping nodes styling */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #0f172a;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(11, 46, 168, 0.08);
+    background-color: #ffffff;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #94a3b8;
+}
+
+textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 14px;
+    box-shadow: 0 4px 12px rgba(11, 46, 168, 0.15);
+}
+
+.btn:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 6px 16px rgba(11, 46, 168, 0.25);
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* ================= PREMIUM ADMINISTRATIVE DATA TABLES ================= */
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.01);
+}
+
+table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th, td {
+    padding: 16px 20px;
+    font-size: 14px;
+}
+
+th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: 0.2px;
+}
+
+td {
+    border-bottom: 1px solid var(--border-color);
+    color: #334155;
+    background: #ffffff;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background-color: #f8fafc;
+}
+
+/* Action button configurations updated to high-end styling constraints */
+.edit {
+    background: var(--edit-bg);
+    color: var(--edit-color);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.delete {
+    background: var(--delete-bg);
+    color: var(--delete-color);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.edit:hover {
+    background: var(--edit-color);
+    color: white;
+}
+
+.delete:hover {
+    background: var(--delete-color);
+    color: white;
+}
+
+/* ================= PANEL LAYOUT MATRIX ================= */
+.section { display: none; }
+.section.active { display: block; animation: smoothFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+
+@keyframes smoothFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================= BREAKPOINT MEDIA RESPONSIVENESS ================= */
+@media(max-width: 900px) {
+    .sidebar { transform: translateX(-260px); }
+    .sidebar.show { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .floating-toggle { left: 16px; }
+    .sidebar.show ~ .floating-toggle { left: 276px; }
+    .content { padding: 84px 20px 20px 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- TOGGLE -->
+<button class="floating-toggle" onclick="toggleSidebar()">☰</button>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="logo">
+        <h2>1O1 ERP</h2>
+        <p>Super Admin</p>
+    </div>
+
+    <div class="menu">
+        <div class="menu-title">Schools</div>
+        <a class="nav-link active" onclick="show('schools')">🏫 All Schools</a>
+        <a class="nav-link" onclick="show('add')">➕ Add School</a>
+
+        <div class="menu-title">System</div>
+        <a class="nav-link" onclick="show('notifications')">🔔 Notifications</a>
+        <a class="nav-link" onclick="show('settings')">⚙️ Settings</a>
+
+        <a href="/auth/logout" class="logout">🚪 Logout</a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+<div class="content">
+
+<!-- SCHOOLS -->
+<div class="section active" id="schools">
+<div class="card">
+<h3>All Schools</h3>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Type</th>
+<th>Status</th>
+<th>Subscription</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="schoolsTable">
+    <tr>
+        <td style="font-weight: 600; color: var(--text-muted);">#1001</td>
+        <td style="font-weight: 600; color: #0f172a;">Example High School</td>
+        <td>Secondary</td>
+        <td>Active</td>
+        <td>Premium</td>
+        <td>
+            <button class="edit" style="margin-right: 4px;">Edit</button>
+            <button class="delete">Delete</button>
+        </td>
+    </tr>
+</tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<!-- ADD SCHOOL -->
+<div class="section" id="add">
+
+<div class="card">
+<h3>SCHOOL INFO</h3>
+<div class="grid">
+    <div class="field-group">
+        <input id="school_name" placeholder="School Name">
+    </div>
+    <div class="field-group">
+        <select id="school_type">
+            <option>Primary</option>
+            <option>Secondary</option>
+        </select>
+    </div>
+    <div class="field-group">
+        <input id="address" placeholder="Address">
+    </div>
+    <div class="field-group">
+        <input id="motto" placeholder="Motto">
+    </div>
+</div>
+</div>
+
+<div class="card">
+<h3>SCHOOL ADMIN</h3>
+<div class="grid">
+    <div class="field-group">
+        <input id="username" placeholder="Username">
+    </div>
+    <div class="field-group">
+        <input id="contact" placeholder="Contact">
+    </div>
+    <div class="field-group">
+        <input id="password" type="password" placeholder="Password">
+    </div>
+    <div class="field-group">
+        <select id="role"><option>Admin</option></select>
+    </div>
+</div>
+</div>
+
+<div class="card">
+<h3>SUBSCRIPTION</h3>
+<div class="grid">
+    <div class="field-group">
+        <select id="plan">
+            <option>Basic</option>
+            <option>Standard</option>
+            <option>Premium</option>
+        </select>
+    </div>
+    <div class="field-group">
+        <select id="payment_status">
+            <option>Paid</option>
+            <option>Trial</option>
+            <option>Expired</option>
+        </select>
+    </div>
+</div>
+</div>
+
+<button class="btn" id="submitBtn">Add School</button>
+
+</div>
+
+<!-- NOTIFICATIONS -->
+<!-- NOTIFICATIONS -->
+<div class="section" id="notifications">
+
+    <!-- SEND REMINDER -->
+    <div class="card">
+        <h3>Reminder</h3>
+
+        <div class="grid" style="grid-template-columns: 1fr; gap: 16px;">
+
+            <div style="max-width: 360px;" class="field-group">
+                <input id="notificationSchoolId" placeholder="School ID">
+            </div>
+
+            <div class="field-group">
+                <textarea id="notificationMessage" placeholder="Reminder message"></textarea>
+            </div>
+
+        </div>
+
+        <button class="btn" id="sendNotificationBtn">
+            Submit Reminder
+        </button>
+    </div>
+
+    <!-- NOTIFICATIONS TABLE -->
+    <div class="card">
+
+        <h3>Sent Notifications</h3>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>School ID</th>
+                        <th>Notification</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="notificationsTable">
+
+                    <tr>
+                        <td>#1001</td>
+
+                        <td>
+                            School fees deadline reminder sent.
+                        </td>
+
+                        <td>
+                            13 May 2026
+                        </td>
+
+                        <td>
+                            <button class="delete">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SETTINGS -->
+<!-- SETTINGS -->
+<div class="section" id="settings">
+
+    <!-- BLACKLIST SCHOOL ACTION -->
+    <div class="card">
+        <h3>Blacklist School</h3>
+
+        <div class="grid" style="grid-template-columns: 1fr max-content; align-items: center; gap: 16px;">
+            
+            <div class="field-group" style="width: 100%;">
+                <input id="blacklistSchoolId" placeholder="School ID">
+            </div>
+
+            <button class="btn" id="blacklistBtn" style="margin-top: 0; height: 42px;">
+                Blacklist
+            </button>
+
+        </div>
+    </div>
+
+    <!-- BLACKLISTED SCHOOLS TABLE -->
+    <div class="card">
+
+        <h3>Blacklisted Schools</h3>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>School ID</th>
+                        <th>School Name</th>
+                        <th>Reason</th>
+                        <th>Date Blacklisted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="blacklistTable">
+
+                    <!-- Example row (will be replaced dynamically from API) -->
+                    <tr>
+                        <td>#1003</td>
+                        <td>Green Valley High</td>
+                        <td>Non-payment of subscription</td>
+                        <td>13 May 2026</td>
+                        <td>
+                            <button class="edit" style="margin-right:6px;">Unblacklist</button>
+                            <button class="delete">Delete</button>
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+ 
+
+<!-- COMPONENT SYSTEM JAVASCRIPT BINDINGS -->
+
+<script defer src="{{ url_for('static', filename='js/superadmin/main.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/superadmin/schools.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/superadmin/add_schools.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/superadmin/notifications.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/superadmin/settings.js') }}"></script>
+</body>
+</html>

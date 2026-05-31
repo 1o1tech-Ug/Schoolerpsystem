@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+{% block title %}Subjects{% endblock %}
+
+{% block content %}
+<style>
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:14px;
+}
+.page-title h1{ font-size:26px; font-weight:800; color:#0f172a; }
+.page-title p{ color:#64748b; margin-top:4px; font-size:14px; }
+
+/* ── TOAST ────────────────────────────────────────────────── */
+#toast{
+    position:fixed;
+    top:80px;
+    right:24px;
+    padding:14px 22px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:600;
+    color:white;
+    opacity:0;
+    transform:translateY(-10px);
+    transition:.3s ease;
+    z-index:9999;
+    pointer-events:none;
+}
+#toast.show{ opacity:1; transform:translateY(0); }
+#toast.success{ background:#16a34a; }
+#toast.error{ background:#dc2626; }
+
+/* ── PRIMARY BUTTON ───────────────────────────────────────── */
+.primary-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:11px 18px;
+    border-radius:10px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:.2s;
+}
+.primary-btn:hover{ background:#1d4ed8; transform:translateY(-1px); }
+
+/* ── SUBJECT GRID ─────────────────────────────────────────── */
+.subject-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:20px;
+}
+.subject-card{
+    background:white;
+    border-radius:20px;
+    padding:24px;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+    display:flex;
+    flex-direction:column;
+    border:1.5px solid #f1f5f9;
+    transition:.2s;
+}
+.subject-card:hover{ box-shadow:0 8px 24px rgba(0,0,0,.09); }
+
+.subject-name{ font-size:20px; font-weight:800; color:#0f172a; }
+.subject-desc{ color:#64748b; margin-top:6px; line-height:1.5; font-size:14px; }
+
+.section-label{
+    margin-top:16px;
+    margin-bottom:8px;
+    font-size:12px;
+    text-transform:uppercase;
+    color:#94a3b8;
+    font-weight:700;
+    letter-spacing:.5px;
+}
+.teacher-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.teacher-chip{
+    background:#eff6ff;
+    color:#2563eb;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+}
+.no-teacher{ color:#94a3b8; font-size:13px; font-style:italic; }
+
+.paper-table{ width:100%; border-collapse:collapse; margin-top:4px; }
+.paper-table td{
+    padding:8px 0;
+    border-bottom:1px solid #f1f5f9;
+    font-size:14px;
+    color:#334155;
+}
+.paper-table tr:last-child td{ border-bottom:none; }
+.paper-score{ font-weight:700; color:#0f172a; text-align:right; }
+
+.level-badge{
+    display:inline-block;
+    margin-top:14px;
+    background:#dcfce7;
+    color:#166534;
+    padding:6px 14px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+}
+.card-actions{
+    display:flex;
+    gap:10px;
+    margin-top:auto;
+    padding-top:20px;
+}
+.subject-btn{
+    flex:1;
+    border:none;
+    padding:11px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:13px;
+    transition:.15s;
+}
+.edit{ background:#dbeafe; color:#1d4ed8; }
+.edit:hover{ background:#bfdbfe; }
+.del{ background:#fee2e2; color:#dc2626; }
+.del:hover{ background:#fecaca; }
+
+.empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:#94a3b8;
+    grid-column:1/-1;
+}
+.empty-state .icon{ font-size:48px; margin-bottom:12px; }
+.empty-state p{ font-size:15px; }
+
+/* ── MODAL ────────────────────────────────────────────────── */
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:3000;
+    padding:20px;
+}
+.modal.show{ display:flex; }
+.modal-card{
+    width:100%;
+    max-width:560px;
+    background:white;
+    border-radius:20px;
+    padding:30px;
+    animation:popup .25s ease;
+    max-height:90vh;
+    overflow-y:auto;
+}
+@keyframes popup{
+    from{ transform:translateY(20px); opacity:0; }
+    to{   transform:translateY(0);    opacity:1; }
+}
+.modal-card h2{ margin-bottom:22px; font-size:22px; font-weight:800; color:#0f172a; }
+.form-group{ margin-bottom:18px; }
+.form-group label{
+    display:block;
+    margin-bottom:7px;
+    font-size:13px;
+    font-weight:600;
+    color:#334155;
+}
+.form-control{
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid #cbd5e1;
+    border-radius:10px;
+    outline:none;
+    font-size:14px;
+    transition:.2s;
+    box-sizing:border-box;
+}
+.form-control:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.form-control.input-error{ border-color:#dc2626 !important; }
+
+.field-error-msg{
+    font-size:12px;
+    color:#dc2626;
+    margin-top:5px;
+    display:none;
+}
+.field-error-msg.show{ display:block; }
+
+/* Teacher checkboxes */
+.teacher-checkboxes{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:8px 0;
+}
+.teacher-check-label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:#f8fafc;
+    border:1.5px solid #e2e8f0;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:13px;
+    cursor:pointer;
+    transition:.15s;
+}
+.teacher-check-label:hover{ border-color:#2563eb; background:#eff6ff; }
+.teacher-check-label input{ accent-color:#2563eb; }
+
+/* Papers */
+.papers-container{ display:flex; flex-direction:column; gap:10px; }
+.paper-row{
+    display:grid;
+    /* dropdown | score input | remove btn */
+    grid-template-columns:1fr 110px 36px;
+    gap:8px;
+    align-items:start;
+}
+.paper-score-wrap{ display:flex; flex-direction:column; }
+.remove-paper-btn{
+    background:#fee2e2;
+    color:#dc2626;
+    border:none;
+    border-radius:8px;
+    width:34px;
+    height:42px;   /* matches input height */
+    cursor:pointer;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+}
+.paper-score-error{
+    font-size:11px;
+    color:#dc2626;
+    margin-top:3px;
+    display:none;
+}
+.paper-score-error.show{ display:block; }
+
+.add-paper-btn{
+    background:#f0fdf4;
+    color:#16a34a;
+    border:1.5px dashed #86efac;
+    border-radius:10px;
+    padding:10px;
+    width:100%;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+    margin-top:6px;
+    transition:.15s;
+}
+.add-paper-btn:hover{ background:#dcfce7; }
+
+.modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    margin-top:26px;
+}
+.cancel-btn{
+    background:#e2e8f0;
+    color:#0f172a;
+    border:none;
+    padding:11px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+}
+.save-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:11px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+    transition:.2s;
+}
+.save-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.save-btn:not(:disabled):hover{ background:#1d4ed8; }
+
+.confirm-card{
+    width:100%;
+    max-width:400px;
+    background:white;
+    border-radius:20px;
+    padding:28px;
+    animation:popup .2s ease;
+}
+.confirm-card h3{ font-size:18px; font-weight:700; margin-bottom:10px; }
+.confirm-card p{ color:#64748b; font-size:14px; margin-bottom:22px; }
+.danger-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:11px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+}
+.danger-btn:hover{ background:#b91c1c; }
+</style>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title">
+        <h1>Subjects</h1>
+        <p>Manage subjects, assigned teachers{{ " and papers" if is_secondary else "" }}</p>
+    </div>
+    <button class="primary-btn" onclick="openCreateModal()">➕ Create Subject</button>
+</div>
+
+<!-- SUBJECT CARDS -->
+<div class="subject-grid" id="subjectGrid">
+{% if subject_data %}
+    {% for item in subject_data %}
+    <div class="subject-card" id="subj-card-{{ item.subject.id }}">
+        <div class="subject-name">{{ item.subject.name }}</div>
+
+        {% if item.subject.description %}
+        <div class="subject-desc">{{ item.subject.description }}</div>
+        {% endif %}
+
+        {% if item.subject.level %}
+        <span class="level-badge">{{ item.subject.level }}</span>
+        {% endif %}
+
+        <div class="section-label">Assigned Teachers</div>
+        <div class="teacher-chips">
+            {% if item.teachers %}
+                {% for t in item.teachers %}
+                <span class="teacher-chip">{{ t.name }}</span>
+                {% endfor %}
+            {% else %}
+                <span class="no-teacher">No teachers assigned</span>
+            {% endif %}
+        </div>
+
+        {% if is_secondary and item.papers %}
+        <div class="section-label">Papers &amp; Max Score</div>
+        <table class="paper-table">
+            {% for p in item.papers %}
+            <tr>
+                <td>{{ p.paper_name }}</td>
+                <td class="paper-score">{{ p.max_marks }} marks</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        <div class="card-actions">
+            <button class="subject-btn edit"
+                onclick="openEditModal({{ item.subject.id }})">✏️ Edit</button>
+            <button class="subject-btn del"
+                onclick="confirmDelete({{ item.subject.id }}, '{{ item.subject.name }}')">🗑 Delete</button>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-state">
+        <div class="icon">📚</div>
+        <p>No subjects yet. Click <strong>Create Subject</strong> to add one.</p>
+    </div>
+{% endif %}
+</div>
+
+<!-- ══ CREATE MODAL ══════════════════════════════════════════ -->
+<div class="modal" id="createModal">
+    <div class="modal-card">
+        <h2>Create Subject</h2>
+
+        <div class="form-group">
+            <label>Subject Name <span style="color:#dc2626">*</span></label>
+            <input type="text" id="c_name" class="form-control" placeholder="e.g. Mathematics">
+            <div class="field-error-msg" id="err_c_name">Subject name is required.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="c_description" class="form-control" rows="3"
+                placeholder="Brief description…"></textarea>
+        </div>
+
+        <!-- Level — options injected by JS based on school type -->
+        <div class="form-group">
+            <label>Level <span style="color:#dc2626">*</span></label>
+            <select id="c_level" class="form-control">
+                <!-- populated by JS -->
+            </select>
+            <div class="field-error-msg" id="err_c_level">Please select a level.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Assign Teachers</label>
+            <div class="teacher-checkboxes" id="c_teachers">
+                {% for s in staff %}
+                <label class="teacher-check-label">
+                    <input type="checkbox" value="{{ s.id }}">
+                    {{ s.first_name }} {{ s.last_name }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Papers — secondary schools only, controlled by JS -->
+        <div class="form-group" id="c_papers_section" style="display:none">
+            <label>Papers &amp; Max Score</label>
+            <div class="papers-container" id="c_papers"></div>
+            <button type="button" class="add-paper-btn" onclick="addPaperRow('c_papers')">
+                ➕ Add Paper
+            </button>
+        </div>
+
+        <div class="modal-actions">
+            <button class="cancel-btn" onclick="closeModal('createModal')">Cancel</button>
+            <button class="save-btn" id="createBtn" onclick="createSubject()">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ EDIT MODAL ════════════════════════════════════════════ -->
+<div class="modal" id="editModal">
+    <div class="modal-card">
+        <h2>Edit Subject</h2>
+        <input type="hidden" id="e_subject_id">
+
+        <div class="form-group">
+            <label>Subject Name <span style="color:#dc2626">*</span></label>
+            <input type="text" id="e_name" class="form-control">
+            <div class="field-error-msg" id="err_e_name">Subject name is required.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="e_description" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Level <span style="color:#dc2626">*</span></label>
+            <select id="e_level" class="form-control">
+                <!-- populated by JS -->
+            </select>
+            <div class="field-error-msg" id="err_e_level">Please select a level.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Assign Teachers</label>
+            <div class="teacher-checkboxes" id="e_teachers">
+                {% for s in staff %}
+                <label class="teacher-check-label">
+                    <input type="checkbox" value="{{ s.id }}">
+                    {{ s.first_name }} {{ s.last_name }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group" id="e_papers_section" style="display:none">
+            <label>Papers &amp; Max Score</label>
+            <div class="papers-container" id="e_papers"></div>
+            <button type="button" class="add-paper-btn" onclick="addPaperRow('e_papers')">
+                ➕ Add Paper
+            </button>
+        </div>
+
+        <div class="modal-actions">
+            <button class="cancel-btn" onclick="closeModal('editModal')">Cancel</button>
+            <button class="save-btn" id="editBtn" onclick="saveSubject()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ CONFIRM DELETE ════════════════════════════════════════ -->
+<div class="modal" id="confirmModal">
+    <div class="confirm-card">
+        <h3>Confirm Delete</h3>
+        <p id="confirmText"></p>
+        <div style="display:flex;gap:12px;justify-content:flex-end">
+            <button class="cancel-btn" onclick="closeModal('confirmModal')">Cancel</button>
+            <button class="danger-btn" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── CONSTANTS INJECTED FROM FLASK ─────────────────────────────
+const IS_SECONDARY  = {{ "true" if is_secondary else "false" }};
+const SCHOOL_TYPE   = "{{ school.school_type | lower }}";
+const SUBJECTS_API  = "/api/academics/subjects";
+
+// ── LEVEL OPTIONS PER SCHOOL TYPE ────────────────────────────
+const LEVEL_OPTIONS = {
+    secondary:      ['O Level', 'A Level'],
+    'high school':  ['O Level', 'A Level'],
+    college:        ['A Level'],
+    primary:        ['nursery','Lower Primary', 'Upper Primary'],
+    nursery:        ['Nursery', 'Pre-Primary'],
+};
+
+// Fixed paper name choices — no free text
+const PAPER_CHOICES = ['Paper 1', 'Paper 2', 'Paper 3', 'Paper 4','A1','A2','A3'];
+
+/* ── BOOT: populate level dropdowns & show/hide papers ──────── */
+(function init(){
+    const levels = LEVEL_OPTIONS[SCHOOL_TYPE] || LEVEL_OPTIONS['secondary'];
+
+    ['c_level', 'e_level'].forEach(id => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = '<option value="">— Select level —</option>';
+        levels.forEach(l => {
+            const o = document.createElement('option');
+            o.value = o.textContent = l;
+            sel.appendChild(o);
+        });
+    });
+
+    // Show papers section only for secondary schools
+    if (IS_SECONDARY){
+        document.getElementById('c_papers_section').style.display = 'block';
+        document.getElementById('e_papers_section').style.display = 'block';
+    }
+})();
+
+/* ── VALIDATION HELPERS ─────────────────────────────────────── */
+function isPositiveInt(v){
+    return /^\d+$/.test(String(v).trim()) && parseInt(v) > 0;
+}
+function setErr(inputEl, errId, show){
+    if (inputEl) inputEl.classList.toggle('input-error', show);
+    const errEl = document.getElementById(errId);
+    if (errEl) errEl.classList.toggle('show', show);
+}
+
+/* ── TOAST ──────────────────────────────────────────────────── */
+function toast(msg, type="success"){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.className   = `show ${type}`;
+    setTimeout(() => { el.className = ""; }, 3000);
+}
+
+/* ── MODAL HELPERS ──────────────────────────────────────────── */
+function openModal(id) { document.getElementById(id).classList.add("show");    }
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+
+/* ── FETCH WRAPPER ──────────────────────────────────────────── */
+async function api(url, method="GET", body=null){
+    const opts = { method, headers:{ "Content-Type":"application/json" }, credentials:"same-origin" };
+    if (body) opts.body = JSON.stringify(body);
+    const res  = await fetch(url, opts);
+    const data = await res.json().catch(() => ({}));
+    return { ok:res.ok, status:res.status, data };
+}
+
+/* ── PAPER ROWS ─────────────────────────────────────────────── */
+/**
+ * Add a paper row to a container.
+ * @param {string}  containerId  - 'c_papers' or 'e_papers'
+ * @param {string}  paperName    - pre-selected paper (e.g. 'Paper 1')
+ * @param {string|number} maxMarks - pre-filled score
+ */
+function addPaperRow(containerId, paperName="", maxMarks=""){
+    const container = document.getElementById(containerId);
+    const rowId     = `pr_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+
+    const div = document.createElement('div');
+    div.className = 'paper-row';
+    div.id        = rowId;
+
+    // Paper name — fixed dropdown
+    const sel = document.createElement('select');
+    sel.className = 'form-control paper-name-sel';
+    PAPER_CHOICES.forEach(p => {
+        const o = document.createElement('option');
+        o.value = o.textContent = p;
+        if (p === paperName) o.selected = true;
+        sel.appendChild(o);
+    });
+
+    // Max score — numeric only, required
+    const scoreWrap = document.createElement('div');
+    scoreWrap.className = 'paper-score-wrap';
+
+    const scoreInp = document.createElement('input');
+    scoreInp.type        = 'text';
+    scoreInp.inputMode   = 'numeric';
+    scoreInp.className   = 'form-control paper-marks-inp';
+    scoreInp.placeholder = 'Max score *';
+    scoreInp.value       = maxMarks;
+
+    const scoreErr = document.createElement('div');
+    scoreErr.className = 'paper-score-error';
+    scoreErr.textContent = 'Required, numbers only.';
+
+    // Live validation on score field
+    scoreInp.addEventListener('input', function(){
+        const v   = this.value.trim();
+        const bad = v === "" || !isPositiveInt(v);
+        this.classList.toggle('input-error', bad);
+        scoreErr.classList.toggle('show', bad);
+    });
+
+    scoreWrap.appendChild(scoreInp);
+    scoreWrap.appendChild(scoreErr);
+
+    // Remove button
+    const rmBtn = document.createElement('button');
+    rmBtn.type      = 'button';
+    rmBtn.className = 'remove-paper-btn';
+    rmBtn.textContent = '✕';
+    rmBtn.onclick   = () => div.remove();
+
+    div.appendChild(sel);
+    div.appendChild(scoreWrap);
+    div.appendChild(rmBtn);
+    container.appendChild(div);
+}
+
+/**
+ * Collect and validate all paper rows in a container.
+ * Returns array on success, null if any row is invalid.
+ */
+function collectPapers(containerId){
+    const rows   = document.querySelectorAll(`#${containerId} .paper-row`);
+    const papers = [];
+    let   valid  = true;
+
+    rows.forEach(row => {
+        const nameEl  = row.querySelector('.paper-name-sel');
+        const scoreEl = row.querySelector('.paper-marks-inp');
+        const errEl   = row.querySelector('.paper-score-error');
+        const v       = scoreEl.value.trim();
+
+        if (v === "" || !isPositiveInt(v)){
+            scoreEl.classList.add('input-error');
+            errEl.classList.add('show');
+            valid = false;
+        } else {
+            scoreEl.classList.remove('input-error');
+            errEl.classList.remove('show');
+            papers.push({ paper_name: nameEl.value, max_marks: parseInt(v) });
+        }
+    });
+
+    return valid ? papers : null;
+}
+
+function collectTeachers(containerId){
+    return Array.from(
+        document.querySelectorAll(`#${containerId} input[type=checkbox]:checked`)
+    ).map(cb => parseInt(cb.value));
+}
+
+/* ── OPEN CREATE ────────────────────────────────────────────── */
+function openCreateModal(){
+    document.getElementById("c_name").value        = "";
+    document.getElementById("c_description").value = "";
+    document.getElementById("c_level").value        = "";
+    document.querySelectorAll("#c_teachers input").forEach(cb => cb.checked = false);
+    document.getElementById("c_papers").innerHTML   = "";
+
+    setErr(document.getElementById("c_name"),  "err_c_name",  false);
+    setErr(document.getElementById("c_level"), "err_c_level", false);
+
+    openModal("createModal");
+}
+
+/* ── CREATE SUBJECT ─────────────────────────────────────────── */
+async function createSubject(){
+    const btn   = document.getElementById("createBtn");
+    const nameEl  = document.getElementById("c_name");
+    const levelEl = document.getElementById("c_level");
+    const name    = nameEl.value.trim();
+    const level   = levelEl.value;
+
+    let valid = true;
+
+    if (!name)  { setErr(nameEl,  "err_c_name",  true); valid = false; }
+    else          setErr(nameEl,  "err_c_name",  false);
+
+    if (!level) { setErr(levelEl, "err_c_level", true); valid = false; }
+    else          setErr(levelEl, "err_c_level", false);
+
+    let papers = [];
+    if (IS_SECONDARY){
+        papers = collectPapers("c_papers");
+        if (papers === null) valid = false;
+    }
+
+    if (!valid) return;
+
+    btn.disabled    = true;
+    btn.textContent = "Saving…";
+
+    const { ok, data } = await api(SUBJECTS_API, "POST", {
+        name,
+        description: document.getElementById("c_description").value.trim(),
+        level,
+        teacher_ids: collectTeachers("c_teachers"),
+        papers,
+    });
+
+    btn.disabled    = false;
+    btn.textContent = "Create";
+
+    if (!ok){ toast(data.message || "Error creating subject", "error"); return; }
+
+    toast("Subject created");
+    closeModal("createModal");
+    setTimeout(() => location.reload(), 600);
+}
+
+/* ── OPEN EDIT ──────────────────────────────────────────────── */
+async function openEditModal(subjectId){
+    const { ok, data } = await api(`${SUBJECTS_API}/${subjectId}/detail`);
+    if (!ok){ toast("Failed to load subject", "error"); return; }
+
+    document.getElementById("e_subject_id").value  = subjectId;
+    document.getElementById("e_name").value         = data.name        || "";
+    document.getElementById("e_description").value  = data.description || "";
+    document.getElementById("e_level").value         = data.level       || "";
+
+    setErr(document.getElementById("e_name"),  "err_e_name",  false);
+    setErr(document.getElementById("e_level"), "err_e_level", false);
+
+    // Tick assigned teachers
+    document.querySelectorAll("#e_teachers input").forEach(cb => {
+        cb.checked = (data.teacher_ids || []).includes(parseInt(cb.value));
+    });
+
+    // Re-populate papers
+    if (IS_SECONDARY){
+        document.getElementById("e_papers").innerHTML = "";
+        (data.papers || []).forEach(p =>
+            addPaperRow("e_papers", p.paper_name, p.max_marks)
+        );
+    }
+
+    openModal("editModal");
+}
+
+/* ── SAVE EDIT ──────────────────────────────────────────────── */
+async function saveSubject(){
+    const btn       = document.getElementById("editBtn");
+    const subjectId = document.getElementById("e_subject_id").value;
+    const nameEl    = document.getElementById("e_name");
+    const levelEl   = document.getElementById("e_level");
+    const name      = nameEl.value.trim();
+    const level     = levelEl.value;
+
+    let valid = true;
+
+    if (!name)  { setErr(nameEl,  "err_e_name",  true); valid = false; }
+    else          setErr(nameEl,  "err_e_name",  false);
+
+    if (!level) { setErr(levelEl, "err_e_level", true); valid = false; }
+    else          setErr(levelEl, "err_e_level", false);
+
+    let papers = undefined;
+    if (IS_SECONDARY){
+        papers = collectPapers("e_papers");
+        if (papers === null) valid = false;
+    }
+
+    if (!valid) return;
+
+    btn.disabled    = true;
+    btn.textContent = "Saving…";
+
+    const payload = {
+        name,
+        description: document.getElementById("e_description").value.trim(),
+        level,
+        teacher_ids: collectTeachers("e_teachers"),
+    };
+    if (papers !== undefined) payload.papers = papers;
+
+    const { ok, data } = await api(`${SUBJECTS_API}/${subjectId}`, "PUT", payload);
+
+    btn.disabled    = false;
+    btn.textContent = "Save";
+
+    if (!ok){ toast(data.message || "Error updating", "error"); return; }
+
+    toast("Subject updated");
+    closeModal("editModal");
+    setTimeout(() => location.reload(), 600);
+}
+
+/* ── DELETE ─────────────────────────────────────────────────── */
+let _deleteId = null;
+
+function confirmDelete(id, name){
+    _deleteId = id;
+    document.getElementById("confirmText").textContent =
+        `Delete subject "${name}"? All its papers and teacher links will be removed.`;
+    openModal("confirmModal");
+}
+
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+    const { ok, data } = await api(`${SUBJECTS_API}/${_deleteId}`, "DELETE");
+    closeModal("confirmModal");
+    if (!ok){ toast(data.message || "Error deleting", "error"); return; }
+
+    toast("Subject deleted");
+    const card = document.getElementById(`subj-card-${_deleteId}`);
+    if (card) card.remove();
+
+    if (!document.querySelector(".subject-card")){
+        document.getElementById("subjectGrid").innerHTML = `
+            <div class="empty-state">
+                <div class="icon">📚</div>
+                <p>No subjects yet. Click <strong>Create Subject</strong> to add one.</p>
+            </div>`;
+    }
+});
+
+/* ── CLOSE MODAL ON BACKDROP CLICK ─────────────────────────── */
+document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', e => {
+        if (e.target === m) m.classList.remove('show');
+    });
+});
+</script>
+{% endblock %}

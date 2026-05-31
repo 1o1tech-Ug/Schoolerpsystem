@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>
+    {% if student %}{{ student.first_name }}'s Report Card{% else %}Student Portal{% endif %}
+    — 1O1 SMS
+  </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0a1628;
+      --navy-mid:  #0f2040;
+      --navy-card: #111f38;
+      --blue:      #2563eb;
+      --blue-l:    #3b82f6;
+      --blue-xl:   #60a5fa;
+      --green:     #10b981;
+      --amber:     #f59e0b;
+      --red:       #ef4444;
+      --slate-100: #e2e8f0;
+      --slate-300: #94a3b8;
+      --slate-400: #64748b;
+      --slate-500: #475569;
+      --white:     #ffffff;
+      --topbar-h:  64px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      min-height: 100%;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Topbar ─────────────────────────────────────────── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: var(--topbar-h);
+      background: var(--navy);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      box-shadow: 0 4px 24px rgba(0,0,0,.3);
+    }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none;
+    }
+    .brand-badge {
+      width: 38px; height: 38px;
+      background: var(--blue);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .brand-text h2 {
+      font-size: 14.5px; font-weight: 800;
+      color: var(--white); line-height: 1.1; letter-spacing: -.2px;
+    }
+    .brand-text p { font-size: 10.5px; color: var(--slate-400); margin-top: 1px; }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .student-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 99px;
+      padding: 6px 14px 6px 8px;
+    }
+    .student-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--green));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .student-chip-name { font-size: 12.5px; font-weight: 700; color: var(--white); }
+    .student-chip-code { font-size: 11px; color: var(--slate-400); }
+
+    .logout-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(239,68,68,.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,.25);
+      padding: 0 14px; height: 36px;
+      border-radius: 8px; cursor: pointer;
+      font-family: inherit; font-size: 12.5px; font-weight: 700;
+      text-decoration: none;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .logout-btn:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+    /* ── Main layout ────────────────────────────────────── */
+    .main {
+      padding-top: calc(var(--topbar-h) + 32px);
+      padding-bottom: 48px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    /* ── Error state ────────────────────────────────────── */
+    .error-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 64px 40px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(15,23,42,.06), 0 4px 16px rgba(15,23,42,.04);
+      border: 1px solid rgba(15,23,42,.06);
+    }
+    .error-card .ec-icon { font-size: 52px; margin-bottom: 18px; }
+    .error-card h2 { font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+    .error-card p  { font-size: .9rem; color: var(--slate-400); line-height: 1.6; max-width: 400px; margin: 0 auto; }
+
+    /* ── School banner ──────────────────────────────────── */
+    .school-banner {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 50%, #1e3a6e 100%);
+      border-radius: 18px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 20px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(10,22,40,.2);
+    }
+    .school-banner::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 220px; height: 220px; border-radius: 50%;
+      background: rgba(255,255,255,.04);
+    }
+    .school-logo-wrap {
+      width: 64px; height: 64px; border-radius: 14px;
+      background: rgba(255,255,255,.12);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .school-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .school-logo-wrap .logo-fallback { font-size: 28px; }
+    .school-banner-text { position: relative; z-index: 1; }
+    .school-banner-text h2 {
+      font-size: 1.2rem; font-weight: 800;
+      color: var(--white); letter-spacing: -.3px; margin-bottom: 4px;
+    }
+    .school-banner-text p { font-size: .82rem; color: rgba(255,255,255,.5); }
+
+    /* ── Info grid ──────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .info-tile {
+      background: #fff;
+      border: 1px solid rgba(15,23,42,.07);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .info-tile-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .it-blue   { background: #eff6ff; }
+    .it-green  { background: #ecfdf5; }
+    .it-amber  { background: #fffbeb; }
+    .it-violet { background: #f5f3ff; }
+    .info-tile-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--slate-400); margin-bottom: 3px;
+    }
+    .info-tile-value { font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+
+    /* ── Report viewer card ─────────────────────────────── */
+    .viewer-card {
+      background: #fff;
+      border: 1px solid rgba(15,23,42,.07);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(15,23,42,.06), 0 4px 16px rgba(15,23,42,.04);
+    }
+    .viewer-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .viewer-header h3 {
+      font-size: 15px; font-weight: 700; color: #0f172a;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .viewer-actions { display: flex; align-items: center; gap: 10px; }
+    .action-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      font-family: inherit; font-size: 12.5px; font-weight: 700;
+      cursor: pointer; border: none; text-decoration: none;
+      transition: background .2s, transform .1s;
+    }
+    .action-btn:active { transform: scale(.98); }
+    .ab-primary { background: var(--blue); color: #fff; }
+    .ab-primary:hover { background: #1d4ed8; }
+    .ab-ghost { background: #f1f5f9; color: var(--slate-500); }
+    .ab-ghost:hover { background: #e2e8f0; color: #0f172a; }
+
+    /* PDF embed */
+    .pdf-embed-wrap {
+      width: 100%; background: #e2e8f0;
+      position: relative;
+    }
+    .pdf-embed-wrap iframe {
+      display: block; width: 100%; border: none;
+      height: 82vh; min-height: 540px;
+    }
+
+    /* Fallback (HTML reports or no embed) */
+    .fallback-msg {
+      padding: 48px 32px;
+      text-align: center;
+    }
+    .fallback-msg p { font-size: .9rem; color: var(--slate-400); margin-bottom: 16px; }
+
+    /* Footer */
+    .portal-footer {
+      text-align: center; margin-top: 32px;
+      font-size: .75rem; color: var(--slate-400);
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .school-banner { flex-direction: column; align-items: flex-start; padding: 22px; }
+      .viewer-header { flex-direction: column; align-items: flex-start; }
+      .topbar { padding: 0 16px; }
+      .brand-text p { display: none; }
+      .student-chip-code { display: none; }
+    }
+
+    @media print {
+      .topbar, .viewer-header, .school-banner, .info-grid, .portal-footer { display: none !important; }
+      .viewer-card { border: none; box-shadow: none; border-radius: 0; }
+      .pdf-embed-wrap iframe { height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Topbar ───────────────────────────────────────────── -->
+  <header class="topbar">
+    <a href="/student/portal" class="topbar-brand">
+      <div class="brand-badge">🎓</div>
+      <div class="brand-text">
+        <h2>1O1 School Management System</h2>
+        <p>Student Report Card Portal</p>
+      </div>
+    </a>
+
+    <div class="topbar-right">
+      {% if student %}
+      <div class="student-chip">
+        <div class="student-avatar">
+          {{ student.first_name[0] | upper }}{{ student.last_name[0] | upper }}
+        </div>
+        <div>
+          <div class="student-chip-name">{{ student.first_name }} {{ student.last_name }}</div>
+          <div class="student-chip-code">{{ student.student_code }}</div>
+        </div>
+      </div>
+      {% endif %}
+      <a href="/auth/logout" class="logout-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Logout
+      </a>
+    </div>
+  </header>
+
+  <!-- ── Main ─────────────────────────────────────────────── -->
+  <main class="main">
+
+    {% if error %}
+    <!-- Error state -->
+    <div class="error-card">
+      <div class="ec-icon">
+        {% if "not been generated" in error or "not been shared" in error %}📭
+        {% elif "not found" in error %}🔍
+        {% else %}⚠️{% endif %}
+      </div>
+      <h2>
+        {% if "not been shared" in error %}Report Not Available Yet
+        {% elif "not been generated" in error %}Report Not Generated
+        {% else %}Something Went Wrong{% endif %}
+      </h2>
+      <p>{{ error }}</p>
+    </div>
+
+    {% else %}
+
+    <!-- ── School banner ──────────────────────────────────── -->
+    <div class="school-banner">
+      <div class="school-logo-wrap">
+        {% if school_detail and school_detail.school_logo_url %}
+          <img src="{{ school_detail.school_logo_url }}" alt="School logo">
+        {% else %}
+          <span class="logo-fallback">🏫</span>
+        {% endif %}
+      </div>
+      <div class="school-banner-text">
+        <h2>{{ school.name if school else 'School' }}</h2>
+        <p>
+          {% if school_detail and school_detail.district %}{{ school_detail.district }} · {% endif %}
+          Official Student Report Card
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Info tiles ────────────────────────────────────── -->
+    <div class="info-grid">
+
+      <div class="info-tile">
+        <div class="info-tile-icon it-blue">🎓</div>
+        <div>
+          <div class="info-tile-label">Student</div>
+          <div class="info-tile-value">{{ student.first_name }} {{ student.last_name }}</div>
+        </div>
+      </div>
+
+      <div class="info-tile">
+        <div class="info-tile-icon it-green">🪪</div>
+        <div>
+          <div class="info-tile-label">Student Code</div>
+          <div class="info-tile-value" style="font-family:'DM Mono',monospace;font-size:13px">
+            {{ student.student_code }}
+          </div>
+        </div>
+      </div>
+
+      <div class="info-tile">
+        <div class="info-tile-icon it-violet">📅</div>
+        <div>
+          <div class="info-tile-label">Term</div>
+          <div class="info-tile-value">
+            {{ term.name if term else '—' }}
+            {% if academic_year %}<span style="font-size:12px;font-weight:500;color:var(--slate-400)"> · {{ academic_year.name }}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="info-tile">
+        <div class="info-tile-icon it-amber">📝</div>
+        <div>
+          <div class="info-tile-label">Exam Type</div>
+          <div class="info-tile-value">
+            {% if report.exam_type == 'BOT' %}Beginning of Term
+            {% elif report.exam_type == 'MID' %}Mid Term
+            {% elif report.exam_type == 'EOT' %}End of Term
+            {% else %}{{ report.exam_type }}{% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Report viewer ─────────────────────────────────── -->
+    <div class="viewer-card">
+
+      <div class="viewer-header">
+        <h3>
+          📄 Report Card
+          <span style="font-size:12px;font-weight:500;color:var(--slate-400)">
+            Generated {{ report.generated_at.strftime('%d %b %Y') if report.generated_at else '' }}
+          </span>
+        </h3>
+        <div class="viewer-actions">
+          <a href="{{ viewer_url }}" target="_blank" class="action-btn ab-ghost">
+            ↗ Open in new tab
+          </a>
+          <a href="{{ viewer_url }}" download class="action-btn ab-primary">
+            ⬇ Download PDF
+          </a>
+        </div>
+      </div>
+
+      {% set ext = report.local_path.rsplit('.', 1)[-1].lower() if report.local_path else 'pdf' %}
+
+      {% if ext == 'pdf' %}
+      <!-- Inline PDF viewer -->
+      <div class="pdf-embed-wrap">
+        <iframe
+          src="{{ viewer_url }}"
+          title="Report Card — {{ student.first_name }} {{ student.last_name }}"
+          loading="lazy"
+        ></iframe>
+      </div>
+
+      {% else %}
+      <!-- HTML report fallback -->
+      <div class="fallback-msg">
+        <p>Your report card is ready. Click below to view it.</p>
+        <a href="{{ viewer_url }}" target="_blank" class="action-btn ab-primary" style="display:inline-flex">
+          📄 View Report Card
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+
+    {% endif %}
+
+    <div class="portal-footer">
+      © 2026 1O1 Technologies · 1O1 School Management System
+    </div>
+
+  </main>
+
+</body>
+</html>

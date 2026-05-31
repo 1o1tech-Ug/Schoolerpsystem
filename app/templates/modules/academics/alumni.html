@@ -1,0 +1,765 @@
+{% extends "base.html" %}
+
+{% block title %}Class Alumni & History{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* ─── Layout ─────────────────────────────────────────────────── */
+.page-header          { margin-bottom: 24px; }
+.page-header h1       { font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+.page-header p        { color: #64748b; font-size: 15px; }
+
+/* ─── Filters card ───────────────────────────────────────────── */
+.filters-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.form-group                 { display: flex; flex-direction: column; gap: 8px; }
+.form-group label           { font-size: 14px; font-weight: 700; color: #334155; }
+.form-group select,
+.form-group input[type=text]{
+    padding: 12px 14px;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    background: white;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s;
+}
+.form-group select:focus,
+.form-group input[type=text]:focus { border-color: #2563eb; }
+.form-group select:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+
+.action-row { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+.action-btn {
+    border: none; padding: 11px 18px; border-radius: 12px; cursor: pointer;
+    font-weight: 700; font-size: 14px; transition: all .2s;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.action-btn.primary   { background: #2563eb; color: white; }
+.action-btn.primary:hover   { background: #1d4ed8; }
+.action-btn.secondary { background: #e2e8f0; color: #334155; }
+.action-btn.secondary:hover { background: #cbd5e1; }
+.action-btn.ghost     { background: transparent; border: 1px solid #e2e8f0; color: #475569; }
+.action-btn.ghost:hover     { background: #f8fafc; }
+.action-btn:disabled  { opacity: .5; cursor: not-allowed; }
+
+/* ─── Overview section ───────────────────────────────────────── */
+.overview-section       { margin-bottom: 28px; }
+.overview-section h2    { font-size: 16px; font-weight: 700; color: #475569; margin-bottom: 14px; text-transform: uppercase; letter-spacing: .5px; }
+
+.cohort-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.cohort-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+}
+.cohort-card:hover        { border-color: #2563eb; box-shadow: 0 4px 16px rgba(37,99,235,.12); transform: translateY(-1px); }
+.cohort-card.selected     { border-color: #2563eb; background: #eff6ff; }
+.cohort-card .year-badge  { font-size: 11px; font-weight: 700; color: #2563eb; background: #dbeafe; padding: 3px 8px; border-radius: 6px; display: inline-block; margin-bottom: 8px; }
+.cohort-card .class-name  { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+.cohort-card .student-cnt { font-size: 13px; color: #64748b; }
+.cohort-card .status-dots { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+.status-dot               { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; }
+.sd-promoted      { background: #dcfce7; color: #166534; }
+.sd-graduated     { background: #e2e8f0; color: #334155; }
+.sd-level_complete{ background: #dbeafe; color: #1e40af; }
+.sd-active        { background: #fef3c7; color: #92400e; }
+.sd-repeated      { background: #fee2e2; color: #991b1b; }
+.sd-transferred   { background: #f3e8ff; color: #6b21a8; }
+
+/* ─── Cohort detail card ─────────────────────────────────────── */
+.detail-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.detail-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.detail-header-left h3   { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+.detail-header-left p    { font-size: 14px; color: #64748b; }
+
+.status-pills            { display: flex; gap: 6px; flex-wrap: wrap; }
+.status-pill             {
+    font-size: 12px; font-weight: 700; padding: 5px 12px;
+    border-radius: 999px; cursor: pointer; transition: opacity .15s;
+    border: 2px solid transparent;
+}
+.status-pill:hover       { opacity: .8; }
+.status-pill.active-pill { border-color: #0f172a; }
+
+.sp-all            { background: #f1f5f9; color: #334155; }
+.sp-promoted       { background: #dcfce7; color: #166534; }
+.sp-graduated      { background: #e2e8f0; color: #334155; }
+.sp-level_complete { background: #dbeafe; color: #1e40af; }
+.sp-active         { background: #fef3c7; color: #92400e; }
+.sp-repeated       { background: #fee2e2; color: #991b1b; }
+.sp-transferred    { background: #f3e8ff; color: #6b21a8; }
+
+/* detail filters */
+.detail-filters {
+    padding: 14px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+}
+
+.detail-filters select,
+.detail-filters input { padding: 9px 12px; border: 1px solid #dbe2ea; border-radius: 10px; font-size: 13px; outline: none; }
+.detail-filters select:focus,
+.detail-filters input:focus { border-color: #2563eb; }
+
+.table-wrap   { overflow-x: auto; }
+table         { width: 100%; border-collapse: collapse; }
+th, td        { padding: 13px 16px; border-bottom: 1px solid #f1f5f9; text-align: left; white-space: nowrap; }
+th            { background: #f8fafc; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: #475569; }
+td            { font-size: 14px; }
+
+.avatar {
+    width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
+    background: #e2e8f0; display: inline-flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 13px; color: #475569;
+    vertical-align: middle; margin-right: 8px;
+}
+
+.status-badge {
+    display: inline-flex; align-items: center;
+    padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+}
+.sb-promoted       { background: #dcfce7; color: #166534; }
+.sb-graduated      { background: #e2e8f0; color: #334155; }
+.sb-level_complete { background: #dbeafe; color: #1e40af; }
+.sb-active         { background: #fef3c7; color: #92400e; }
+.sb-repeated       { background: #fee2e2; color: #991b1b; }
+.sb-transferred    { background: #f3e8ff; color: #6b21a8; }
+
+/* ─── Pagination ─────────────────────────────────────────────── */
+.pagination {
+    display: flex; gap: 6px; align-items: center; justify-content: center;
+    padding: 16px; border-top: 1px solid #f1f5f9; flex-wrap: wrap;
+}
+.page-link {
+    padding: 7px 13px; border: 1px solid #e2e8f0; border-radius: 8px;
+    background: white; cursor: pointer; font-size: 13px; font-weight: 600; color: #334155;
+}
+.page-link:hover  { background: #f1f5f9; }
+.page-link.active { background: #2563eb; color: white; border-color: #2563eb; }
+
+/* ─── Timeline modal ─────────────────────────────────────────── */
+.modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 1000;
+    align-items: center; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+
+.modal {
+    background: white; border-radius: 20px;
+    width: min(560px, 95vw); max-height: 85vh;
+    overflow-y: auto; padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+
+.modal-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 20px;
+}
+.modal-header h3  { font-size: 20px; font-weight: 800; color: #0f172a; }
+.modal-close      { border: none; background: #f1f5f9; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 16px; color: #64748b; }
+.modal-close:hover{ background: #e2e8f0; }
+
+.modal-student-info {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; background: #f8fafc; border-radius: 12px; margin-bottom: 20px;
+}
+.modal-student-info img,
+.modal-student-avatar {
+    width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+    background: #e2e8f0; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: #64748b; flex-shrink: 0;
+}
+.modal-student-info .name { font-size: 16px; font-weight: 700; color: #0f172a; }
+.modal-student-info .code { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before {
+    content: ""; position: absolute; left: 7px; top: 0; bottom: 0;
+    width: 2px; background: #e2e8f0;
+}
+
+.tl-item {
+    position: relative; margin-bottom: 20px;
+}
+.tl-item:last-child { margin-bottom: 0; }
+
+.tl-dot {
+    position: absolute; left: -20px; top: 4px;
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid white; background: #94a3b8;
+}
+.tl-dot.promoted       { background: #16a34a; }
+.tl-dot.graduated      { background: #475569; }
+.tl-dot.level_complete { background: #2563eb; }
+.tl-dot.active         { background: #d97706; }
+.tl-dot.repeated       { background: #dc2626; }
+.tl-dot.transferred    { background: #7c3aed; }
+
+.tl-year  { font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 4px; }
+.tl-class { font-size: 16px; font-weight: 800; color: #0f172a; }
+.tl-meta  { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+/* ─── States ─────────────────────────────────────────────────── */
+.empty-state { padding: 48px; text-align: center; color: #94a3b8; font-size: 15px; }
+.loading     { padding: 30px; text-align: center; color: #64748b; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.35); border-top-color: white; border-radius: 50%; animation: spin .6s linear infinite; display: inline-block; }
+
+</style>
+
+
+{# ── Inject data for JS ─────────────────────────────────────────────── #}
+<script id="page-meta" type="application/json">
+{
+    "classes": {
+        {% for class_ in classes %}
+        "{{ class_.id }}": "{{ class_.name }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    },
+    "years": {
+        {% for year in academic_years %}
+        "{{ year.id }}": "{{ year.name }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    }
+}
+</script>
+
+
+<div class="page-header">
+    <h1>Class Alumni &amp; History</h1>
+    <p>Browse past cohorts by class and academic year. View every student who was ever enrolled in a given class.</p>
+</div>
+
+{# ── Top filters ───────────────────────────────────────────────────── #}
+<div class="filters-card">
+    <div class="filters">
+
+        <div class="form-group">
+            <label>Academic Year</label>
+            <select id="f_year" onchange="onFilterChange()">
+                <option value="">All Years</option>
+                {% for year in academic_years %}
+                <option value="{{ year.id }}">{{ year.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Class</label>
+            <select id="f_class" onchange="onFilterChange()">
+                <option value="">All Classes</option>
+                {% for class_ in classes %}
+                <option value="{{ class_.id }}">{{ class_.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+    </div>
+    <div class="action-row">
+        <button class="action-btn primary" onclick="loadOverview()">Load Overview</button>
+    </div>
+</div>
+
+{# ── Overview grid ─────────────────────────────────────────────────── #}
+<div class="overview-section">
+    <h2>Cohort Overview</h2>
+    <div id="cohortGrid">
+        <div class="empty-state">
+            Select filters above and click <strong>Load Overview</strong> to see cohort cards.
+        </div>
+    </div>
+</div>
+
+{# ── Cohort detail ─────────────────────────────────────────────────── #}
+<div class="detail-card" id="detailCard" style="display:none">
+
+    <div class="detail-header">
+        <div class="detail-header-left">
+            <h3 id="d_title">—</h3>
+            <p id="d_subtitle"></p>
+        </div>
+        <div class="status-pills" id="d_statusPills"></div>
+    </div>
+
+    <div class="detail-filters">
+        <select id="d_stream" onchange="reloadDetail()">
+            <option value="">All Streams</option>
+        </select>
+        <input
+            type="text"
+            id="d_search"
+            placeholder="Search name or admission no…"
+            oninput="debounceDetail()"
+            style="min-width:220px;"
+        />
+        <span id="d_countLabel" style="font-size:13px;color:#64748b;margin-left:auto;"></span>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Admission No</th>
+                    <th>Student</th>
+                    <th>Gender</th>
+                    <th>Stream</th>
+                    <th>Status</th>
+                    <th>Enrolled On</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="detailTable">
+                <tr><td colspan="7"><div class="loading">Loading…</div></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination" id="d_pagination"></div>
+
+</div>
+
+
+{# ── Student timeline modal ────────────────────────────────────────── #}
+<div class="modal-backdrop" id="timelineModal" onclick="closeModal(event)">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Enrollment History</h3>
+            <button class="modal-close" onclick="closeTimelineModal()">✕</button>
+        </div>
+        <div id="modal-student-info"></div>
+        <div id="modal-timeline">
+            <div class="loading">Loading…</div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function () {
+
+    /* ── Static metadata ─────────────────────────────────────────── */
+    const META    = JSON.parse(document.getElementById("page-meta").textContent)
+    const CLASSES = META.classes
+    const YEARS   = META.years
+
+    /* ── Detail state ────────────────────────────────────────────── */
+    let _detailClassId = null
+    let _detailYearId  = null
+    let _detailStatus  = ""
+    let _detailPage    = 1
+    let _debounceTimer = null
+
+    /* ════════════════════════════════════════════════════════════════
+       Overview
+    ════════════════════════════════════════════════════════════════ */
+    window.onFilterChange = function () {}
+
+    window.loadOverview = async function () {
+
+        const yearId  = document.getElementById("f_year").value
+        const classId = document.getElementById("f_class").value
+
+        const params = new URLSearchParams()
+
+        if (yearId)  params.set("academic_year_id", yearId)
+        if (classId) params.set("class_id", classId)
+
+        const grid = document.getElementById("cohortGrid")
+
+        grid.innerHTML = `<div class="loading">Loading cohort data…</div>`
+
+        try {
+
+            const res  = await fetch(`/api/academics/alumni/summary?${params}`)
+            const data = await res.json()
+
+            if (!res.ok) throw new Error(data.message || "Failed to load cohort overview")
+
+            if (!data.cohorts || data.cohorts.length === 0) {
+                grid.innerHTML = `<div class="empty-state">No cohort data found for the selected filters.</div>`
+                return
+            }
+
+            grid.innerHTML = ""
+
+            data.cohorts.forEach(cohort => {
+
+                const card = document.createElement("div")
+                card.className = "cohort-card"
+
+                card.addEventListener("click", () => {
+                    openCohort(cohort.class_id, cohort.year_id, cohort.class_name, cohort.year_name, card)
+                })
+
+                const dots = Object.entries(cohort.by_status || {})
+                    .map(([status, count]) =>
+                        `<span class="status-dot sd-${status}">${_statusShort(status)} ${count}</span>`
+                    ).join("")
+
+                card.innerHTML = `
+                    <div class="year-badge">${cohort.year_name}</div>
+                    <div class="class-name">${cohort.class_name}</div>
+                    <div class="student-cnt">${cohort.total} student${cohort.total !== 1 ? "s" : ""}</div>
+                    <div class="status-dots">${dots}</div>
+                `
+
+                grid.appendChild(card)
+            })
+
+        } catch (err) {
+            grid.innerHTML = `<div class="empty-state">${err.message}</div>`
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       Open cohort detail
+    ════════════════════════════════════════════════════════════════ */
+    window.openCohort = function (classId, yearId, className, yearName, selectedCard = null) {
+
+        _detailClassId = classId
+        _detailYearId  = yearId
+        _detailStatus  = ""
+        _detailPage    = 1
+
+        document.querySelectorAll(".cohort-card").forEach(c => c.classList.remove("selected"))
+        if (selectedCard) selectedCard.classList.add("selected")
+
+        /* Reset stream dropdown — full reset so it repopulates on next fetch */
+        document.getElementById("d_stream").innerHTML = `<option value="">All Streams</option>`
+        document.getElementById("d_search").value = ""
+
+        document.getElementById("d_title").textContent    = `${className} — ${yearName}`
+        document.getElementById("d_subtitle").textContent = `Showing all students enrolled in ${className} during ${yearName}`
+
+        document.getElementById("detailCard").style.display = "block"
+        document.getElementById("detailCard").scrollIntoView({ behavior: "smooth", block: "start" })
+
+        _fetchDetail()
+    }
+
+    window.reloadDetail = function () {
+        _detailPage = 1
+        _fetchDetail()
+    }
+
+    window.debounceDetail = function () {
+        clearTimeout(_debounceTimer)
+        _debounceTimer = setTimeout(() => { _detailPage = 1; _fetchDetail() }, 400)
+    }
+
+    async function _fetchDetail() {
+
+        if (!_detailClassId || !_detailYearId) return
+
+        const streamId = document.getElementById("d_stream").value
+        const search   = document.getElementById("d_search").value.trim()
+
+        const params = new URLSearchParams({
+            class_id:         _detailClassId,
+            academic_year_id: _detailYearId,
+            page:             _detailPage,
+            per_page:         50,
+        })
+
+        if (streamId)      params.set("stream_id", streamId)
+        if (_detailStatus) params.set("status",    _detailStatus)
+        if (search)        params.set("search",    search)
+
+        const tbody      = document.getElementById("detailTable")
+        const pagination = document.getElementById("d_pagination")
+        const countLabel = document.getElementById("d_countLabel")
+
+        tbody.innerHTML        = `<tr><td colspan="7"><div class="loading">Loading…</div></td></tr>`
+        pagination.innerHTML   = ""
+        countLabel.textContent = ""
+
+        try {
+
+            const res  = await fetch(`/api/academics/alumni/cohort?${params}`)
+            const data = await res.json()
+
+            if (!res.ok) throw new Error(data.message || "Failed to load cohort")
+
+            /* Populate stream dropdown once (only when it has no options beyond the default) */
+            const streamSel = document.getElementById("d_stream")
+            if (streamSel.options.length <= 1 && data.streams && data.streams.length > 0) {
+                data.streams.forEach(stream => {
+                    const opt = document.createElement("option")
+                    opt.value       = stream.id
+                    opt.textContent = stream.name
+                    streamSel.appendChild(opt)
+                })
+            }
+
+            _renderStatusPills(data.status_counts || {}, data.total || 0)
+
+            countLabel.textContent = `${data.total} student${data.total !== 1 ? "s" : ""}`
+
+            if (!data.students || data.students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No students match the current filters.</div></td></tr>`
+                return
+            }
+
+            tbody.innerHTML = ""
+
+            data.students.forEach(student => {
+
+                const tr = document.createElement("tr")
+
+                const initials = [student.first_name, student.last_name]
+                    .map(n => n ? n.charAt(0) : "").join("")
+
+                const avatarHtml = student.photo_url
+                    ? `<img class="avatar" src="${student.photo_url}" alt="${student.name}">`
+                    : `<span class="avatar">${initials}</span>`
+
+                tr.innerHTML = `
+                    <td>${student.student_code || student.admission_number || "—"}</td>
+
+                    <td>${avatarHtml}<strong>${student.name}</strong></td>
+
+                    <td>${student.gender || "—"}</td>
+
+                    <td>${student.stream_name || "—"}</td>
+
+                    <td>
+                        <span class="status-badge sb-${student.enrollment_status}">
+                            ${student.enrollment_status_label}
+                        </span>
+                    </td>
+
+                    <td>${student.enrolled_on || "—"}</td>
+
+                    <td style="display:flex;gap:8px;">
+
+                        <button
+                            class="action-btn ghost"
+                            style="font-size:12px;padding:7px 11px;"
+                            onclick="openTimeline(${student.id})"
+                        >
+                            Timeline
+                        </button>
+
+                        <button
+                            class="action-btn secondary"
+                            style="font-size:12px;padding:7px 11px;"
+                            onclick="window.location.href='/api/academics/alumni/student/${student.id}'"
+                        >
+                            Profile
+                        </button>
+
+                    </td>
+                `
+
+                {#
+                    FIX: Profile button previously linked to:
+                         /api/academics/alumni/student/<id>/profile  ← JSON endpoint (wrong)
+                    Corrected to:
+                         /api/academics/alumni/student/<id>          ← HTML page  (correct)
+
+                    Using window.location.href on a <button> rather than an <a> tag avoids
+                    the browser treating the JWT-protected page as a plain anchor navigation,
+                    and keeps the action consistent with the Timeline button style.
+                #}
+
+                tbody.appendChild(tr)
+            })
+
+            /* Pagination */
+            if (data.pages > 1) {
+                for (let p = 1; p <= data.pages; p++) {
+                    const btn = document.createElement("button")
+                    btn.className   = `page-link${p === data.page ? " active" : ""}`
+                    btn.textContent = p
+                    btn.onclick     = () => { _detailPage = p; _fetchDetail() }
+                    pagination.appendChild(btn)
+                }
+            }
+
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">${err.message}</div></td></tr>`
+        }
+    }
+
+    function _renderStatusPills(statusCounts, total) {
+
+        const container = document.getElementById("d_statusPills")
+        container.innerHTML = ""
+
+        const allBtn = _pill("all", `All (${total})`, _detailStatus === "")
+        allBtn.onclick = () => {
+            _detailStatus = ""
+            _detailPage   = 1
+            _fetchDetail()
+            _setActivePill(allBtn)
+        }
+        container.appendChild(allBtn)
+
+        Object.entries(statusCounts).forEach(([status, count]) => {
+            const btn = _pill(status, `${_statusLabel(status)} (${count})`, _detailStatus === status)
+            btn.onclick = () => {
+                _detailStatus = status
+                _detailPage   = 1
+                _fetchDetail()
+                _setActivePill(btn)
+            }
+            container.appendChild(btn)
+        })
+    }
+
+    function _pill(status, text, isActive) {
+        const btn = document.createElement("button")
+        btn.className      = `status-pill sp-${status}${isActive ? " active-pill" : ""}`
+        btn.textContent    = text
+        btn.dataset.status = status
+        return btn
+    }
+
+    function _setActivePill(activePill) {
+        document.querySelectorAll(".status-pill").forEach(p => p.classList.remove("active-pill"))
+        activePill.classList.add("active-pill")
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       Student timeline modal
+    ════════════════════════════════════════════════════════════════ */
+    window.openTimeline = async function (studentId) {
+
+        document.getElementById("modal-student-info").innerHTML = `<div class="loading">Loading…</div>`
+        document.getElementById("modal-timeline").innerHTML     = ""
+        document.getElementById("timelineModal").classList.add("open")
+
+        try {
+
+            const res  = await fetch(`/api/academics/alumni/student/${studentId}/timeline`)
+            const data = await res.json()
+
+            if (!res.ok) throw new Error(data.message || "Failed")
+
+            const student  = data.student
+            const initials = (student.name || "  ").split(" ").map(w => w[0]).slice(0, 2).join("")
+
+            document.getElementById("modal-student-info").innerHTML = `
+                <div class="modal-student-info">
+                    ${
+                        student.photo_url
+                            ? `<img src="${student.photo_url}" alt="${student.name}" class="modal-student-avatar">`
+                            : `<div class="modal-student-avatar">${initials}</div>`
+                    }
+                    <div>
+                        <div class="name">${student.name}</div>
+                        <div class="code">${student.admission_number || student.student_code || "—"}</div>
+                    </div>
+                </div>
+            `
+
+            if (!data.timeline || data.timeline.length === 0) {
+                document.getElementById("modal-timeline").innerHTML =
+                    `<div class="empty-state">No enrollment records found.</div>`
+                return
+            }
+
+            const tl = document.createElement("div")
+            tl.className = "timeline"
+
+            data.timeline.forEach(item => {
+                const div = document.createElement("div")
+                div.className = "tl-item"
+                div.innerHTML = `
+                    <div class="tl-dot ${item.status}"></div>
+                    <div class="tl-year">${item.academic_year}</div>
+                    <div class="tl-class">
+                        ${item.class_name}${item.stream_name ? ` — ${item.stream_name}` : ""}
+                    </div>
+                    <div class="tl-meta">
+                        <span class="status-badge sb-${item.status}">${item.status_label}</span>
+                        ${item.enrolled_on
+                            ? `<span style="margin-left:8px;color:#94a3b8;font-size:12px;">${item.enrolled_on}</span>`
+                            : ""}
+                    </div>
+                `
+                tl.appendChild(div)
+            })
+
+            document.getElementById("modal-timeline").appendChild(tl)
+
+        } catch (err) {
+            document.getElementById("modal-timeline").innerHTML =
+                `<div class="empty-state">${err.message}</div>`
+        }
+    }
+
+    window.closeTimelineModal = function () {
+        document.getElementById("timelineModal").classList.remove("open")
+    }
+
+    window.closeModal = function (e) {
+        if (e.target === document.getElementById("timelineModal")) closeTimelineModal()
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       Utilities
+    ════════════════════════════════════════════════════════════════ */
+    const STATUS_LABELS = {
+        active:         "Active",
+        promoted:       "Promoted",
+        level_complete: "Level Complete",
+        graduated:      "Graduated",
+        repeated:       "Repeated",
+        demoted:        "Demoted",
+        transferred:    "Transferred",
+    }
+
+    function _statusLabel(s)  { return STATUS_LABELS[s] || s }
+
+    function _statusShort(s) {
+        return ({ active:"Act", promoted:"Pro", level_complete:"LC", graduated:"Grad", repeated:"Rep", transferred:"Trans" })[s] || s
+    }
+
+})()
+</script>
+
+{% endblock %}

@@ -1,0 +1,636 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root{
+  --navy:#0f2044;
+  --navy-mid:#1a3461;
+  --navy-light:#2a4a7f;
+  --gold:#c9a84c;
+  --gold-light:#e8c97a;
+  --cream:#faf8f4;
+  --white:#ffffff;
+  --gray-50:#f8f9fb;
+  --gray-100:#eef0f5;
+  --gray-200:#dde1eb;
+  --gray-400:#8c96b0;
+  --gray-600:#4a5470;
+  --gray-800:#1e2540;
+  --error:#8b1a1a;
+
+  --radius-sm:6px;
+  --radius-md:10px;
+  --radius-lg:16px;
+
+  --shadow-sm:0 1px 4px rgba(15,32,68,0.07);
+  --shadow-md:0 4px 16px rgba(15,32,68,0.12);
+
+  --transition:.2s ease;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+body{
+  background:var(--cream);
+  font-family:'DM Sans',sans-serif;
+  color:var(--gray-800);
+}
+
+.page-wrapper{
+  max-width:1200px;
+  margin:auto;
+  padding:35px 20px 60px;
+}
+
+/* ── HEADER ─────────────────────────────── */
+.page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:20px;
+  flex-wrap:wrap;
+  margin-bottom:25px;
+  border-bottom:2px solid var(--gold);
+  padding-bottom:16px;
+}
+.page-header h1{
+  font-family:'Lora',serif;
+  color:var(--navy);
+  font-size:2rem;
+  font-weight:600;
+}
+.page-header h1 span{
+  display:block;
+  font-size:.72rem;
+  color:var(--gold);
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+/* ── BUTTONS ─────────────────────────────── */
+.btn{
+  border:none;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:11px 18px;
+  border-radius:var(--radius-sm);
+  font-size:.86rem;
+  font-weight:600;
+  transition:var(--transition);
+  white-space:nowrap;
+}
+.btn-gold{ background:var(--gold); color:var(--navy); }
+.btn-gold:hover{ background:var(--gold-light); }
+.btn-navy{ background:var(--navy); color:white; }
+.btn-navy:hover{ background:var(--navy-mid); }
+.btn-search{ background:var(--navy-light); color:white; min-width:110px; }
+.btn-search:hover{ background:var(--navy); }
+
+/* ── TOOLBAR ─────────────────────────────── */
+.toolbar{
+  background:white;
+  padding:16px;
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-sm);
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-bottom:20px;
+  align-items:center;
+}
+.search-group{ display:flex; gap:10px; flex:1; min-width:260px; }
+.search-wrap{ flex:1; }
+.search-wrap input{
+  width:100%;
+  padding:11px 14px;
+  border:1.5px solid var(--gray-200);
+  border-radius:var(--radius-sm);
+  outline:none;
+  font-size:.9rem;
+  font-family:'DM Sans',sans-serif;
+}
+.search-wrap input:focus{ border-color:var(--navy-light); }
+.filters-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  width:100%;
+}
+.filter-select{
+  flex:1;
+  min-width:120px;
+  padding:11px 14px;
+  border:1.5px solid var(--gray-200);
+  border-radius:var(--radius-sm);
+  background:white;
+  outline:none;
+  font-size:.85rem;
+  font-family:'DM Sans',sans-serif;
+  color:var(--gray-800);
+  cursor:pointer;
+}
+.filter-select:focus{ border-color:var(--navy-light); }
+
+/* ── TABLE CARD ─────────────────────────── */
+.table-card{
+  background:white;
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  box-shadow:var(--shadow-md);
+}
+.table-responsive{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table{ width:100%; border-collapse:collapse; min-width:700px; }
+thead{ background:var(--navy); }
+thead th{
+  padding:14px 16px;
+  text-align:left;
+  color:rgba(255,255,255,.85);
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+tbody tr{ border-bottom:1px solid var(--gray-100); transition:var(--transition); }
+tbody tr:hover{ background:var(--gray-50); }
+tbody td{ padding:13px 16px; font-size:.88rem; vertical-align:middle; }
+
+/* ── ACTION BUTTONS ─────────────────────── */
+.actions-cell{ display:flex; gap:6px; align-items:center; flex-wrap:nowrap; }
+.action-btn{
+  border:1.5px solid var(--gray-200);
+  background:white;
+  border-radius:var(--radius-sm);
+  padding:6px 11px;
+  font-size:.75rem;
+  font-weight:600;
+  text-decoration:none;
+  cursor:pointer;
+  transition:var(--transition);
+  white-space:nowrap;
+  font-family:'DM Sans',sans-serif;
+  display:inline-flex;
+  align-items:center;
+}
+.action-btn.view{ color:var(--navy-light); }
+.action-btn.view:hover{ background:var(--navy); color:white; border-color:var(--navy); }
+.action-btn.edit{ color:#92400e; }
+.action-btn.edit:hover{ background:var(--gold); border-color:var(--gold); }
+.action-btn.del{ color:var(--error); }
+.action-btn.del:hover{ background:var(--error); color:white; border-color:var(--error); }
+
+/* ── MOBILE CARDS ───────────────────────── */
+.student-cards{ display:none; flex-direction:column; gap:12px; }
+.student-card{
+  background:white;
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-sm);
+  padding:16px;
+  border-left:4px solid var(--navy);
+  transition:var(--transition);
+}
+.student-card:hover{ box-shadow:var(--shadow-md); border-left-color:var(--gold); }
+.student-card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.student-card-name{ font-weight:600; font-size:.97rem; color:var(--navy); font-family:'Lora',serif; }
+.student-card-code{
+  font-size:.75rem;
+  color:var(--gray-400);
+  background:var(--gray-100);
+  padding:3px 8px;
+  border-radius:20px;
+  white-space:nowrap;
+}
+.student-card-meta{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+.meta-chip{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:.78rem;
+  color:var(--gray-600);
+  background:var(--gray-50);
+  border:1px solid var(--gray-100);
+  padding:4px 10px;
+  border-radius:20px;
+}
+.meta-chip strong{ color:var(--gray-800); }
+.student-card-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+.student-card-actions .action-btn{
+  flex:1; min-width:80px; justify-content:center; padding:9px 12px; font-size:.8rem;
+}
+
+/* ── PAGINATION ─────────────────────────── */
+.pagination{
+  padding:18px;
+  border-top:1px solid var(--gray-100);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.pagination-info{ font-size:.83rem; color:var(--gray-600); }
+.pagination-btns{ display:flex; gap:6px; flex-wrap:wrap; }
+.page-btn{
+  min-width:34px;
+  height:34px;
+  border:1.5px solid var(--gray-200);
+  background:white;
+  border-radius:var(--radius-sm);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  color:var(--gray-600);
+  font-size:.84rem;
+  font-weight:600;
+  transition:var(--transition);
+  padding:0 10px;
+}
+.page-btn:hover{ background:var(--gray-100); }
+.page-btn.active{ background:var(--navy); color:white; border-color:var(--navy); }
+
+/* ── DOWNLOAD MODAL ─────────────────────── */
+.dl-page{ position:fixed; inset:0; display:none; z-index:1000; }
+.dl-page.show{ display:flex; }
+.dl-overlay{
+  width:100%; height:100%;
+  background:rgba(15,32,68,.55);
+  backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.dl-card{
+  position:relative; background:white; padding:35px;
+  border-radius:var(--radius-lg); box-shadow:var(--shadow-md);
+  width:100%; max-width:500px; animation:fadeUp .25s ease;
+}
+.close-btn{
+  position:absolute; top:14px; right:14px;
+  width:36px; height:36px; border:none; border-radius:50%;
+  background:var(--gray-100); color:var(--navy);
+  cursor:pointer; font-size:1rem; font-weight:700; transition:var(--transition);
+}
+.close-btn:hover{ background:var(--gold); transform:rotate(90deg); }
+.dl-card h2{ font-family:'Lora',serif; color:var(--navy); margin-bottom:20px; }
+.dl-form-group{ display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.dl-form-group label{
+  font-size:.72rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--gray-600);
+}
+.dl-form-group select{
+  padding:11px 14px; border:1.5px solid var(--gray-200);
+  border-radius:var(--radius-sm); outline:none;
+  font-family:'DM Sans',sans-serif; font-size:.9rem;
+}
+.dl-form-group select:focus{ border-color:var(--navy-light); }
+.dl-actions{ display:flex; justify-content:flex-end; }
+
+/* ── EMPTY STATE ────────────────────────── */
+.empty-state{ text-align:center; padding:60px 20px; color:var(--gray-400); }
+.empty-state svg{ width:48px; height:48px; opacity:.4; margin-bottom:16px; }
+.empty-state p{ font-size:.9rem; }
+
+@keyframes fadeUp{
+  from{ opacity:0; transform:translateY(25px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+/* ── RESPONSIVE ─────────────────────────── */
+@media(max-width:900px){
+  .page-wrapper{ padding:24px 16px 50px; }
+  .search-group{ min-width:100%; }
+  .filters-row .btn-navy{ width:100%; }
+}
+@media(max-width:640px){
+  .page-wrapper{ padding:16px 12px 40px; }
+  .page-header h1{ font-size:1.5rem; }
+  .btn{ padding:10px 14px; font-size:.83rem; }
+  .table-card .table-responsive{ display:none; }
+  .student-cards{ display:flex; }
+  .table-card .pagination{ display:none; }
+  .mobile-pagination{ display:flex !important; }
+  .toolbar{ gap:10px; }
+  .search-group{ flex-direction:column; min-width:100%; }
+  .btn-search{ width:100%; }
+  .filter-select{ min-width:calc(50% - 5px); }
+  .filters-row .btn-navy{ width:100%; }
+}
+@media(max-width:380px){
+  .filter-select{ min-width:100%; }
+  .student-card-actions .action-btn{ font-size:.76rem; padding:8px 10px; }
+}
+@media(min-width:641px){
+  .student-cards{ display:none !important; }
+  .mobile-pagination{ display:none !important; }
+}
+</style>
+
+<div class="page-wrapper">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <h1>
+      <span>Academic Records</span>
+      Students
+    </h1>
+    <button class="btn btn-gold" onclick="showDownloadPage()">↓ Download</button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+
+    <!-- Search row -->
+    <div class="search-group">
+      <div class="search-wrap">
+        <input type="text"
+               id="searchInput"
+               placeholder="Search by name"
+               value="">
+      </div>
+      <button class="btn btn-search" onclick="searchStudents()">Search</button>
+    </div>
+
+    <!-- Filter row -->
+    <div class="filters-row">
+
+      <select class="filter-select" id="classFilter">
+        <option value="">Class</option>
+        {% for c in classes %}
+        <option value="{{ c.name }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+
+
+      <select class="filter-select" id="genderFilter">
+        <option value="">Gender</option>
+        {% for g in ["Male","Female"] %}
+        <option value="{{ g }}">{{ g }}</option>
+        {% endfor %}
+      </select>
+
+      {% if school.school_type == "secondary" %}
+      <select class="filter-select" id="levelFilter">
+        <option value="">Level</option>
+        {% for l in ["O","A"] %}
+        <option value="{{ l }}">{{ l }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+
+      <button class="btn btn-navy" onclick="applyFilters()">Apply Filter</button>
+
+    </div>
+  </div>
+
+  <!-- DESKTOP TABLE -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Student Code</th>
+            <th>Names</th>
+            <th>Class</th>
+            <th>Stream</th>
+            {% if school.school_type == "secondary" %}
+            <th>Level</th>
+            {% endif %}
+            <th>Profile</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="studentsBody">
+          {% for student in students %}
+          <tr>
+            <td>{{ student.student_code }}</td>
+            <td>{{ student.first_name }} {{ student.last_name }}</td>
+            <td>{{ class_map.get(student.class_id, "Unknown") }}</td>
+            <td>{{ student_stream_map.get(student.id, "-") }}</td>
+            {% if school.school_type == "secondary" %}
+            <td>{{ student.level or "—" }}</td>
+            {% endif %}
+            <td>
+              <a href="/students/profile/{{ student.id }}" class="action-btn view">View Profile</a>
+            </td>
+            <td>
+              <div class="actions-cell">
+                <a href="{{ url_for('student_management_api.edit_student_page', student_id=student.id) }}"
+                   class="action-btn edit">Edit</a>
+                <button class="action-btn del" onclick="deleteStudent('{{ student.id }}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197"/>
+                </svg>
+                <p>No students found.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination (desktop) -->
+    <div class="pagination">
+      <span class="pagination-info">
+        Showing {{ students|length }} student{{ 's' if students|length != 1 }}
+      </span>
+      <div class="pagination-btns">
+        {% if pagination.has_prev %}
+        <a href="?page={{ pagination.prev_num }}&{{ current_filters | urlencode }}" class="page-btn">← Prev</a>
+        {% endif %}
+        {% for page_num in pagination.iter_pages() %}
+          {% if page_num %}
+          <a href="?page={{ page_num }}&{{ current_filters | urlencode }}"
+             class="page-btn {% if page_num == pagination.page %}active{% endif %}">
+            {{ page_num }}
+          </a>
+          {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <a href="?page={{ pagination.next_num }}&{{ current_filters | urlencode }}" class="page-btn">Next →</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE CARDS -->
+  <div class="student-cards" id="studentCards">
+    {% for student in students %}
+    <div class="student-card">
+      <div class="student-card-header">
+        <div class="student-card-name">{{ student.first_name }} {{ student.last_name }}</div>
+        <span class="student-card-code">{{ student.student_code }}</span>
+      </div>
+      <div class="student-card-meta">
+        <span class="meta-chip">Class: <strong>{{ class_map.get(student.class_id, "—") }}</strong></span>
+        <span class="meta-chip">Stream: <strong> {{ student_stream_map.get(student.id, "-") }}</strong></span>
+        {% if school.school_type == "secondary" %}
+        <span class="meta-chip">Level: <strong>{{ student.level or "—" }}</strong></span>
+        {% endif %}
+      </div>
+      <div class="student-card-actions">
+        <a href="/students/profile/{{ student.id }}" class="action-btn view">View Profile</a>
+        <a href="{{ url_for('student_management_api.edit_student_page', student_id=student.id) }}"
+           class="action-btn edit">Edit</a>
+        <button class="action-btn del" onclick="deleteStudent('{{ student.id }}')">Delete</button>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:40px;color:var(--gray-400);font-size:.9rem;">
+      No students found.
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Mobile pagination -->
+  <div class="pagination mobile-pagination"
+       style="display:none; background:white; border-radius:var(--radius-md); margin-top:12px; box-shadow:var(--shadow-sm);">
+    <span class="pagination-info">
+      Showing {{ students|length }} student{{ 's' if students|length != 1 }}
+    </span>
+    <div class="pagination-btns">
+      {% if pagination.has_prev %}
+      <a href="?page={{ pagination.prev_num }}&{{ current_filters | urlencode }}" class="page-btn">← Prev</a>
+      {% endif %}
+      {% for page_num in pagination.iter_pages() %}
+        {% if page_num %}
+        <a href="?page={{ page_num }}&{{ current_filters | urlencode }}"
+           class="page-btn {% if page_num == pagination.page %}active{% endif %}">
+          {{ page_num }}
+        </a>
+        {% endif %}
+      {% endfor %}
+      {% if pagination.has_next %}
+      <a href="?page={{ pagination.next_num }}&{{ current_filters | urlencode }}" class="page-btn">Next →</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- DOWNLOAD MODAL -->
+  <div class="dl-page" id="downloadPage">
+    <div class="dl-overlay">
+      <div class="dl-card">
+        <button class="close-btn" onclick="showListView()">✕</button>
+        <h2>Download Student Data</h2>
+        <div class="dl-form-group">
+          <label>Class</label>
+          <select id="downloadClass">
+            <option value="">All Classes</option>
+            {% for c in classes %}
+            <option value="{{ c.name }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="dl-form-group">
+          <label>Stream</label>
+          <select id="downloadStream">
+            <option value="">All Streams</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+        <div class="dl-form-group">
+          <label>Gender</label>
+          <select id="downloadGender">
+            <option value="">All Genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        {% if school.school_type == "secondary" %}
+        <div class="dl-form-group">
+          <label>Level</label>
+          <select id="downloadLevel">
+            <option value="">All Levels</option>
+            <option value="O">O</option>
+            <option value="A">A</option>
+          </select>
+        </div>
+        {% endif %}
+        <div class="dl-actions">
+          <button class="btn btn-gold" onclick="downloadStudents()">Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<script>
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : "";
+}
+
+function searchStudents() {
+  const params = new URLSearchParams({
+    search: getVal("searchInput"),
+    class:  getVal("classFilter"),
+    stream: getVal("streamFilter"),
+    gender: getVal("genderFilter"),
+    level:  getVal("levelFilter"),
+  });
+  window.location.href = "?" + params.toString();
+}
+
+function applyFilters() {
+  const params = new URLSearchParams({
+    search: getVal("searchInput"),
+    class:  getVal("classFilter"),
+    stream: getVal("streamFilter"),
+    gender: getVal("genderFilter"),
+    level:  getVal("levelFilter"),
+  });
+  window.location.href = "?" + params.toString();
+}
+
+async function deleteStudent(studentId) {
+  if (!confirm("Delete this student? This cannot be undone.")) return;
+  const res = await fetch(`/api/students/${studentId}`, { method: "DELETE" });
+  if (res.ok) { location.reload(); }
+  else        { alert("Failed to delete student. Please try again."); }
+}
+
+function downloadStudents() {
+  const params = new URLSearchParams({
+    class:  getVal("downloadClass"),
+    stream: getVal("downloadStream"),
+    gender: getVal("downloadGender"),
+    level:  getVal("downloadLevel"),
+  });
+  window.location.href = "/api/students/download?" + params.toString();
+}
+
+function showDownloadPage() {
+  document.getElementById("downloadPage").classList.add("show");
+}
+function showListView() {
+  document.getElementById("downloadPage").classList.remove("show");
+}
+
+document.getElementById("searchInput")
+  .addEventListener("keydown", e => { if (e.key === "Enter") searchStudents(); });
+</script>
+
+{% endblock %}

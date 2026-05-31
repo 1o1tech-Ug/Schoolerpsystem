@@ -1,0 +1,959 @@
+{% extends "base.html" %}
+{% block title %}Send Report Cards — 1O1 School ERP{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Page-scoped tokens ─────────────────────────────────── */
+  :root {
+    --push-green:  #10b981;
+    --push-green-bg: rgba(16,185,129,.10);
+    --push-amber:  #f59e0b;
+    --push-amber-bg: rgba(245,158,11,.10);
+    --push-red:    #ef4444;
+    --push-red-bg: rgba(239,68,68,.10);
+    --push-blue:   #3b82f6;
+    --push-blue-bg: rgba(59,130,246,.10);
+  }
+
+  /* ── Layout shells ──────────────────────────────────────── */
+  .src-wrap       { display: flex; flex-direction: column; gap: 24px; }
+
+  /* ── Filter bar ─────────────────────────────────────────── */
+  .filter-card {
+    background: var(--surface);
+    border: 1px solid var(--slate-100);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+  }
+  .filter-card h2 {
+    font-size: 15px; font-weight: 700; color: #0f172a;
+    margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+  }
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    align-items: end;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 6px; }
+  .filter-label { font-size: 11.5px; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: .6px; }
+  .filter-select {
+    padding: 9px 12px;
+    border: 1.5px solid var(--slate-200);
+    border-radius: var(--radius-md);
+    font-family: inherit; font-size: 13.5px; color: #0f172a;
+    background: #fff; outline: none; cursor: pointer;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 32px;
+  }
+  .filter-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+  .filter-btn {
+    padding: 10px 20px;
+    background: var(--primary);
+    color: #fff; border: none;
+    border-radius: var(--radius-md);
+    font-family: inherit; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; white-space: nowrap;
+    transition: background var(--dur) var(--ease), transform .1s;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .filter-btn:hover  { background: var(--primary-deep); }
+  .filter-btn:active { transform: scale(.98); }
+  .filter-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+  /* ── Summary strip ──────────────────────────────────────── */
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .summary-tile {
+    background: var(--surface);
+    border: 1px solid var(--slate-100);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .summary-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+  }
+  .si-total  { background: var(--push-blue-bg); }
+  .si-ready  { background: var(--push-green-bg); }
+  .si-pushed { background: var(--push-amber-bg); }
+  .si-not    { background: var(--push-red-bg); }
+  .summary-info small { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--slate-400); display: block; margin-bottom: 2px; }
+  .summary-info strong { font-size: 24px; font-weight: 800; color: #0f172a; line-height: 1; }
+
+  /* ── Toolbar ────────────────────────────────────────────── */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .toolbar-left  { display: flex; align-items: center; gap: 10px; }
+  .toolbar-right { display: flex; align-items: center; gap: 10px; }
+
+  .tb-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--radius-md);
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: none; text-decoration: none;
+    transition: background var(--dur) var(--ease), transform .1s;
+    white-space: nowrap;
+  }
+  .tb-btn:active { transform: scale(.98); }
+  .tb-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .tb-push   { background: var(--push-green); color: #fff; }
+  .tb-push:hover { background: #059669; }
+  .tb-push-sel { background: var(--primary); color: #fff; }
+  .tb-push-sel:hover { background: var(--primary-deep); }
+  .tb-revoke { background: var(--push-red-bg); color: var(--push-red); border: 1px solid rgba(239,68,68,.2); }
+  .tb-revoke:hover { background: var(--push-red); color: #fff; }
+
+  .sel-count {
+    font-size: 12.5px; font-weight: 700; color: var(--slate-500);
+    background: var(--slate-100); padding: 5px 12px; border-radius: 99px;
+    display: none;
+  }
+  .sel-count.visible { display: inline-block; }
+
+  /* Search */
+  .search-box {
+    position: relative; display: flex; align-items: center;
+  }
+  .search-box input {
+    padding: 9px 12px 9px 34px;
+    border: 1.5px solid var(--slate-200); border-radius: var(--radius-md);
+    font-family: inherit; font-size: 13px; outline: none; width: 220px;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+  .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+  .search-icon {
+    position: absolute; left: 10px;
+    color: var(--slate-400); font-size: 14px; pointer-events: none;
+  }
+
+  /* ── Main table card ────────────────────────────────────── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--slate-100);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .table-card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--slate-100);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .table-card-header h3 { font-size: 14.5px; font-weight: 700; color: #0f172a; }
+  .table-card-header small { font-size: 12px; color: var(--slate-400); }
+
+  /* Table overrides */
+  .src-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .src-table thead th {
+    background: var(--slate-50); padding: 12px 16px;
+    text-align: left; font-size: 11px; font-weight: 700;
+    color: var(--slate-500); text-transform: uppercase; letter-spacing: .7px;
+    border-bottom: 1px solid var(--slate-100); white-space: nowrap;
+  }
+  .src-table thead th:first-child { width: 40px; padding-left: 20px; }
+  .src-table tbody td {
+    padding: 13px 16px; color: #1e293b;
+    border-bottom: 1px solid var(--slate-50);
+    vertical-align: middle;
+  }
+  .src-table tbody td:first-child { padding-left: 20px; }
+  .src-table tbody tr:last-child td { border-bottom: none; }
+  .src-table tbody tr:hover td { background: var(--slate-50); }
+  .src-table tbody tr.selected td { background: #eff6ff; }
+
+  /* Check */
+  .row-check {
+    width: 15px; height: 15px; cursor: pointer;
+    accent-color: var(--primary);
+  }
+
+  /* Status pills */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 99px;
+    font-size: 11.5px; font-weight: 700; white-space: nowrap;
+  }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pill-pushed  { background: var(--push-green-bg);  color: #065f46; }
+  .pill-pushed .pill-dot  { background: var(--push-green); }
+  .pill-ready   { background: var(--push-blue-bg);   color: #1e40af; }
+  .pill-ready .pill-dot   { background: var(--push-blue); }
+  .pill-missing { background: var(--push-red-bg);    color: #991b1b; }
+  .pill-missing .pill-dot { background: var(--push-red); }
+
+  /* Action cell */
+  .row-actions { display: flex; align-items: center; gap: 8px; }
+  .row-btn {
+    padding: 5px 12px; border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 12px; font-weight: 700;
+    cursor: pointer; border: none;
+    transition: background var(--dur) var(--ease);
+  }
+  .rb-push   { background: var(--push-green-bg); color: #065f46; }
+  .rb-push:hover { background: var(--push-green); color: #fff; }
+  .rb-pushed { background: var(--push-amber-bg); color: #92400e; }
+  .rb-pushed:hover { background: var(--push-amber); color: #fff; }
+  .rb-revoke { background: var(--push-red-bg); color: #991b1b; }
+  .rb-revoke:hover { background: var(--push-red); color: #fff; }
+  .rb-disabled { background: var(--slate-100); color: var(--slate-400); cursor: not-allowed; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 64px 20px; color: var(--slate-400);
+  }
+  .empty-state .es-icon { font-size: 48px; margin-bottom: 14px; opacity: .5; }
+  .empty-state p { font-size: 14px; font-weight: 500; }
+  .empty-state small { font-size: 12.5px; }
+
+  /* ── Credentials panel ──────────────────────────────────── */
+  .cred-panel {
+    background: var(--surface);
+    border: 1px solid var(--slate-100);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: none;
+  }
+  .cred-panel.visible { display: block; }
+  .cred-panel-header {
+    padding: 18px 24px;
+    background: linear-gradient(90deg, var(--navy-800), var(--navy-600));
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .cred-panel-header h3 { font-size: 14.5px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .cred-panel-header small { font-size: 12px; color: rgba(255,255,255,.55); }
+  .cred-notice {
+    margin: 16px 24px 0;
+    background: #fffbeb; border: 1px solid #fcd34d;
+    color: #92400e; border-radius: var(--radius-md);
+    padding: 12px 14px; font-size: 12.5px; font-weight: 600;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .cred-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    padding: 16px 24px 24px;
+  }
+
+  /* Credential card */
+  .cred-card {
+    border: 1.5px solid var(--slate-100);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    position: relative;
+    transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    background: #fff;
+  }
+  .cred-card:hover { box-shadow: 0 4px 16px rgba(15,23,42,.08); border-color: var(--slate-200); }
+  .cred-card.new-push { border-color: var(--push-green); box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+
+  .cred-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .cred-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-600), var(--push-blue));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .cred-name { font-size: 13.5px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+  .cred-class { font-size: 11px; color: var(--slate-400); margin-top: 1px; }
+
+  .cred-fields { display: flex; flex-direction: column; gap: 8px; }
+  .cred-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cred-key { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--slate-400); flex-shrink: 0; }
+  .cred-val {
+    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600;
+    color: #0f172a; background: var(--slate-50);
+    padding: 4px 10px; border-radius: var(--radius-sm);
+    letter-spacing: 1px; display: flex; align-items: center; gap: 6px;
+  }
+  .cred-val.password { color: var(--push-green); background: var(--push-green-bg); font-size: 18px; letter-spacing: 4px; }
+  .copy-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--slate-400); font-size: 13px;
+    padding: 2px; border-radius: 4px;
+    transition: color var(--dur);
+  }
+  .copy-btn:hover { color: var(--primary); }
+
+  .cred-badge-new {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--push-green); color: #fff;
+    font-size: 10px; font-weight: 800; letter-spacing: .5px;
+    padding: 2px 8px; border-radius: 99px;
+  }
+
+  /* Print section */
+  .print-bar {
+    padding: 14px 24px;
+    border-top: 1px solid var(--slate-100);
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  }
+
+  /* ── Toast ──────────────────────────────────────────────── */
+  .src-toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #0f172a; color: #fff;
+    padding: 12px 22px; border-radius: var(--radius-lg);
+    font-size: 13.5px; font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0,0,0,.25);
+    z-index: 3000; opacity: 0;
+    transition: transform .3s var(--ease), opacity .3s var(--ease);
+    display: flex; align-items: center; gap: 10px;
+    white-space: nowrap;
+  }
+  .src-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .src-toast.success { background: #064e3b; border: 1px solid var(--push-green); }
+  .src-toast.error   { background: #7f1d1d; border: 1px solid var(--push-red); }
+
+  /* ── Loading overlay ────────────────────────────────────── */
+  .loading-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.35);
+    z-index: 2500; display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .loading-overlay.show { display: flex; }
+  .loading-box {
+    background: #fff; border-radius: var(--radius-lg);
+    padding: 32px 40px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  }
+  .spin {
+    width: 40px; height: 40px; border: 3px solid var(--slate-100);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin .7s linear infinite; margin: 0 auto 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-box p { font-size: 14px; font-weight: 600; color: var(--slate-600); }
+
+  /* ── Responsive ─────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .summary-strip { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .summary-strip { grid-template-columns: 1fr; }
+    .filter-grid   { grid-template-columns: 1fr; }
+    .cred-grid     { grid-template-columns: 1fr; }
+    .toolbar       { flex-direction: column; align-items: stretch; }
+  }
+
+  @media print {
+    .topbar, .sidebar, .filter-card, .toolbar,
+    .table-card, .summary-strip, .print-bar,
+    .cred-panel-header button { display: none !important; }
+    .cred-panel { display: block !important; border: none; }
+    .cred-card  { break-inside: avoid; border: 1px solid #ccc; }
+    .content    { margin: 0 !important; padding: 0 !important; }
+  }
+</style>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spin"></div>
+    <p id="loadingMsg">Processing…</p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="src-toast" id="srcToast"></div>
+
+<!-- ── Page header ───────────────────────────────────────── -->
+<div class="breadcrumb">
+  <a href="/base">Home</a>
+  <span class="sep">›</span>
+  <a href="#">Academics</a>
+  <span class="sep">›</span>
+  <span class="current">Send Report Cards</span>
+</div>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>📤 Send Report Cards</h1>
+    <p>Generate student login credentials and push report cards for parent &amp; student access.</p>
+  </div>
+</div>
+
+<div class="src-wrap">
+
+  <!-- ── Filter bar ──────────────────────────────────────── -->
+  <div class="filter-card">
+    <h2>🔍 Filter Students</h2>
+    <div class="filter-grid">
+
+      <div class="filter-group">
+        <label class="filter-label">Academic Year</label>
+        <select class="filter-select" id="filterYear">
+          <option value="">— Select Year —</option>
+          {% for ay in academic_years %}
+          <option value="{{ ay.id }}">{{ ay.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Term</label>
+        <select class="filter-select" id="filterTerm">
+          <option value="">— Select Term —</option>
+          {% for t in terms %}
+          <option value="{{ t.id }}" data-year="{{ t.academic_year_id }}">{{ t.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Class</label>
+        <select class="filter-select" id="filterClass">
+          <option value="">— Select Class —</option>
+          {% for cls in classes %}
+          <option value="{{ cls.id }}">{{ cls.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Stream</label>
+        <select class="filter-select" id="filterStream">
+          <option value="">— Select Stream —</option>
+          {% for s in streams %}
+          <option value="{{ s.id }}" data-class="{{ s.class_id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Exam Type</label>
+        <select class="filter-select" id="filterExam">
+          <option value="">— Select Exam —</option>
+          <option value="BOT">BOT — Beginning of Term</option>
+          <option value="MID">MID — Mid Term</option>
+          <option value="EOT">EOT — End of Term</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">&nbsp;</label>
+        <button class="filter-btn" id="loadBtn" onclick="loadStudents()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Load Students
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Summary strip (hidden until loaded) ─────────────── -->
+  <div class="summary-strip" id="summaryStrip" style="display:none">
+    <div class="summary-tile">
+      <div class="summary-icon si-total">👥</div>
+      <div class="summary-info">
+        <small>Total</small>
+        <strong id="statTotal">0</strong>
+      </div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon si-ready">✅</div>
+      <div class="summary-info">
+        <small>Report Ready</small>
+        <strong id="statReady">0</strong>
+      </div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon si-pushed">📤</div>
+      <div class="summary-info">
+        <small>Already Pushed</small>
+        <strong id="statPushed">0</strong>
+      </div>
+    </div>
+    <div class="summary-tile">
+      <div class="summary-icon si-not">⏳</div>
+      <div class="summary-info">
+        <small>Not Pushed</small>
+        <strong id="statNot">0</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Student table ───────────────────────────────────── -->
+  <div class="table-card" id="tableCard" style="display:none">
+
+    <div class="table-card-header">
+      <div>
+        <h3>Students</h3>
+        <small id="tableSubtitle">—</small>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span class="sel-count" id="selCount">0 selected</span>
+          <button class="tb-btn tb-push-sel" id="pushSelBtn" onclick="pushSelected()" disabled style="display:none">
+            📤 Push Selected
+          </button>
+          <button class="tb-btn tb-push" id="pushAllBtn" onclick="pushAll()">
+            🚀 Push All Ready
+          </button>
+          <button class="tb-btn tb-revoke" id="revokeSelBtn" onclick="revokeSelected()" disabled style="display:none">
+            🔒 Revoke Selected
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search student…" oninput="filterTable()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="src-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="checkAll" onchange="toggleAll(this)" class="row-check"></th>
+            <th>#</th>
+            <th>Student Code</th>
+            <th>Name</th>
+            <th>Class / Stream</th>
+            <th>Report Card</th>
+            <th>Push Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="studentTbody">
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">
+                <div class="es-icon">🎓</div>
+                <p>No students loaded</p>
+                <small>Select filters above and click Load Students</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ── Credentials panel ───────────────────────────────── -->
+  <div class="cred-panel" id="credPanel">
+    <div class="cred-panel-header">
+      <div>
+        <h3>🔑 Student Login Credentials</h3>
+      </div>
+      <small id="credSubtitle">Passwords shown once — save or print now</small>
+    </div>
+
+    <div class="cred-notice">
+      ⚠️ <span>These passwords are shown <strong>only once</strong>. Please print or copy them before navigating away. Pushing again will generate a new password and overwrite the old one.</span>
+    </div>
+
+    <div class="cred-grid" id="credGrid"></div>
+
+    <div class="print-bar">
+      <button class="tb-btn" style="background:var(--slate-100);color:var(--slate-600)" onclick="clearCredentials()">
+        ✕ Dismiss
+      </button>
+      <button class="tb-btn tb-push" onclick="window.print()">
+        🖨️ Print Credentials
+      </button>
+    </div>
+  </div>
+
+</div><!-- /src-wrap -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+let _students    = [];   // full list from API
+let _context     = {};   // { stream_id, term_id, exam_type, stream_name, class_name }
+let _newPushMap  = {};   // student_id → plain_password  (from latest push response)
+
+/* ═══════════════════════════════════════════════════════════
+   FILTER HELPERS
+═══════════════════════════════════════════════════════════ */
+document.getElementById('filterYear').addEventListener('change', function () {
+  const yearId = this.value;
+  const termSel = document.getElementById('filterTerm');
+  Array.from(termSel.options).forEach(opt => {
+    if (!opt.value) return;
+    opt.style.display = (!yearId || opt.dataset.year === yearId) ? '' : 'none';
+  });
+  termSel.value = '';
+});
+
+document.getElementById('filterClass').addEventListener('change', function () {
+  const classId = this.value;
+  const streamSel = document.getElementById('filterStream');
+  Array.from(streamSel.options).forEach(opt => {
+    if (!opt.value) return;
+    opt.style.display = (!classId || opt.dataset.class === classId) ? '' : 'none';
+  });
+  streamSel.value = '';
+});
+
+/* ═══════════════════════════════════════════════════════════
+   LOAD STUDENTS
+═══════════════════════════════════════════════════════════ */
+async function loadStudents() {
+  const streamId = document.getElementById('filterStream').value;
+  const termId   = document.getElementById('filterTerm').value;
+  const examType = document.getElementById('filterExam').value;
+
+  if (!streamId || !termId || !examType) {
+    showToast('Please select stream, term and exam type.', 'error');
+    return;
+  }
+
+  const streamSel = document.getElementById('filterStream');
+  const termSel   = document.getElementById('filterTerm');
+  const streamName = streamSel.options[streamSel.selectedIndex]?.text || '';
+  const termName   = termSel.options[termSel.selectedIndex]?.text || '';
+
+  _context = { stream_id: streamId, term_id: termId, exam_type: examType, stream_name: streamName, term_name: termName };
+  _newPushMap = {};
+
+  setLoading(true, 'Loading students…');
+
+  try {
+    const res  = await apiFetch(`/api/send-report-cards/students?stream_id=${streamId}&term_id=${termId}&exam_type=${examType}`);
+    const data = await res.json();
+
+    if (!res.ok) { showToast(data.message || 'Failed to load students', 'error'); return; }
+
+    _students = data.students || [];
+    renderTable();
+    renderSummary();
+
+    document.getElementById('tableCard').style.display    = 'block';
+    document.getElementById('summaryStrip').style.display = 'grid';
+    document.getElementById('tableSubtitle').textContent  = `${streamName} · ${termName} · ${examType}`;
+
+    clearCredentials();
+
+  } catch (e) {
+    showToast('Network error: ' + e.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER TABLE
+═══════════════════════════════════════════════════════════ */
+function renderTable(filter) {
+  const tbody = document.getElementById('studentTbody');
+  let rows    = _students;
+
+  if (filter) {
+    const q = filter.toLowerCase();
+    rows = rows.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      (s.student_code || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="es-icon">🔍</div>
+      <p>No students found</p><small>Try a different filter</small>
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((s, i) => {
+    const reportPill = s.report_generated
+      ? `<span class="pill pill-ready"><span class="pill-dot"></span>Ready</span>`
+      : `<span class="pill pill-missing"><span class="pill-dot"></span>Not Generated</span>`;
+
+    const pushPill = s.pushed
+      ? `<span class="pill pill-pushed"><span class="pill-dot"></span>Pushed</span>`
+      : `<span class="pill pill-missing"><span class="pill-dot"></span>Not Pushed</span>`;
+
+    const canPush  = s.report_generated;
+    const hasPush  = s.pushed;
+
+    const actionBtns = canPush
+      ? `<button class="row-btn ${hasPush ? 'rb-pushed' : 'rb-push'}"
+              onclick="pushOne(${s.id})" title="${hasPush ? 'Re-push (overwrites password)' : 'Push report card'}">
+           ${hasPush ? '🔄 Re-push' : '📤 Push'}
+         </button>
+         ${hasPush
+           ? `<button class="row-btn rb-revoke" onclick="revokeOne(${s.id})" title="Revoke access">🔒</button>`
+           : ''}`
+      : `<button class="row-btn rb-disabled" disabled title="Generate report card first">No report</button>`;
+
+    return `<tr id="row-${s.id}" data-id="${s.id}">
+      <td><input type="checkbox" class="row-check" data-id="${s.id}"
+          onchange="onRowCheck()" ${!canPush ? 'disabled' : ''}></td>
+      <td style="color:var(--slate-400);font-size:12px">${i + 1}</td>
+      <td><code style="font-family:'DM Mono',monospace;font-size:12.5px;
+          background:var(--slate-50);padding:3px 8px;border-radius:4px">${s.student_code || '—'}</code></td>
+      <td><span style="font-weight:600">${s.name}</span></td>
+      <td style="font-size:12.5px;color:var(--slate-500)">${s.class_name} · ${s.stream_name}</td>
+      <td>${reportPill}</td>
+      <td id="status-${s.id}">${pushPill}</td>
+      <td><div class="row-actions">${actionBtns}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable() {
+  renderTable(document.getElementById('searchInput').value);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUMMARY COUNTS
+═══════════════════════════════════════════════════════════ */
+function renderSummary() {
+  const total  = _students.length;
+  const ready  = _students.filter(s => s.report_generated).length;
+  const pushed = _students.filter(s => s.pushed).length;
+  const not    = ready - pushed;
+
+  document.getElementById('statTotal').textContent  = total;
+  document.getElementById('statReady').textContent  = ready;
+  document.getElementById('statPushed').textContent = pushed;
+  document.getElementById('statNot').textContent    = Math.max(0, not);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SELECTION
+═══════════════════════════════════════════════════════════ */
+function toggleAll(master) {
+  document.querySelectorAll('.row-check:not([disabled])').forEach(cb => {
+    if (cb.id !== 'checkAll') cb.checked = master.checked;
+  });
+  onRowCheck();
+}
+
+function onRowCheck() {
+  const checked = getCheckedIds();
+  const count   = checked.length;
+
+  document.getElementById('selCount').textContent = `${count} selected`;
+  document.getElementById('selCount').classList.toggle('visible', count > 0);
+  document.getElementById('pushSelBtn').style.display  = count > 0 ? 'inline-flex' : 'none';
+  document.getElementById('pushSelBtn').disabled       = count === 0;
+  document.getElementById('revokeSelBtn').style.display = count > 0 ? 'inline-flex' : 'none';
+  document.getElementById('revokeSelBtn').disabled      = count === 0;
+
+  document.querySelectorAll('#studentTbody tr[data-id]').forEach(tr => {
+    const cb = tr.querySelector('.row-check');
+    tr.classList.toggle('selected', cb && cb.checked);
+  });
+}
+
+function getCheckedIds() {
+  return Array.from(document.querySelectorAll('#studentTbody .row-check:checked'))
+    .map(cb => parseInt(cb.dataset.id));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PUSH  — single, selected, all
+═══════════════════════════════════════════════════════════ */
+async function pushOne(studentId) {
+  await doPush([studentId]);
+}
+
+async function pushSelected() {
+  const ids = getCheckedIds();
+  if (!ids.length) { showToast('No students selected', 'error'); return; }
+  await doPush(ids);
+}
+
+async function pushAll() {
+  const readyIds = _students.filter(s => s.report_generated).map(s => s.id);
+  if (!readyIds.length) { showToast('No students with generated report cards', 'error'); return; }
+  await doPush(readyIds);
+}
+
+async function doPush(studentIds) {
+  if (!_context.stream_id) { showToast('Load students first', 'error'); return; }
+
+  setLoading(true, `Pushing ${studentIds.length} report card(s)…`);
+
+  try {
+    const res  = await apiFetch('/api/send-report-cards/push', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        stream_id:   parseInt(_context.stream_id),
+        term_id:     parseInt(_context.term_id),
+        exam_type:   _context.exam_type,
+        student_ids: studentIds,
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) { showToast(data.message || 'Push failed', 'error'); return; }
+
+    // Update local state + newPushMap
+    (data.pushed || []).forEach(p => {
+      _newPushMap[p.student_id] = p.password;
+      const student = _students.find(s => s.id === p.student_id);
+      if (student) { student.pushed = true; }
+    });
+
+    renderTable(document.getElementById('searchInput').value);
+    renderSummary();
+    renderCredentials(data.pushed || [], data.failed || []);
+
+    const msg = `${data.pushed.length} pushed` + (data.failed.length ? `, ${data.failed.length} skipped` : '');
+    showToast('✅ ' + msg, 'success');
+
+  } catch (e) {
+    showToast('Network error: ' + e.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REVOKE — single and selected
+═══════════════════════════════════════════════════════════ */
+async function revokeOne(studentId) {
+  if (!confirm('Revoke this student\'s report card access? They will no longer be able to log in.')) return;
+  await doRevoke([studentId]);
+}
+
+async function revokeSelected() {
+  const ids = getCheckedIds();
+  if (!ids.length) { showToast('No students selected', 'error'); return; }
+  if (!confirm(`Revoke access for ${ids.length} student(s)?`)) return;
+  await doRevoke(ids);
+}
+
+async function doRevoke(studentIds) {
+  setLoading(true, 'Revoking access…');
+  let ok = 0, fail = 0;
+
+  try {
+    for (const sid of studentIds) {
+      const res = await apiFetch(`/api/send-report-cards/revoke/${sid}`, { method: 'DELETE' });
+      if (res.ok) {
+        ok++;
+        const student = _students.find(s => s.id === sid);
+        if (student) student.pushed = false;
+        delete _newPushMap[sid];
+      } else {
+        fail++;
+      }
+    }
+    renderTable(document.getElementById('searchInput').value);
+    renderSummary();
+    showToast(`🔒 ${ok} revoked` + (fail ? `, ${fail} failed` : ''), ok > 0 ? 'success' : 'error');
+  } catch (e) {
+    showToast('Network error: ' + e.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CREDENTIALS PANEL
+═══════════════════════════════════════════════════════════ */
+function renderCredentials(pushed, failed) {
+  if (!pushed.length) return;
+
+  const panel    = document.getElementById('credPanel');
+  const grid     = document.getElementById('credGrid');
+  const subtitle = document.getElementById('credSubtitle');
+
+  subtitle.textContent = `${pushed.length} credential(s) — ${_context.exam_type} · ${_context.term_name}`;
+
+  const school_id = '{{ school.id }}';
+
+  const cards = pushed.map(p => {
+    const initials = p.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    return `
+    <div class="cred-card new-push" id="cred-${p.student_id}">
+      <span class="cred-badge-new">NEW</span>
+      <div class="cred-card-top">
+        <div class="cred-avatar">${initials}</div>
+        <div>
+          <div class="cred-name">${p.name}</div>
+          <div class="cred-class">${_context.stream_name} · ${p.exam_type}</div>
+        </div>
+      </div>
+      <div class="cred-fields">
+        <div class="cred-row">
+          <span class="cred-key">School ID</span>
+          <span class="cred-val">
+            ${school_id}
+            <button class="copy-btn" onclick="copyText('${school_id}', this)" title="Copy">⧉</button>
+          </span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-key">Student Code</span>
+          <span class="cred-val">
+            ${p.student_code}
+            <button class="copy-btn" onclick="copyText('${p.student_code}', this)" title="Copy">⧉</button>
+          </span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-key">Password</span>
+          <span class="cred-val password">
+            ${p.password}
+            <button class="copy-btn" onclick="copyText('${p.password}', this)" title="Copy">⧉</button>
+          </span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.innerHTML = cards;
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function clearCredentials() {
+  document.getElementById('credPanel').classList.remove('visible');
+  document.getElementById('credGrid').innerHTML = '';
+  _newPushMap = {};
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════ */
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.color = 'var(--push-green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1400);
+  });
+}
+
+function setLoading(show, msg) {
+  const overlay = document.getElementById('loadingOverlay');
+  document.getElementById('loadingMsg').textContent = msg || 'Processing…';
+  overlay.classList.toggle('show', show);
+}
+
+let _toastTimer;
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('srcToast');
+  el.textContent = msg;
+  el.className   = `src-toast show ${type}`;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+}
+
+async function apiFetch(url, opts = {}) {
+  return fetch(url, { credentials: 'include', ...opts });
+}
+</script>
+{% endblock %}

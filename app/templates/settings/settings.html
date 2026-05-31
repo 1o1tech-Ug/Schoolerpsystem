@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings{% endblock %}
+
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --navy: #0f2044;
+  --navy-mid: #1a3461;
+  --navy-light: #2a4a7f;
+  --gold: #c9a84c;
+  --cream: #faf8f4;
+  --gray-50: #f8f9fb;
+  --gray-100: #eef0f5;
+  --gray-200: #dde1eb;
+  --gray-400: #8c96b0;
+  --gray-600: #4a5470;
+  --gray-800: #1e2540;
+  --success: #1a6b3c;
+  --error: #8b1a1a;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-lg: 0 8px 32px rgba(15,32,68,0.13);
+  --transition: 0.18s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.settings-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 8px 0 48px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── PAGE HEADER ── */
+.settings-header {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--gold);
+}
+
+.settings-header-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--navy);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.settings-header h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.settings-header p {
+  font-size: .82rem;
+  color: var(--gray-400);
+  margin-top: 3px;
+}
+
+/* ── CARDS ── */
+.settings-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  padding: 20px 28px 18px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-header-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  border: 1.5px solid var(--gray-200);
+}
+
+.card-header h2 {
+  font-family: 'Lora', serif;
+  font-size: .98rem;
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.card-header p {
+  font-size: .76rem;
+  color: var(--gray-400);
+  margin-top: 1px;
+}
+
+.card-body { padding: 24px 28px; }
+
+/* ── FORM ELEMENTS ── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.input-group:last-of-type { margin-bottom: 0; }
+
+.input-group label {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.input-group label.required::after { content: " *"; color: #c0392b; }
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrap input {
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-size: .9rem;
+  font-family: 'DM Sans', sans-serif;
+  transition: var(--transition);
+  color: var(--gray-800);
+}
+
+.input-wrap input:focus {
+  border-color: var(--navy-light);
+  box-shadow: 0 0 0 3px rgba(42,74,127,.1);
+}
+
+/* Eye toggle for password fields */
+.eye-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: .95rem;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: var(--transition);
+  user-select: none;
+}
+.eye-toggle:hover { color: var(--navy); }
+
+/* Password strength bar */
+.strength-wrap { margin-top: 8px; display: none; }
+.strength-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--gray-100);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0;
+  transition: width .3s, background .3s;
+}
+.strength-label { font-size: .72rem; color: var(--gray-400); }
+
+/* ── SUBMIT ── */
+.card-footer {
+  padding: 16px 28px 22px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.submit-btn {
+  background: var(--navy);
+  color: white;
+  border: none;
+  padding: 11px 28px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .88rem;
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+.submit-btn:hover:not(:disabled) { background: var(--navy-mid); }
+.submit-btn:disabled { opacity: .65; cursor: not-allowed; }
+
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── INLINE FEEDBACK ── */
+.form-msg {
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  display: none;
+  margin-top: 10px;
+}
+.form-msg.success { background: #d1fae5; color: #065f46; }
+.form-msg.error   { background: #fee2e2; color: #991b1b; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 13px 20px; border-radius: var(--radius-md);
+  color: white; transform: translateY(80px); opacity: 0;
+  transition: .3s ease; z-index: 9999; max-width: 300px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: var(--success); }
+.toast.error   { background: var(--error); }
+
+@media (max-width: 600px) {
+  .card-body    { padding: 18px; }
+  .card-footer  { padding: 14px 18px 18px; }
+  .card-header  { padding: 16px 18px; }
+}
+</style>
+
+<div class="toast" id="toast"></div>
+
+<div class="settings-wrapper">
+
+  <div class="settings-header">
+    <div class="settings-header-icon">⚙️</div>
+    <div>
+      <h1>Account Settings</h1>
+      <p>Manage your login credentials</p>
+    </div>
+  </div>
+
+  
+
+  <!-- ══════════ CHANGE PASSWORD ══════════ -->
+  <div class="settings-card">
+
+    <div class="card-header">
+      <div class="card-header-icon">🔒</div>
+      <div>
+        <h2>Change Password</h2>
+        <p>Choose a strong password you haven't used before</p>
+      </div>
+    </div>
+
+    <div class="card-body">
+
+      <div class="input-group">
+        <label class="required">Current Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="currentPw"
+            placeholder="Enter current password"
+            autocomplete="current-password"
+          >
+          <button type="button" class="eye-toggle" onclick="toggleEye('currentPw', this)">👁</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="required">New Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="newPw"
+            placeholder="At least 8 characters"
+            autocomplete="new-password"
+            oninput="checkStrength(this.value)"
+          >
+          <button type="button" class="eye-toggle" onclick="toggleEye('newPw', this)">👁</button>
+        </div>
+        <div class="strength-wrap" id="strengthWrap">
+          <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+          <span class="strength-label" id="strengthLabel"></span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="required">Confirm New Password</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="confirmPw"
+            placeholder="Repeat new password"
+            autocomplete="new-password"
+          >
+          <button type="button" class="eye-toggle" onclick="toggleEye('confirmPw', this)">👁</button>
+        </div>
+      </div>
+
+      <div class="form-msg" id="passwordMsg"></div>
+
+    </div>
+
+    <div class="card-footer">
+      <button class="submit-btn" id="passwordBtn" onclick="changePassword()">
+        <span class="spinner" id="passwordSpinner"></span>
+        Update Password
+      </button>
+    </div>
+
+  </div>
+
+</div><!-- /.settings-wrapper -->
+
+<script>
+
+/* ── TOAST ── */
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className   = `toast ${type}`;
+  void t.offsetWidth;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+/* ── INLINE MESSAGES ── */
+function showMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className   = `form-msg ${type}`;
+  el.style.display = "block";
+}
+
+function clearMsg(id) {
+  const el = document.getElementById(id);
+  el.style.display = "none";
+  el.textContent   = "";
+}
+
+/* ── EYE TOGGLE ── */
+function toggleEye(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const show  = input.type === "password";
+  input.type  = show ? "text" : "password";
+  btn.textContent = show ? "🙈" : "👁";
+}
+
+/* ── PASSWORD STRENGTH ── */
+function checkStrength(val) {
+  const wrap  = document.getElementById("strengthWrap");
+  const fill  = document.getElementById("strengthFill");
+  const label = document.getElementById("strengthLabel");
+
+  if (!val) { wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+
+  let score = 0;
+  if (val.length >= 8)          score++;
+  if (val.length >= 12)         score++;
+  if (/[A-Z]/.test(val))        score++;
+  if (/[0-9]/.test(val))        score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+
+  const levels = [
+    { pct: "20%", color: "#ef4444", text: "Very weak"  },
+    { pct: "40%", color: "#f97316", text: "Weak"        },
+    { pct: "60%", color: "#eab308", text: "Fair"        },
+    { pct: "80%", color: "#22c55e", text: "Strong"      },
+    { pct:"100%", color: "#16a34a", text: "Very strong" },
+  ];
+
+  const lvl = levels[Math.min(score, 4)];
+  fill.style.width      = lvl.pct;
+  fill.style.background = lvl.color;
+  label.textContent     = lvl.text;
+  label.style.color     = lvl.color;
+}
+
+/* ── LOADING STATE ── */
+function setBtnLoading(btnId, spinnerId, loading) {
+  document.getElementById(btnId).disabled               = loading;
+  document.getElementById(spinnerId).style.display      = loading ? "inline-block" : "none";
+}
+
+
+/* ══════════════════════════════════
+   CHANGE PASSWORD
+══════════════════════════════════ */
+async function changePassword() {
+  clearMsg("passwordMsg");
+
+  const currentPw = document.getElementById("currentPw").value;
+  const newPw     = document.getElementById("newPw").value;
+  const confirmPw = document.getElementById("confirmPw").value;
+
+  if (!currentPw) { showMsg("passwordMsg", "Current password is required.", "error"); return; }
+  if (!newPw)     { showMsg("passwordMsg", "New password is required.", "error"); return; }
+  if (newPw.length < 8) { showMsg("passwordMsg", "New password must be at least 8 characters.", "error"); return; }
+  if (newPw !== confirmPw) { showMsg("passwordMsg", "New passwords do not match.", "error"); return; }
+  if (currentPw === newPw) { showMsg("passwordMsg", "New password must differ from your current password.", "error"); return; }
+
+  setBtnLoading("passwordBtn", "passwordSpinner", true);
+
+  try {
+    const res  = await fetch("/api/students/settings/change-password", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ current_password: currentPw, new_password: newPw })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      showMsg("passwordMsg", data.message || "Password updated successfully.", "success");
+      showToast("Password updated!");
+      document.getElementById("currentPw").value = "";
+      document.getElementById("newPw").value     = "";
+      document.getElementById("confirmPw").value = "";
+      checkStrength("");
+    } else {
+      showMsg("passwordMsg", data.message || "Failed to update password.", "error");
+     alert(JSON.stringify(data))
+    }
+  } catch (err) {
+    showMsg("passwordMsg", "Network error: " + err.message, "error");
+  }
+
+  setBtnLoading("passwordBtn", "passwordSpinner", false);
+}
+
+</script>
+
+{% endblock %}

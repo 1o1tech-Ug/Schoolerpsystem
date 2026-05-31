@@ -1,0 +1,832 @@
+{% extends "base.html" %}
+
+{% block title %}Student Profile — Alumni{% endblock %}
+
+{% block content %}
+<style>
+/* ── Imports ────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Design Tokens ──────────────────────────────────────────── */
+:root {
+    --ink:        #0c1117;
+    --ink-mid:    #3d4a5c;
+    --ink-soft:   #64748b;
+    --ink-faint:  #94a3b8;
+    --surface:    #ffffff;
+    --surface-2:  #f8fafc;
+    --surface-3:  #f1f5f9;
+    --border:     #e2e8f0;
+    --border-2:   #cbd5e1;
+    --accent:     #2563eb;
+    --accent-dim: #dbeafe;
+    --green:      #16a34a;
+    --green-dim:  #dcfce7;
+    --red:        #dc2626;
+    --red-dim:    #fee2e2;
+    --amber:      #d97706;
+    --amber-dim:  #fef3c7;
+    --purple:     #7c3aed;
+    --purple-dim: #f3e8ff;
+    --radius-sm:  8px;
+    --radius-md:  14px;
+    --radius-lg:  20px;
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:  0 4px 16px rgba(0,0,0,.08);
+    --shadow-lg:  0 12px 40px rgba(0,0,0,.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; color: var(--ink); }
+
+/* ── Page Layout ────────────────────────────────────────────── */
+.profile-page { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+
+/* ── Back button ─────────────────────────────────────────────── */
+.back-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    background: var(--surface-3); border: none; border-radius: var(--radius-sm);
+    padding: 8px 14px; cursor: pointer; margin-bottom: 20px;
+    text-decoration: none; transition: background .15s, color .15s;
+}
+.back-btn:hover { background: var(--border-2); color: var(--ink); }
+.back-btn svg   { width: 14px; height: 14px; }
+
+/* ── Profile Hero ────────────────────────────────────────────── */
+.hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.hero-avatar {
+    width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
+    background: var(--surface-3); display: flex; align-items: center;
+    justify-content: center; font-size: 28px; font-weight: 800;
+    color: var(--ink-soft); border: 3px solid var(--border); flex-shrink: 0;
+}
+.hero-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+.hero-info h1       { font-size: 26px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+.hero-info .meta    { font-size: 13px; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+.hero-info .meta span { display: flex; align-items: center; gap: 5px; }
+
+.hero-badges { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+
+.status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+}
+.sb-active        { background: var(--amber-dim); color: var(--amber); }
+.sb-promoted      { background: var(--green-dim); color: var(--green); }
+.sb-graduated     { background: var(--surface-3); color: var(--ink-mid); }
+.sb-level_complete{ background: var(--accent-dim); color: var(--accent); }
+.sb-repeated      { background: var(--red-dim); color: var(--red); }
+.sb-transferred   { background: var(--purple-dim); color: var(--purple); }
+.sb-unknown       { background: var(--surface-3); color: var(--ink-soft); }
+
+/* ── Summary Stat Cards ──────────────────────────────────────── */
+.stat-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    box-shadow: var(--shadow-sm);
+}
+.stat-card .label  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-faint); margin-bottom: 8px; }
+.stat-card .value  { font-size: 22px; font-weight: 800; color: var(--ink); }
+.stat-card .sub    { font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+.stat-card.danger .value { color: var(--red); }
+.stat-card.good   .value { color: var(--green); }
+
+/* ── Tab nav ─────────────────────────────────────────────────── */
+.tab-nav {
+    display: flex; gap: 4px; margin-bottom: 20px;
+    background: var(--surface-3); border-radius: var(--radius-md);
+    padding: 5px; width: fit-content; flex-wrap: wrap;
+}
+.tab-btn {
+    padding: 9px 18px; border: none; background: transparent;
+    border-radius: var(--radius-sm); font-size: 13px; font-weight: 700;
+    color: var(--ink-soft); cursor: pointer; transition: all .18s;
+    display: flex; align-items: center; gap: 6px;
+}
+.tab-btn:hover    { background: var(--surface); color: var(--ink); }
+.tab-btn.active   { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); }
+.tab-badge        { background: var(--accent-dim); color: var(--accent); font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 999px; }
+
+/* ── Panel ───────────────────────────────────────────────────── */
+.tab-panel        { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+}
+.card-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+}
+.card-header h3   { font-size: 15px; font-weight: 800; color: var(--ink); }
+.card-body        { padding: 22px; }
+
+/* ── Info Grid ───────────────────────────────────────────────── */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px 24px;
+}
+.info-item .lbl  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--ink-faint); margin-bottom: 4px; }
+.info-item .val  { font-size: 14px; font-weight: 600; color: var(--ink); }
+.info-item .val.empty { color: var(--ink-faint); font-weight: 400; font-style: italic; }
+
+/* ── Table ───────────────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; }
+table     { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th        {
+    padding: 12px 16px; background: var(--surface-2);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .4px;
+    color: var(--ink-soft); font-weight: 700; text-align: left;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+td        { padding: 13px 16px; border-bottom: 1px solid var(--surface-3); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover  td     { background: var(--surface-2); }
+
+/* ── Document / Report Card list ────────────────────────────── */
+.doc-list { display: flex; flex-direction: column; gap: 10px; }
+.doc-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: border-color .15s, box-shadow .15s;
+}
+.doc-item:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+
+.doc-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    background: var(--accent-dim); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+}
+.doc-icon.report  { background: var(--green-dim); color: var(--green); }
+.doc-icon.invoice { background: var(--amber-dim); color: var(--amber); }
+.doc-icon.receipt { background: var(--purple-dim); color: var(--purple); }
+
+.doc-info        { flex: 1; min-width: 0; }
+.doc-info .name  { font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-info .meta  { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+.doc-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius-sm); border: none;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s;
+    text-decoration: none; font-family: inherit;
+}
+.btn-primary  { background: var(--accent); color: white; }
+.btn-primary:hover  { background: #1d4ed8; }
+.btn-ghost    { background: var(--surface-3); color: var(--ink-mid); border: 1px solid var(--border); }
+.btn-ghost:hover    { background: var(--border); }
+.btn-danger   { background: var(--red-dim); color: var(--red); }
+.btn-success  { background: var(--green-dim); color: var(--green); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn svg      { width: 13px; height: 13px; }
+
+/* ── Invoice accordion ───────────────────────────────────────── */
+.invoice-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+.invoice-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; background: var(--surface-2); cursor: pointer;
+    user-select: none; gap: 12px; flex-wrap: wrap;
+}
+.invoice-head:hover { background: var(--surface-3); }
+.invoice-head .inv-title  { font-size: 14px; font-weight: 700; color: var(--ink); }
+.invoice-head .inv-meta   { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.invoice-head .inv-amounts { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.inv-amount-chip {
+    font-size: 12px; font-weight: 700; padding: 4px 10px;
+    border-radius: 999px;
+}
+.chip-billed  { background: var(--surface-3); color: var(--ink-mid); }
+.chip-paid    { background: var(--green-dim); color: var(--green); }
+.chip-balance { background: var(--red-dim); color: var(--red); }
+.chip-clear   { background: var(--green-dim); color: var(--green); }
+.inv-chevron  { transition: transform .2s; font-size: 12px; color: var(--ink-faint); flex-shrink:0; }
+.inv-chevron.open { transform: rotate(180deg); }
+
+.invoice-body { display: none; padding: 16px 18px; border-top: 1px solid var(--border); }
+.invoice-body.open { display: block; }
+
+.inv-section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-faint); margin-bottom: 10px; }
+
+/* ── Timeline  ───────────────────────────────────────────────── */
+.tl-wrap { position: relative; padding-left: 28px; }
+.tl-wrap::before {
+    content: ''; position: absolute; left: 9px; top: 4px; bottom: 4px;
+    width: 2px; background: var(--border);
+}
+.tl-item { position: relative; margin-bottom: 22px; }
+.tl-item:last-child { margin-bottom: 0; }
+.tl-dot  {
+    position: absolute; left: -22px; top: 4px;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid white; background: var(--ink-faint);
+    box-shadow: 0 0 0 2px var(--border);
+}
+.tl-dot.promoted       { background: var(--green); }
+.tl-dot.graduated      { background: var(--ink-mid); }
+.tl-dot.level_complete { background: var(--accent); }
+.tl-dot.active         { background: var(--amber); }
+.tl-dot.repeated       { background: var(--red); }
+.tl-dot.transferred    { background: var(--purple); }
+.tl-year   { font-size: 11px; font-weight: 700; color: var(--ink-faint); margin-bottom: 3px; }
+.tl-class  { font-size: 15px; font-weight: 800; color: var(--ink); }
+.tl-meta   { margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ── Empty / Loading states ──────────────────────────────────── */
+.empty { padding: 36px; text-align: center; color: var(--ink-faint); font-size: 14px; }
+.empty svg { width: 40px; height: 40px; margin-bottom: 10px; opacity: .4; display: block; margin-left: auto; margin-right: auto; }
+.spinner-wrap { padding: 40px; display: flex; justify-content: center; }
+.spinner {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 3px solid var(--surface-3); border-top-color: var(--accent);
+    animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Mono ─────────────────────────────────────────────────────── */
+.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 700px) {
+    .hero { grid-template-columns: auto 1fr; }
+    .hero-badges { display: none; }
+    .stat-strip { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+{# ── Inject student ID for JS ────────────────────────────────── #}
+<div id="page-meta" data-student-id="{{ student_id }}" style="display:none"></div>
+
+<div class="profile-page">
+
+    {# ── Back ────────────────────────────────────────────────── #}
+    <a href="{{ url_for('alumni_api.alumni_page') }}" class="back-btn">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+        Back to Alumni
+    </a>
+
+    {# ── Loading spinner (shown while /profile API loads) ────── #}
+    <div id="page-loading" class="spinner-wrap"><div class="spinner"></div></div>
+
+    {# ── All content hidden until loaded ─────────────────────── #}
+    <div id="page-content" style="display:none">
+
+        {# ── Hero ───────────────────────────────────────────── #}
+        <div class="hero">
+            <div class="hero-avatar" id="hero-avatar"></div>
+            <div class="hero-info">
+                <h1 id="hero-name">—</h1>
+                <div class="meta" id="hero-meta"></div>
+            </div>
+            <div class="hero-badges" id="hero-badges"></div>
+        </div>
+
+        {# ── Stat strip ─────────────────────────────────────── #}
+        <div class="stat-strip" id="stat-strip"></div>
+
+        {# ── Tab nav ────────────────────────────────────────── #}
+        <div class="tab-nav" id="tab-nav">
+            <button class="tab-btn active" data-tab="overview"  onclick="switchTab('overview')">Overview</button>
+            <button class="tab-btn"        data-tab="documents" onclick="switchTab('documents')">
+                Documents <span class="tab-badge" id="badge-documents">0</span>
+            </button>
+            <button class="tab-btn"        data-tab="reports"   onclick="switchTab('reports')">
+                Report Cards <span class="tab-badge" id="badge-reports">0</span>
+            </button>
+            <button class="tab-btn"        data-tab="finance"   onclick="switchTab('finance')">
+                Finance <span class="tab-badge" id="badge-finance">0</span>
+            </button>
+            <button class="tab-btn"        data-tab="timeline"  onclick="switchTab('timeline')">Timeline</button>
+        </div>
+
+        {# ─────────────────────────────────────────────────────
+           TAB: OVERVIEW
+        ───────────────────────────────────────────────────── #}
+        <div class="tab-panel active" id="panel-overview">
+
+            {# Personal Info #}
+            <div class="card">
+                <div class="card-header"><h3>Personal Information</h3></div>
+                <div class="card-body">
+                    <div class="info-grid" id="personal-grid"></div>
+                </div>
+            </div>
+
+            {# Guardian #}
+            <div class="card">
+                <div class="card-header"><h3>Parent / Guardian</h3></div>
+                <div class="card-body">
+                    <div class="info-grid" id="guardian-grid"></div>
+                </div>
+            </div>
+
+            {# Medical #}
+            <div class="card">
+                <div class="card-header"><h3>Medical Information</h3></div>
+                <div class="card-body">
+                    <div class="info-grid" id="medical-grid"></div>
+                </div>
+            </div>
+
+        </div>
+
+        {# ─────────────────────────────────────────────────────
+           TAB: DOCUMENTS
+        ───────────────────────────────────────────────────── #}
+        <div class="tab-panel" id="panel-documents">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Student Documents</h3>
+                    <span style="font-size:12px;color:var(--ink-faint)">
+                        Files are stored securely and served via CDN
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="doc-list" id="documents-list">
+                        <div class="empty">No documents uploaded yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ─────────────────────────────────────────────────────
+           TAB: REPORT CARDS
+        ───────────────────────────────────────────────────── #}
+        <div class="tab-panel" id="panel-reports">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Report Cards</h3>
+                    <span style="font-size:12px;color:var(--ink-faint)">
+                        Click <strong>View</strong> to open or <strong>Download</strong> to save
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="doc-list" id="reports-list">
+                        <div class="empty">No report cards found.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ─────────────────────────────────────────────────────
+           TAB: FINANCE
+        ───────────────────────────────────────────────────── #}
+        <div class="tab-panel" id="panel-finance">
+
+            <div class="stat-strip" id="finance-stat-strip" style="margin-bottom:20px;"></div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Invoices &amp; Payment History</h3>
+                    <span style="font-size:12px;color:var(--ink-faint)">Click an invoice to expand payments</span>
+                </div>
+                <div class="card-body">
+                    <div id="invoices-list">
+                        <div class="empty">No invoices found.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {# ─────────────────────────────────────────────────────
+           TAB: TIMELINE
+        ───────────────────────────────────────────────────── #}
+        <div class="tab-panel" id="panel-timeline">
+            <div class="card">
+                <div class="card-header"><h3>Enrollment Timeline</h3></div>
+                <div class="card-body">
+                    <div class="tl-wrap" id="timeline-wrap"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>{# /page-content #}
+</div>{# /profile-page #}
+
+
+<script>
+(function () {
+    /* ── helpers ──────────────────────────────────────────────── */
+    const $   = id => document.getElementById(id)
+    const fmt = n  => n != null ? `UGX ${Number(n).toLocaleString()}` : "—"
+
+    function infoItem(label, value) {
+        const cls = value ? "" : " empty"
+        return `<div class="info-item">
+            <div class="lbl">${label}</div>
+            <div class="val${cls}">${value || "—"}</div>
+        </div>`
+    }
+
+    /* ── tabs ─────────────────────────────────────────────────── */
+    window.switchTab = function (name) {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === name))
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id === `panel-${name}`))
+    }
+
+    /* ── STATUS ───────────────────────────────────────────────── */
+    const STATUS_LABELS = {
+        active:"Active", promoted:"Promoted", level_complete:"Level Complete",
+        graduated:"Graduated", repeated:"Repeated", demoted:"Demoted", transferred:"Transferred"
+    }
+    function statusBadge(s) {
+        return `<span class="status-badge sb-${s || 'unknown'}">${STATUS_LABELS[s] || s || "Unknown"}</span>`
+    }
+
+    /* ── file action buttons ──────────────────────────────────── */
+    function viewBtn(url, label = "View") {
+        if (!url) return `<button class="btn btn-ghost" disabled>No File</button>`
+        return `<a href="${url}" target="_blank" rel="noopener" class="btn btn-primary">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+            </svg>
+            ${label}
+        </a>`
+    }
+
+    /*
+     * reportDownloadBtn — uses the dedicated /api/report-cards/<id>/download
+     * endpoint which streams the file as attachment=True from the server,
+     * bypassing any CDN CORS restriction that would block a blob fetch.
+     */
+    function reportDownloadBtn(reportId, filename) {
+        if (!reportId) return ""
+        const safeFilename = (filename || "report_card.pdf").replace(/"/g, "")
+        // Navigate directly to the download endpoint; the server sends
+        // Content-Disposition: attachment so the browser saves instead of opening.
+        const downloadUrl = `/api/report-cards/${reportId}/download`
+        return `<a href="${downloadUrl}" download="${safeFilename}" class="btn btn-ghost">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+            Download
+        </a>`
+    }
+
+    /*
+     * genericDownloadBtn — for non-report documents (stored locally or on CDN).
+     * Falls back to a blob-fetch approach to force the browser to save the file
+     * rather than opening it, which is needed for cross-origin CDN URLs.
+     */
+    function genericDownloadBtn(url, filename) {
+        if (!url) return ""
+        const safeFilename = (filename || "document").replace(/"/g, "").replace(/'/g, "")
+        const safeUrl      = url.replace(/'/g, "\\'")
+        return `<button class="btn btn-ghost" onclick="forceDownload('${safeUrl}', '${safeFilename}')">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+            Download
+        </button>`
+    }
+
+    /*
+     * forceDownload — fetches a URL as a blob and triggers a save dialog.
+     * Used for generic documents; report cards use reportDownloadBtn instead.
+     */
+    window.forceDownload = async function (url, filename) {
+        try {
+            const res  = await fetch(url)
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            const blob    = await res.blob()
+            const blobUrl = URL.createObjectURL(blob)
+            const a       = document.createElement("a")
+            a.href        = blobUrl
+            a.download    = filename
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(blobUrl)
+        } catch (err) {
+            console.error("Download failed:", err)
+            window.open(url, "_blank")
+        }
+    }
+
+    /* ── LOAD profile ─────────────────────────────────────────── */
+    const studentId = $("page-meta").dataset.studentId
+
+    async function loadProfile() {
+        try {
+            const res  = await fetch(`/api/academics/alumni/student/${studentId}/profile`)
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Failed to load profile")
+
+            render(data)
+
+            $("page-loading").style.display = "none"
+            $("page-content").style.display = "block"
+
+        } catch (err) {
+            $("page-loading").innerHTML = `
+                <div class="empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                    ${err.message}
+                </div>`
+        }
+    }
+
+    function render(data) {
+        const s  = data.student
+        const g  = data.guardian
+        const m  = data.medical
+        const ac = data.academic
+        const fs = data.financial_summary
+
+        /* ── Hero ─────────────────────────────────────────────── */
+        const av = $("hero-avatar")
+        if (s.photo_url) {
+            av.innerHTML = `<img src="${s.photo_url}" alt="${s.name}">`
+        } else {
+            const init = ((s.first_name||"")[0]||"") + ((s.last_name||"")[0]||"")
+            av.textContent = init.toUpperCase()
+        }
+
+        $("hero-name").textContent = s.name
+
+        $("hero-meta").innerHTML = [
+            s.admission_number ? `<span>📋 ${s.admission_number}</span>` : "",
+            s.student_code     ? `<span class="mono">${s.student_code}</span>` : "",
+            s.class_name       ? `<span>🎓 ${s.class_name}</span>` : "",
+            s.gender           ? `<span>${s.gender}</span>` : "",
+        ].filter(Boolean).join("")
+
+        const latestTimeline = (data.timeline || []).slice(-1)[0]
+        $("hero-badges").innerHTML = latestTimeline
+            ? statusBadge(latestTimeline.status)
+            : statusBadge(s.status)
+
+        /* ── Top stat strip ───────────────────────────────────── */
+        $("stat-strip").innerHTML = [
+            { label: "Documents",    value: data.documents.length,    cls: "" },
+            { label: "Report Cards", value: data.report_cards.length, cls: "" },
+            { label: "Total Billed", value: fmt(fs?.total_billed),    cls: "" },
+            { label: "Total Paid",   value: fmt(fs?.total_paid),      cls: "good" },
+            { label: "Outstanding",  value: fmt(fs?.total_balance),   cls: fs?.total_balance > 0 ? "danger" : "good" },
+        ].map(st => `
+            <div class="stat-card ${st.cls}">
+                <div class="label">${st.label}</div>
+                <div class="value">${st.value}</div>
+            </div>
+        `).join("")
+
+        /* ── Tab badges ───────────────────────────────────────── */
+        $("badge-documents").textContent = data.documents.length
+        $("badge-reports").textContent   = data.report_cards.length
+        $("badge-finance").textContent   = (data.invoices || []).length
+
+        /* ── Overview: Personal ───────────────────────────────── */
+        $("personal-grid").innerHTML = [
+            infoItem("Full Name",         s.name),
+            infoItem("Admission Number",  s.admission_number),
+            infoItem("Student Code",      s.student_code),
+            infoItem("Gender",            s.gender),
+            infoItem("Date of Birth",     s.date_of_birth),
+            infoItem("Nationality",       s.nationality),
+            infoItem("Religion",          s.religion),
+            infoItem("Current Class",     s.class_name),
+            ac ? infoItem("Admission Date",  ac.admission_date)  : "",
+            ac ? infoItem("Student Type",    ac.student_type)    : "",
+            ac ? infoItem("Previous School", ac.previous_school) : "",
+        ].join("")
+
+        /* ── Overview: Guardian ───────────────────────────────── */
+        if (g) {
+            $("guardian-grid").innerHTML = [
+                infoItem("Name",         g.name),
+                infoItem("Relationship", g.relationship),
+                infoItem("Phone",        g.phone),
+                infoItem("Email",        g.email),
+                infoItem("Occupation",   g.occupation),
+                infoItem("Address",      g.address),
+            ].join("")
+        } else {
+            $("guardian-grid").innerHTML = `<div class="empty" style="grid-column:1/-1">No guardian information on record.</div>`
+        }
+
+        /* ── Overview: Medical ────────────────────────────────── */
+        if (m) {
+            $("medical-grid").innerHTML = [
+                infoItem("Blood Group",        m.blood_group),
+                infoItem("Allergies",          m.allergies),
+                infoItem("Medical Conditions", m.conditions),
+                infoItem("Emergency Contact",  m.emergency_contact),
+            ].join("")
+        } else {
+            $("medical-grid").innerHTML = `<div class="empty" style="grid-column:1/-1">No medical records on file.</div>`
+        }
+
+        /* ── Documents tab ────────────────────────────────────── */
+        if (data.documents.length) {
+            $("documents-list").innerHTML = data.documents.map(doc => `
+                <div class="doc-item">
+                    <div class="doc-icon">📄</div>
+                    <div class="doc-info">
+                        <div class="name">${doc.title || doc.document_type || "Document"}</div>
+                        <div class="meta">${doc.document_type || ""}${doc.uploaded_at ? " · " + doc.uploaded_at : ""}</div>
+                    </div>
+                    <div class="doc-actions">
+                        ${viewBtn(doc.file_url)}
+                        ${genericDownloadBtn(doc.file_url, doc.title)}
+                    </div>
+                </div>
+            `).join("")
+        } else {
+            $("documents-list").innerHTML = emptyState("No documents uploaded yet.")
+        }
+
+        /* ── Report Cards tab ─────────────────────────────────── */
+        if (data.report_cards.length) {
+            $("reports-list").innerHTML = data.report_cards.map(rc => {
+                const examLabel = rc.exam_type ? `${rc.exam_type} Exam` : "Report Card"
+                const yearLabel = rc.academic_year || ""
+                const filename  = `report_card_${yearLabel}_${rc.exam_type || ""}.pdf`
+                    .replace(/\s+/g, "_")
+
+                return `
+                <div class="doc-item">
+                    <div class="doc-icon report">📊</div>
+                    <div class="doc-info">
+                        <div class="name">${yearLabel} — ${examLabel}</div>
+                        <div class="meta">
+                            Generated ${rc.generated_at || "—"}
+                            <span class="status-badge sb-${rc.status === 'generated' ? 'promoted' : 'unknown'}"
+                                  style="margin-left:8px;font-size:10px;padding:2px 7px;">
+                                ${rc.status || "unknown"}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="doc-actions">
+                        ${viewBtn(rc.file_url, "View")}
+                        ${reportDownloadBtn(rc.id, filename)}
+                    </div>
+                </div>`
+            }).join("")
+        } else {
+            $("reports-list").innerHTML = emptyState("No report cards found for this student.")
+        }
+
+        /* ── Finance: stat strip ──────────────────────────────── */
+        $("finance-stat-strip").innerHTML = [
+            { label: "Total Invoices", value: (data.invoices||[]).length, cls: "" },
+            { label: "Total Billed",   value: fmt(fs?.total_billed),      cls: "" },
+            { label: "Total Paid",     value: fmt(fs?.total_paid),        cls: "good" },
+            { label: "Balance Due",    value: fmt(fs?.total_balance),     cls: fs?.total_balance > 0 ? "danger" : "good" },
+        ].map(st => `
+            <div class="stat-card ${st.cls}">
+                <div class="label">${st.label}</div>
+                <div class="value">${st.value}</div>
+            </div>
+        `).join("")
+
+        /* ── Finance: Invoices ────────────────────────────────── */
+        if (data.invoices && data.invoices.length) {
+            $("invoices-list").innerHTML = data.invoices.map((inv, idx) => {
+                const cleared = inv.balance <= 0
+
+                const itemsHtml = (inv.items || []).map(item => `
+                    <tr>
+                        <td>${item.fee_type}</td>
+                        <td style="text-align:right" class="mono">${fmt(item.amount)}</td>
+                    </tr>`).join("")
+
+                const paymentsHtml = (inv.payments || []).length === 0
+                    ? `<p style="color:var(--ink-faint);font-size:13px;padding:8px 0">No payments recorded.</p>`
+                    : `<table>
+                        <thead><tr><th>Date</th><th>Method</th><th>Reference</th><th>Receipt #</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead>
+                        <tbody>
+                        ${inv.payments.map(pmt => `
+                            <tr>
+                                <td>${pmt.created_at || "—"}</td>
+                                <td>${pmt.method || "—"}</td>
+                                <td class="mono">${pmt.reference || "—"}</td>
+                                <td class="mono">${pmt.receipt_number || "—"}</td>
+                                <td style="text-align:right" class="mono">${fmt(pmt.amount)}</td>
+                                <td><span class="status-badge ${pmt.status === 'completed' ? 'sb-promoted' : 'sb-repeated'}">${pmt.status}</span></td>
+                            </tr>`).join("")}
+                        </tbody>
+                       </table>`
+
+                return `
+                <div class="invoice-block">
+                    <div class="invoice-head" onclick="toggleInvoice(${idx})">
+                        <div>
+                            <div class="inv-title">Invoice #${inv.id} — ${inv.academic_year || "—"} · ${inv.term || "—"}</div>
+                            <div class="inv-meta">Issued ${inv.created_at || "—"}</div>
+                        </div>
+                        <div class="inv-amounts">
+                            <span class="inv-amount-chip chip-billed">Billed ${fmt(inv.total_amount)}</span>
+                            <span class="inv-amount-chip chip-paid">Paid ${fmt(inv.amount_paid)}</span>
+                            <span class="inv-amount-chip ${cleared ? 'chip-clear' : 'chip-balance'}">
+                                ${cleared ? "✓ Cleared" : "Due " + fmt(inv.balance)}
+                            </span>
+                        </div>
+                        <span class="inv-chevron" id="chevron-${idx}">▼</span>
+                    </div>
+                    <div class="invoice-body" id="inv-body-${idx}">
+                        <div class="inv-section-title">Fee Breakdown</div>
+                        <div class="tbl-wrap" style="margin-bottom:18px;">
+                            <table>
+                                <thead><tr><th>Fee Type</th><th style="text-align:right">Amount</th></tr></thead>
+                                <tbody>${itemsHtml || '<tr><td colspan="2">No items.</td></tr>'}</tbody>
+                            </table>
+                        </div>
+                        <div class="inv-section-title">Payment History</div>
+                        <div class="tbl-wrap">${paymentsHtml}</div>
+                    </div>
+                </div>`
+            }).join("")
+        } else {
+            $("invoices-list").innerHTML = emptyState("No invoices found for this student.")
+        }
+
+        /* ── Timeline tab ─────────────────────────────────────── */
+        if (data.timeline && data.timeline.length) {
+            $("timeline-wrap").innerHTML = data.timeline.map(item => `
+                <div class="tl-item">
+                    <div class="tl-dot ${item.status}"></div>
+                    <div class="tl-year">${item.academic_year}</div>
+                    <div class="tl-class">
+                        ${item.class_name}${item.stream_name ? ` — ${item.stream_name}` : ""}
+                    </div>
+                    <div class="tl-meta">
+                        ${statusBadge(item.status)}
+                        ${item.enrolled_on ? `<span style="font-size:12px;color:var(--ink-faint)">${item.enrolled_on}</span>` : ""}
+                    </div>
+                </div>
+            `).join("")
+        } else {
+            $("timeline-wrap").innerHTML = emptyState("No enrollment history found.")
+        }
+    }
+
+    /* ── Invoice accordion ────────────────────────────────────── */
+    window.toggleInvoice = function (idx) {
+        const body    = $(`inv-body-${idx}`)
+        const chevron = $(`chevron-${idx}`)
+        const open    = body.classList.toggle("open")
+        chevron.classList.toggle("open", open)
+    }
+
+    /* ── Utility ──────────────────────────────────────────────── */
+    function emptyState(msg) {
+        return `<div class="empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
+            </svg>
+            ${msg}
+        </div>`
+    }
+
+    /* ── Boot ─────────────────────────────────────────────────── */
+    loadProfile()
+
+})()
+</script>
+
+{% endblock %}

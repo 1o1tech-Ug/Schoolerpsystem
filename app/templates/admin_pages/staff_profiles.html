@@ -1,0 +1,164 @@
+{% extends "admin.html" %}
+
+{% block title %}Staff Profiles{% endblock %}
+{% block page_title %}Staff Profiles{% endblock %}
+
+{% block content %}
+
+<style>
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+    gap:16px;
+}
+
+.card{
+    background:white;
+    border-radius:16px;
+    padding:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    text-align:center;
+    transition:0.2s;
+}
+
+.card:hover{
+    transform:translateY(-3px);
+}
+
+.card img{
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:10px;
+    border:2px solid #e2e8f0;
+}
+
+.card h3{
+    font-size:16px;
+    margin-bottom:6px;
+}
+
+.card p{
+    font-size:13px;
+    color:#64748b;
+    margin:2px 0;
+}
+
+.btns{
+    margin-top:10px;
+    display:flex;
+    gap:6px;
+    justify-content:center;
+}
+
+.btn{
+    padding:8px 10px;
+    border:none;
+    border-radius:8px;
+    font-size:12px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.view{
+    background:#0f172a;
+    color:white;
+}
+
+.edit{
+    background:#1d4ed8;
+    color:white;
+}
+
+.delete{
+    background:#dc2626;
+    color:white;
+}
+
+.header-box{
+    background:white;
+    padding:14px;
+    border-radius:14px;
+    margin-bottom:15px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.05);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.header-box h3{
+    margin:0;
+}
+
+</style>
+
+<div class="header-box">
+    <h3>All Staff Members</h3>
+</div>
+
+<div id="staffGrid" class="grid"></div>
+
+<script>
+
+async function loadStaff(){
+
+    let res = await fetch("/admin/api/staff");
+    let data = await res.json();
+
+    let grid = document.getElementById("staffGrid");
+    grid.innerHTML = "";
+
+    data.staff.forEach(s => {
+
+        grid.innerHTML += `
+            <div class="card">
+
+                <img src="${s.photo || 'default.png'}">
+
+                <h3>${s.first_name} ${s.last_name}</h3>
+
+                <p>${s.staff_code}</p>
+                <p>${s.contact || ''}</p>
+                <p>${s.staff_type}</p>
+
+                <div class="btns">
+                    <button class="btn view" onclick="viewStaff(${s.id})">View</button>
+                    <button class="btn edit" onclick="editStaff(${s.id})">Edit</button>
+                    <button class="btn delete" onclick="deleteStaff(${s.id})">Delete</button>
+                </div>
+
+            </div>
+        `;
+    });
+}
+
+function viewStaff(id){
+    window.location.href = `/admin/api/staff/${id}`;
+}
+
+/* ✅ NEW: EDIT ROUTE */
+function editStaff(id){
+    window.location.href = `/admin/staff/edit/${id}`;
+}
+
+async function deleteStaff(id){
+
+    if(!confirm("Delete this staff?")) return;
+
+    let res = await fetch(`/admin/api/staff/${id}`, {
+        method: "DELETE"
+    });
+
+    let data = await res.json();
+    alert(data.message || data.error);
+
+    loadStaff();
+}
+
+loadStaff();
+
+</script>
+
+{% endblock %}

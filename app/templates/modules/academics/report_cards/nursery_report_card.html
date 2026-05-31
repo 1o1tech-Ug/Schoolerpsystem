@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Card — {{ student.first_name }} {{ student.last_name }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap');
+
+    @page { size: A4; margin: 0; }
+    @media print {
+      body { margin: 0; }
+      .no-print { display: none !important; }
+    }
+
+    :root {
+      --navy:        #0c2340;
+      --blue:        #1565c0;
+      --blue-mid:    #1976d2;
+      --blue-light:  #e3f2fd;
+      --blue-pale:   #f0f7ff;
+      --gold:        #c8961e;
+      --gold-light:  #fdf6e3;
+      --gold-pale:   #fffbef;
+      --slate:       #334155;
+      --slate-light: #64748b;
+      --border:      #b8d4f0;
+      --row-even:    #f0f7ff;
+      --white:       #ffffff;
+      --text:        #1a2a3a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', 'Century Gothic', Calibri, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      background: var(--white);
+      color: var(--text);
+      font-size: 10.5px;
+    }
+
+    .report-card-container {
+      width: 210mm;
+      min-height: 297mm;
+      position: relative;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════════
+       SIDEBAR — fully decorated
+    ══════════════════════════════════════════ */
+    .sidebar {
+      width: 36mm;
+      min-width: 36mm;
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 6px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── background gradient glow ── */
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70px 80px at 50% 30%, rgba(200,150,30,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 60px 60px at 50% 75%, rgba(21,101,192,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── wavy vine lines (CSS only) ── */
+    .vine {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(200,150,30,0.25) 10%,
+        rgba(200,150,30,0.35) 50%,
+        rgba(200,150,30,0.25) 90%,
+        transparent 100%);
+      z-index: 0;
+    }
+
+    /* ──────────────────────────────────────────
+       ALL DECORATIVE SVG ELEMENTS
+    ────────────────────────────────────────── */
+    .deco {
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* top-left leaf cluster */
+    .deco-leaf-tl {
+      top: 4px; left: 2px;
+    }
+    /* top-right leaf */
+    .deco-leaf-tr {
+      top: 6px; right: 2px;
+    }
+
+    /* butterfly 1 — large, mid-upper */
+    .deco-butterfly-1 {
+      top: 88px; left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* butterfly 2 — small, below logo */
+    .deco-butterfly-2 {
+      top: 152px; left: 4px;
+    }
+
+    /* butterfly 3 — mid sidebar, right */
+    .deco-butterfly-3 {
+      top: 195px; right: 3px;
+    }
+
+    /* flower 1 */
+    .deco-flower-1 {
+      top: 240px; left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* butterfly 4 — lower left */
+    .deco-butterfly-4 {
+      top: 292px; left: 3px;
+    }
+
+    /* dragonfly */
+    .deco-dragonfly {
+      top: 336px; right: 4px;
+    }
+
+    /* flower 2 */
+    .deco-flower-2 {
+      top: 388px; left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* butterfly 5 — lower section */
+    .deco-butterfly-5 {
+      top: 430px; right: 2px;
+    }
+
+    /* leaf spray bottom */
+    .deco-leaf-bot {
+      bottom: 68px; left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* sparkle dots scattered */
+    .deco-sparkle {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(200,150,30,0.55);
+      box-shadow: 0 0 4px 1px rgba(200,150,30,0.4);
+    }
+    .sp1 { top: 78px;  left: 6px; }
+    .sp2 { top: 108px; right: 7px; }
+    .sp3 { top: 178px; left: 10px; }
+    .sp4 { top: 270px; right: 8px; }
+    .sp5 { top: 355px; left: 5px; }
+    .sp6 { top: 410px; right: 6px; }
+    .sp7 { top: 460px; left: 8px; }
+    .sp8 { bottom: 95px; right: 5px; }
+
+    /* ── Logo & school name ── */
+    .sidebar-logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sidebar-logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      object-fit: contain;
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(200,150,30,0.25), 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .sidebar-logo-placeholder {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--gold);
+      background: rgba(255,255,255,0.06);
+      text-align: center;
+      padding: 4px;
+      box-shadow: 0 0 0 3px rgba(200,150,30,0.2);
+    }
+
+    .sidebar-school-name {
+      font-size: 8.5px;
+      font-weight: 900;
+      color: var(--gold);
+      text-align: center;
+      text-transform: uppercase;
+      line-height: 1.4;
+      letter-spacing: 0.4px;
+    }
+
+    .sidebar-divider {
+      width: 26px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--gold), transparent);
+      margin: 4px auto 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sidebar-vertical-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-size: 9px;
+      font-weight: 800;
+      color: rgba(200,150,30,0.65);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: auto;
+      position: relative;
+      z-index: 2;
+      padding-bottom: 8px;
+    }
+
+    /* ══════════════════════════════════════════
+       MAIN CONTENT
+    ══════════════════════════════════════════ */
+    .main-content {
+      flex: 1;
+      padding: 14px 16px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .header-area { text-align: center; margin-bottom: 10px; }
+
+    .school-name-main {
+      font-family: 'Playfair Display', 'Times New Roman', serif;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--navy);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+
+    .school-motto {
+      font-size: 9px;
+      font-style: italic;
+      color: var(--gold);
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      margin-bottom: 3px;
+    }
+
+    .nursery-badge {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--navy);
+      font-size: 10px;
+      font-weight: 900;
+      padding: 3px 18px;
+      border-radius: 20px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .school-contact-bar {
+      font-size: 8.5px;
+      color: var(--slate-light);
+      font-weight: 600;
+    }
+
+    .rule-gold {
+      height: 3px;
+      background: linear-gradient(to right, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+      margin: 6px 0 2px;
+    }
+
+    .rule-navy {
+      height: 1.5px;
+      background: linear-gradient(to right, transparent, var(--navy) 20%, var(--navy) 80%, transparent);
+      margin: 0 0 10px;
+    }
+
+    .term-banner {
+      background: var(--blue);
+      color: var(--white);
+      text-align: center;
+      font-weight: 800;
+      font-size: 10.5px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--gold);
+      border-right: 4px solid var(--gold);
+    }
+    .term-banner span { color: var(--gold); }
+
+    .student-block { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+
+    .info-grid {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .info-grid-header {
+      background: var(--navy);
+      color: var(--white);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 5px 10px;
+    }
+
+    .info-grid-body {
+      background: var(--blue-pale);
+      padding: 8px 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto 1fr;
+      row-gap: 7px;
+      column-gap: 8px;
+      align-items: end;
+    }
+
+    .info-label {
+      font-size: 8.5px;
+      font-weight: 800;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+
+    .info-value {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--navy);
+      border-bottom: 1.5px solid var(--gold);
+      padding-bottom: 1px;
+      min-height: 15px;
+    }
+
+    .photo-box {
+      width: 68px;
+      height: 80px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue-light);
+      box-shadow: 0 0 0 2px rgba(200,150,30,0.3);
+    }
+
+    .photo-box img { width:100%; height:100%; object-fit:cover; }
+
+    .photo-placeholder {
+      font-size: 8px;
+      color: var(--blue);
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .sh-line { flex:1; height:1px; background:var(--border); }
+
+    .sh-text {
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--navy);
+      padding: 2px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      background: var(--white);
+    }
+
+    .subject-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .subject-table thead tr th {
+      background: var(--navy);
+      color: var(--white);
+      padding: 6px 8px;
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border: 1px solid var(--navy);
+    }
+
+    .subject-table thead tr th:first-child { border-left: 3px solid var(--gold); }
+    .subject-table th.c { text-align: center; }
+
+    .subject-table tbody td {
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      font-size: 10px;
+      color: var(--slate);
+      vertical-align: middle;
+    }
+
+    .subject-table tbody td.c { text-align: center; }
+    .subject-table tbody tr:nth-child(even) td { background: var(--row-even); }
+
+    .subject-table tbody td.subj-name {
+      font-weight: 800;
+      color: var(--navy);
+      border-left: 3px solid var(--blue-mid);
+    }
+
+    .score-pill {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 9.5px;
+      background: var(--blue-light);
+      color: var(--navy);
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .g-d1, .g-d2 { color: #15803d; font-weight: 800; }
+    .g-c3, .g-c4, .g-c5, .g-c6 { color: var(--blue); font-weight: 700; }
+    .g-p7, .g-p8 { color: #b45309; font-weight: 700; }
+    .g-f9 { color: #b91c1c; font-weight: 800; }
+    .g-dash { color: #94a3b8; }
+
+    .result-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1.5px solid var(--navy);
+      border-top: none;
+      overflow: hidden;
+      border-radius: 0 0 8px 8px;
+      margin-bottom: 10px;
+    }
+
+    .result-cell {
+      padding: 6px 8px;
+      text-align: center;
+      background: var(--gold-light);
+      border-right: 1px solid var(--navy);
+    }
+    .result-cell:last-child { border-right: none; }
+
+    .result-label {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--slate-light);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .result-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .conduct-section { margin-bottom: 10px; }
+
+    .conduct-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; }
+
+    .conduct-table thead th {
+      background: var(--navy);
+      color: var(--white);
+      padding: 6px 8px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border: 1px solid var(--navy);
+    }
+
+    .conduct-table thead th:first-child { border-left: 3px solid var(--gold); }
+
+    .conduct-table tbody td {
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      font-size: 9.5px;
+      color: var(--slate);
+    }
+
+    .conduct-table tbody tr:nth-child(even) td { background: var(--gold-pale); }
+
+    .conduct-table tbody td.trait-name {
+      font-weight: 800;
+      color: var(--navy);
+      border-left: 3px solid var(--gold);
+    }
+
+    .rating-star { color: var(--gold); font-size: 11px; }
+
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.5fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
+
+    .card-header {
+      background: var(--navy);
+      color: var(--white);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 5px 8px;
+      text-align: center;
+      border-bottom: 2px solid var(--gold);
+    }
+
+    .att-body {
+      display: flex;
+      justify-content: space-around;
+      padding: 7px 6px;
+      background: var(--blue-pale);
+    }
+
+    .att-item { text-align: center; }
+
+    .att-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+      display: block;
+    }
+
+    .att-lbl {
+      font-size: 8px;
+      color: var(--slate-light);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .legend-body {
+      padding: 6px 8px;
+      background: var(--blue-pale);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px 6px;
+    }
+
+    .legend-item {
+      font-size: 8.5px;
+      color: var(--slate);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-grade { font-weight: 800; color: var(--blue); min-width: 18px; }
+    .legend-range { color: var(--slate-light); }
+
+    .remarks-card {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .remark-row {
+      display: flex;
+      flex: 1;
+      border-top: 1px solid var(--border);
+    }
+
+    .remark-row:first-child { border-top: none; }
+
+    .remark-who {
+      background: var(--blue-pale);
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      width: 34%;
+      padding: 7px 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid var(--border);
+    }
+
+    .remark-lines {
+      flex: 1;
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    .remark-line { border-bottom: 1px solid var(--border); height: 13px; }
+
+    .sig-block { font-size: 7.5px; color: var(--slate-light); font-weight: 700; text-align: right; margin-top: 2px; }
+    .sig-line-short { border-bottom: 1px solid var(--gold); margin-top: 2px; height: 12px; }
+
+    .next-term-panel {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .next-term-body {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--blue-pale);
+      padding: 6px 10px;
+    }
+
+    .next-item { text-align: center; }
+
+    .next-label {
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--slate-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .next-value {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--navy);
+      border-bottom: 1.5px solid var(--gold);
+      padding-bottom: 1px;
+      min-height: 14px;
+      display: block;
+    }
+
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    .footer-school {
+      font-family: 'Playfair Display', serif;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .footer-stamp {
+      font-size: 8px;
+      color: var(--slate-light);
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .footer-seal {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7px;
+      font-weight: 800;
+      color: var(--gold);
+      text-align: center;
+      line-height: 1.3;
+      background: var(--white);
+    }
+  </style>
+</head>
+<body>
+
+<div class="report-card-container">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════ -->
+  <div class="sidebar">
+
+    <!-- sparkle dots -->
+    <div class="deco deco-sparkle sp1"></div>
+    <div class="deco deco-sparkle sp2"></div>
+    <div class="deco deco-sparkle sp3"></div>
+    <div class="deco deco-sparkle sp4"></div>
+    <div class="deco deco-sparkle sp5"></div>
+    <div class="deco deco-sparkle sp6"></div>
+    <div class="deco deco-sparkle sp7"></div>
+    <div class="deco deco-sparkle sp8"></div>
+
+    <!-- top-left leaf cluster -->
+    <div class="deco deco-leaf-tl">
+      <svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 24 C4 16 12 10 11 2" stroke="rgba(200,150,30,0.45)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <path d="M11 14 C7 11 2 13 1 8 C6 8 10 11 11 14Z" fill="rgba(200,150,30,0.28)"/>
+        <path d="M11 10 C14 7 19 9 20 4 C15 4 12 7 11 10Z" fill="rgba(200,150,30,0.22)"/>
+        <path d="M11 18 C8 17 5 19 4 16 C8 15 10 17 11 18Z" fill="rgba(200,150,30,0.20)"/>
+      </svg>
+    </div>
+
+    <!-- top-right leaf -->
+    <div class="deco deco-leaf-tr">
+      <svg width="20" height="22" viewBox="0 0 20 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 20 C16 13 8 8 9 1" stroke="rgba(200,150,30,0.40)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <path d="M9 12 C13 9 18 11 19 6 C14 6 10 9 9 12Z" fill="rgba(200,150,30,0.25)"/>
+        <path d="M9 17 C12 15 16 18 17 14 C13 13 10 15 9 17Z" fill="rgba(200,150,30,0.20)"/>
+      </svg>
+    </div>
+
+    <!-- BUTTERFLY 1 — large centred -->
+    <div class="deco deco-butterfly-1">
+      <svg width="38" height="28" viewBox="0 0 38 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- left wings -->
+        <ellipse cx="10" cy="10" rx="9" ry="7" fill="rgba(200,150,30,0.55)" transform="rotate(-20 10 10)"/>
+        <ellipse cx="8"  cy="19" rx="7" ry="5"  fill="rgba(200,150,30,0.38)" transform="rotate(15 8 19)"/>
+        <!-- right wings -->
+        <ellipse cx="28" cy="10" rx="9" ry="7" fill="rgba(200,150,30,0.55)" transform="rotate(20 28 10)"/>
+        <ellipse cx="30" cy="19" rx="7" ry="5"  fill="rgba(200,150,30,0.38)" transform="rotate(-15 30 19)"/>
+        <!-- wing pattern dots -->
+        <circle cx="11" cy="9"  r="2" fill="rgba(255,255,255,0.35)"/>
+        <circle cx="27" cy="9"  r="2" fill="rgba(255,255,255,0.35)"/>
+        <circle cx="9"  cy="18" r="1.5" fill="rgba(255,255,255,0.25)"/>
+        <circle cx="29" cy="18" r="1.5" fill="rgba(255,255,255,0.25)"/>
+        <!-- body -->
+        <ellipse cx="19" cy="14" rx="2" ry="9" fill="rgba(12,35,64,0.6)"/>
+        <!-- antennae -->
+        <path d="M18 5 C15 1 13 0 12 0" stroke="rgba(200,150,30,0.6)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <path d="M20 5 C23 1 25 0 26 0" stroke="rgba(200,150,30,0.6)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <circle cx="12" cy="0" r="1.2" fill="rgba(200,150,30,0.7)"/>
+        <circle cx="26" cy="0" r="1.2" fill="rgba(200,150,30,0.7)"/>
+      </svg>
+    </div>
+
+    <!-- BUTTERFLY 2 — small, left side -->
+    <div class="deco deco-butterfly-2">
+      <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="6"  cy="6"  rx="5.5" ry="4.5" fill="rgba(21,101,192,0.45)" transform="rotate(-25 6 6)"/>
+        <ellipse cx="5"  cy="13" rx="4.5" ry="3"   fill="rgba(21,101,192,0.30)" transform="rotate(18 5 13)"/>
+        <ellipse cx="18" cy="6"  rx="5.5" ry="4.5" fill="rgba(21,101,192,0.45)" transform="rotate(25 18 6)"/>
+        <ellipse cx="19" cy="13" rx="4.5" ry="3"   fill="rgba(21,101,192,0.30)" transform="rotate(-18 19 13)"/>
+        <circle cx="7"  cy="5"  r="1.3" fill="rgba(255,255,255,0.30)"/>
+        <circle cx="17" cy="5"  r="1.3" fill="rgba(255,255,255,0.30)"/>
+        <ellipse cx="12" cy="9" rx="1.3" ry="6" fill="rgba(12,35,64,0.55)"/>
+        <path d="M11 3 C9 0 8 -0.5 7 -0.5" stroke="rgba(200,150,30,0.55)" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+        <path d="M13 3 C15 0 16 -0.5 17 -0.5" stroke="rgba(200,150,30,0.55)" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+        <circle cx="7"   cy="-0.5" r="0.9" fill="rgba(200,150,30,0.65)"/>
+        <circle cx="17"  cy="-0.5" r="0.9" fill="rgba(200,150,30,0.65)"/>
+      </svg>
+    </div>
+
+    <!-- BUTTERFLY 3 — small, right -->
+    <div class="deco deco-butterfly-3">
+      <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="5"  cy="5"  rx="4.5" ry="3.5" fill="rgba(200,150,30,0.48)" transform="rotate(-30 5 5)"/>
+        <ellipse cx="4"  cy="12" rx="3.5" ry="2.5"  fill="rgba(200,150,30,0.32)" transform="rotate(20 4 12)"/>
+        <ellipse cx="17" cy="5"  rx="4.5" ry="3.5" fill="rgba(200,150,30,0.48)" transform="rotate(30 17 5)"/>
+        <ellipse cx="18" cy="12" rx="3.5" ry="2.5"  fill="rgba(200,150,30,0.32)" transform="rotate(-20 18 12)"/>
+        <ellipse cx="11" cy="8" rx="1.2" ry="5.5" fill="rgba(12,35,64,0.50)"/>
+        <path d="M10 2 C8 -1 7 -1.5 6 -1.5"  stroke="rgba(200,150,30,0.5)" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+        <path d="M12 2 C14 -1 15 -1.5 16 -1.5" stroke="rgba(200,150,30,0.5)" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+        <circle cx="6"  cy="-1.5" r="0.8" fill="rgba(200,150,30,0.6)"/>
+        <circle cx="16" cy="-1.5" r="0.8" fill="rgba(200,150,30,0.6)"/>
+      </svg>
+    </div>
+
+    <!-- FLOWER 1 -->
+    <div class="deco deco-flower-1">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="13" cy="5"  rx="3.5" ry="5.5" fill="rgba(200,150,30,0.42)"/>
+        <ellipse cx="13" cy="21" rx="3.5" ry="5.5" fill="rgba(200,150,30,0.42)"/>
+        <ellipse cx="5"  cy="13" rx="5.5" ry="3.5" fill="rgba(200,150,30,0.42)"/>
+        <ellipse cx="21" cy="13" rx="5.5" ry="3.5" fill="rgba(200,150,30,0.42)"/>
+        <ellipse cx="7"  cy="7"  rx="3"   ry="5"   fill="rgba(200,150,30,0.30)" transform="rotate(-45 7 7)"/>
+        <ellipse cx="19" cy="7"  rx="3"   ry="5"   fill="rgba(200,150,30,0.30)" transform="rotate(45 19 7)"/>
+        <ellipse cx="7"  cy="19" rx="3"   ry="5"   fill="rgba(200,150,30,0.30)" transform="rotate(45 7 19)"/>
+        <ellipse cx="19" cy="19" rx="3"   ry="5"   fill="rgba(200,150,30,0.30)" transform="rotate(-45 19 19)"/>
+        <circle cx="13" cy="13" r="4.5" fill="rgba(255,255,255,0.18)"/>
+        <circle cx="13" cy="13" r="3"   fill="rgba(200,150,30,0.65)"/>
+        <circle cx="13" cy="13" r="1.5" fill="rgba(255,255,255,0.50)"/>
+      </svg>
+    </div>
+
+    <!-- BUTTERFLY 4 — lower left -->
+    <div class="deco deco-butterfly-4">
+      <svg width="26" height="20" viewBox="0 0 26 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="6"  cy="7"  rx="5.5" ry="5"   fill="rgba(21,101,192,0.40)" transform="rotate(-20 6 7)"/>
+        <ellipse cx="5"  cy="15" rx="4.5" ry="3.5"  fill="rgba(21,101,192,0.28)" transform="rotate(15 5 15)"/>
+        <ellipse cx="20" cy="7"  rx="5.5" ry="5"   fill="rgba(21,101,192,0.40)" transform="rotate(20 20 7)"/>
+        <ellipse cx="21" cy="15" rx="4.5" ry="3.5"  fill="rgba(21,101,192,0.28)" transform="rotate(-15 21 15)"/>
+        <circle cx="7"  cy="6"  r="1.5" fill="rgba(200,150,30,0.40)"/>
+        <circle cx="19" cy="6"  r="1.5" fill="rgba(200,150,30,0.40)"/>
+        <ellipse cx="13" cy="10" rx="1.4" ry="7"  fill="rgba(12,35,64,0.55)"/>
+        <path d="M12 3 C10 0 9 -0.5 8 -0.5"  stroke="rgba(200,150,30,0.5)" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+        <path d="M14 3 C16 0 17 -0.5 18 -0.5" stroke="rgba(200,150,30,0.5)" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+        <circle cx="8"  cy="-0.5" r="1" fill="rgba(200,150,30,0.65)"/>
+        <circle cx="18" cy="-0.5" r="1" fill="rgba(200,150,30,0.65)"/>
+      </svg>
+    </div>
+
+    <!-- DRAGONFLY -->
+    <div class="deco deco-dragonfly">
+      <svg width="28" height="30" viewBox="0 0 28 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- top wings -->
+        <ellipse cx="8"  cy="9" rx="7" ry="3.5" fill="rgba(200,150,30,0.32)" transform="rotate(-30 8 9)"/>
+        <ellipse cx="20" cy="9" rx="7" ry="3.5" fill="rgba(200,150,30,0.32)" transform="rotate(30 20 9)"/>
+        <!-- bottom wings -->
+        <ellipse cx="8"  cy="14" rx="6" ry="3"   fill="rgba(200,150,30,0.22)" transform="rotate(-15 8 14)"/>
+        <ellipse cx="20" cy="14" rx="6" ry="3"   fill="rgba(200,150,30,0.22)" transform="rotate(15 20 14)"/>
+        <!-- body -->
+        <ellipse cx="14" cy="7"  rx="2.5" ry="4" fill="rgba(12,35,64,0.55)"/>
+        <ellipse cx="14" cy="15" rx="1.8" ry="3" fill="rgba(12,35,64,0.45)"/>
+        <ellipse cx="14" cy="22" rx="1.3" ry="2.5" fill="rgba(12,35,64,0.38)"/>
+        <ellipse cx="14" cy="28" rx="0.9" ry="2"   fill="rgba(12,35,64,0.30)"/>
+        <!-- eyes -->
+        <circle cx="12" cy="5" r="1.5" fill="rgba(21,101,192,0.6)"/>
+        <circle cx="16" cy="5" r="1.5" fill="rgba(21,101,192,0.6)"/>
+      </svg>
+    </div>
+
+    <!-- FLOWER 2 — smaller -->
+    <div class="deco deco-flower-2">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="10" cy="3.5" rx="2.5" ry="4"   fill="rgba(21,101,192,0.35)"/>
+        <ellipse cx="10" cy="16.5" rx="2.5" ry="4"  fill="rgba(21,101,192,0.35)"/>
+        <ellipse cx="3.5" cy="10" rx="4"   ry="2.5" fill="rgba(21,101,192,0.35)"/>
+        <ellipse cx="16.5" cy="10" rx="4"  ry="2.5" fill="rgba(21,101,192,0.35)"/>
+        <ellipse cx="5" cy="5"   rx="2.2" ry="3.8"  fill="rgba(21,101,192,0.22)" transform="rotate(-45 5 5)"/>
+        <ellipse cx="15" cy="5"  rx="2.2" ry="3.8"  fill="rgba(21,101,192,0.22)" transform="rotate(45 15 5)"/>
+        <ellipse cx="5"  cy="15" rx="2.2" ry="3.8"  fill="rgba(21,101,192,0.22)" transform="rotate(45 5 15)"/>
+        <ellipse cx="15" cy="15" rx="2.2" ry="3.8"  fill="rgba(21,101,192,0.22)" transform="rotate(-45 15 15)"/>
+        <circle cx="10" cy="10" r="3.2" fill="rgba(200,150,30,0.55)"/>
+        <circle cx="10" cy="10" r="1.6" fill="rgba(255,255,255,0.45)"/>
+      </svg>
+    </div>
+
+    <!-- BUTTERFLY 5 — lower right -->
+    <div class="deco deco-butterfly-5">
+      <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="5.5" cy="6"  rx="5"   ry="4"   fill="rgba(200,150,30,0.50)" transform="rotate(-22 5.5 6)"/>
+        <ellipse cx="4.5" cy="13" rx="4"   ry="3"   fill="rgba(200,150,30,0.34)" transform="rotate(16 4.5 13)"/>
+        <ellipse cx="18.5" cy="6"  rx="5"  ry="4"   fill="rgba(200,150,30,0.50)" transform="rotate(22 18.5 6)"/>
+        <ellipse cx="19.5" cy="13" rx="4"  ry="3"   fill="rgba(200,150,30,0.34)" transform="rotate(-16 19.5 13)"/>
+        <circle cx="6.5"  cy="5"  r="1.3" fill="rgba(255,255,255,0.32)"/>
+        <circle cx="17.5" cy="5"  r="1.3" fill="rgba(255,255,255,0.32)"/>
+        <ellipse cx="12" cy="9" rx="1.2" ry="6" fill="rgba(12,35,64,0.55)"/>
+        <path d="M11 3 C9 0 8 -0.5 7 -0.5"  stroke="rgba(200,150,30,0.55)" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+        <path d="M13 3 C15 0 16 -0.5 17 -0.5" stroke="rgba(200,150,30,0.55)" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+        <circle cx="7"  cy="-0.5" r="0.9" fill="rgba(200,150,30,0.65)"/>
+        <circle cx="17" cy="-0.5" r="0.9" fill="rgba(200,150,30,0.65)"/>
+      </svg>
+    </div>
+
+    <!-- bottom leaf spray -->
+    <div class="deco deco-leaf-bot">
+      <svg width="28" height="20" viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 19 C14 12 14 6 14 0" stroke="rgba(200,150,30,0.40)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <path d="M14 12 C10 9 4 10 2 5 C8 5 12 9 14 12Z" fill="rgba(200,150,30,0.26)"/>
+        <path d="M14 12 C18 9 24 10 26 5 C20 5 16 9 14 12Z" fill="rgba(200,150,30,0.26)"/>
+        <path d="M14 7  C11 4 6 5 4 1 C9 1 12 4 14 7Z"  fill="rgba(200,150,30,0.18)"/>
+        <path d="M14 7  C17 4 22 5 24 1 C19 1 16 4 14 7Z" fill="rgba(200,150,30,0.18)"/>
+      </svg>
+    </div>
+
+    <!-- Logo & school name — on top of all decorations -->
+    <div class="sidebar-logo-wrap">
+      {% if school_detail and school_detail.school_logo_url %}
+        <img class="sidebar-logo" src="{{ school_detail.school_logo_url }}" alt="{{ school.name }} Logo">
+      {% else %}
+        <div class="sidebar-logo-placeholder">SCHOOL<br>CREST</div>
+      {% endif %}
+      <div class="sidebar-school-name">{{ school.name }}</div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-vertical-label">Report Card</div>
+  </div>
+
+  <!-- ══ MAIN CONTENT ════════════════════════════ -->
+  <div class="main-content">
+
+    <div class="header-area">
+      <div class="school-name-main">{{ school.name }}</div>
+      {% if school.motto %}
+        <div class="school-motto">"{{ school.motto }}"</div>
+      {% endif %}
+      <div class="nursery-badge">Learner's Progress Report</div>
+      <div class="school-contact-bar">
+        {% if school_detail %}
+          {% if school_detail.po_box_number %}P.O. Box {{ school_detail.po_box_number }}{% endif %}
+          {% if school_detail.district %} &nbsp;·&nbsp; {{ school_detail.district }}{% endif %}
+          {% if school_detail.contact_1 %} &nbsp;·&nbsp; {{ school_detail.contact_1 }}{% endif %}
+          {% if school_detail.contact_2 %} / {{ school_detail.contact_2 }}{% endif %}
+          {% if school_detail.website_domain %} &nbsp;·&nbsp; {{ school_detail.website_domain }}{% endif %}
+          {% if school_detail.email %} &nbsp;·&nbsp; {{ school_detail.email }}{% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="rule-gold"></div>
+    <div class="rule-navy"></div>
+
+    <div class="term-banner">
+      <span>{{ exam_type }}</span>
+      &nbsp;—&nbsp;
+      {{ term.name if term else '' }},&nbsp;
+      {{ academic_year.name if academic_year else '' }}
+    </div>
+
+    <div class="student-block">
+      <div class="info-grid">
+        <div class="info-grid-header">Learner Information</div>
+        <div class="info-grid-body">
+
+          <span class="info-label">Adm. No:</span>
+          <div class="info-value">{{ student.admission_number or student.student_code }}</div>
+
+          <span class="info-label">Class:</span>
+          <div class="info-value">{{ class_name }} {{ stream_name }}</div>
+
+          <span class="info-label">Full Name:</span>
+          <div class="info-value" style="grid-column: span 3;">
+            {{ student.first_name }} {{ student.last_name }}
+          </div>
+
+          <span class="info-label">Gender:</span>
+          <div class="info-value">{{ student.gender or '' }}</div>
+
+          <span class="info-label">Enrolment:</span>
+          <div class="info-value">{{ student.student_type or '' }}</div>
+        </div>
+      </div>
+
+      <div class="photo-box">
+        {% if student.photo_url %}
+          <img src="{{ student.photo_url }}" alt="Student Photo">
+        {% else %}
+          <span class="photo-placeholder">PASSPORT<br>PHOTO</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="section-heading">
+      <div class="sh-line"></div>
+      <div class="sh-text">Academic Performance</div>
+      <div class="sh-line"></div>
+    </div>
+
+    <table class="subject-table">
+      <thead>
+        <tr>
+          <th style="width:28%">Subject</th>
+          <th class="c" style="width:13%">Mark (100%)</th>
+          <th class="c" style="width:9%">Grade</th>
+          <th style="width:26%">Remark</th>
+          <th style="width:24%">Subject Teacher</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if subject_rows %}
+          {% for row in subject_rows %}
+          <tr>
+            <td class="subj-name">{{ row.subject_name }}</td>
+            <td class="c">
+              {% if row.total_score is not none %}
+                <span class="score-pill">{{ row.total_score }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="c
+              {%- set g = row.grade|lower|replace(' ','_') -%}
+              {%- if g in ['d1','d2'] %} g-d1
+              {%- elif g in ['c3','c4','c5','c6'] %} g-c3
+              {%- elif g in ['p7','p8'] %} g-p7
+              {%- elif g == 'f9' %} g-f9
+              {%- else %} g-dash
+              {%- endif %}">{{ row.grade }}</td>
+            <td>{{ row.remark }}</td>
+            <td>{{ row.teacher_name }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center; color:#94a3b8; padding:16px; font-style:italic;">
+              No marks recorded.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <div class="result-strip">
+      <div class="result-cell">
+        <span class="result-label">Average Mark</span>
+        <span class="result-value">{{ average_mark if average_mark is not none else '—' }}</span>
+      </div>
+      <div class="result-cell">
+        <span class="result-label">Position</span>
+        <span class="result-value">
+          {{ position if position else '—' }}<span style="font-size:9px; font-weight:400; color:var(--slate-light);"> / {{ total_students }}</span>
+        </span>
+      </div>
+      <div class="result-cell">
+        <span class="result-label">Aggregates</span>
+        <span class="result-value">{{ aggregates if aggregates is not none else '—' }}</span>
+      </div>
+      <div class="result-cell">
+        <span class="result-label">Division</span>
+        <span class="result-value">{{ division if division else '—' }}</span>
+      </div>
+    </div>
+
+    <div class="conduct-section">
+      <div class="section-heading">
+        <div class="sh-line"></div>
+        <div class="sh-text">Behaviour &amp; Social Development</div>
+        <div class="sh-line"></div>
+      </div>
+
+      <table class="conduct-table">
+        <thead>
+          <tr>
+            <th style="width:36%">Trait</th>
+            <th class="c" style="width:22%">Rating</th>
+            <th style="width:42%">Remark</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set traits = [
+            'Class Participation',
+            'Neatness &amp; Hygiene',
+            'Respect for Others',
+            'Effort &amp; Attitude',
+            'Creative Skills'
+          ] %}
+          {% for trait in traits %}
+          <tr>
+            <td class="trait-name">{{ trait }}</td>
+            <td class="c"><span class="rating-star">★ ★ ★ ★ ☆</span></td>
+            <td></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bottom-row">
+
+      <div class="card">
+        <div class="card-header">Attendance</div>
+        <div class="att-body">
+          <div class="att-item">
+            <span class="att-num">{{ attendance.total if attendance.total else '—' }}</span>
+            <span class="att-lbl">Total</span>
+          </div>
+          <div class="att-item">
+            <span class="att-num">{{ attendance.present if attendance.present else '—' }}</span>
+            <span class="att-lbl">Present</span>
+          </div>
+          <div class="att-item">
+            <span class="att-num">{{ attendance.absent if attendance.absent else '—' }}</span>
+            <span class="att-lbl">Absent</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Grading Key</div>
+        <div class="legend-body">
+          {% for item in grade_legend %}
+          <div class="legend-item">
+            <span class="legend-grade">{{ item.grade }}</span>
+            <span class="legend-range">{{ item.min }}–{{ item.max }}</span>
+            {% if item.remark %}<span style="color:var(--slate-light); font-style:italic;">({{ item.remark }})</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="remarks-card">
+        <div class="card-header">Comments &amp; Signatures</div>
+        <div class="remark-row">
+          <div class="remark-who">
+            Class<br>Teacher
+            <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
+          </div>
+          <div class="remark-lines">
+            <div class="remark-line"></div>
+            <div class="remark-line"></div>
+            <div class="remark-line"></div>
+          </div>
+        </div>
+        <div class="remark-row">
+          <div class="remark-who">
+            Head<br>Teacher
+            <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
+          </div>
+          <div class="remark-lines">
+            <div class="remark-line"></div>
+            <div class="remark-line"></div>
+            <div class="remark-line"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="next-term-panel">
+      <div class="card-header">Next Term Information</div>
+      <div class="next-term-body">
+        <div class="next-item">
+          <span class="next-label">Reopening Date</span>
+          <span class="next-value">&nbsp;</span>
+        </div>
+        <div class="next-item">
+          <span class="next-label">School Fees (UGX)</span>
+          <span class="next-value">&nbsp;</span>
+        </div>
+        <div class="next-item">
+          <span class="next-label">Parent / Guardian Signature</span>
+          <span class="next-value">&nbsp;</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div class="footer-school">{{ school.name }}</div>
+      <div class="footer-stamp">
+        Generated: {{ generated_date }}<br>
+        <span style="color:var(--navy); font-weight:700;">{{ academic_year.name if academic_year else '' }}</span>
+      </div>
+      <div class="footer-seal">OFFICIAL<br>SEAL</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

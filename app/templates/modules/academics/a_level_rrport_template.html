@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+
+{% block title %}A Level Report Card{% endblock %}
+
+{% block content %}
+
+<style>
+.report-container{
+    width: 210mm;
+    min-height: 297mm;
+    margin: auto;
+    background: #fff;
+    padding: 15px;
+    border: 2px solid #444;
+    color: #000;
+    font-family: "Times New Roman", serif;
+}
+
+table{
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td, th{
+    border: 1px solid #555;
+    padding: 4px;
+    font-size: 13px;
+}
+
+.no-border{
+    border: none !important;
+}
+
+.center{
+    text-align: center;
+}
+
+.right{
+    text-align: right;
+}
+
+.bold{
+    font-weight: bold;
+}
+
+.blue{
+    color: #1d2fa3;
+}
+
+.red{
+    color: #b00000;
+}
+
+.header-table td{
+    border: none;
+}
+
+.school-logo{
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.passport{
+    width: 90px;
+    height: 90px;
+    border: 1px solid #333;
+    object-fit: cover;
+}
+
+.main-title{
+    font-size: 20px;
+    font-weight: bold;
+    color: #1d2fa3;
+}
+
+.sub-title{
+    font-size: 15px;
+}
+
+.section-title{
+    background: #1d2fa3;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+    padding: 5px;
+}
+
+.info-table td{
+    font-size: 14px;
+}
+
+.performance-table th{
+    background: #f3f3f3;
+}
+
+.comment-box{
+    min-height: 60px;
+}
+
+.footer-table td{
+    text-align: center;
+    font-weight: bold;
+}
+
+.grade-table td,
+.grade-table th{
+    text-align: center;
+}
+
+@media print{
+    body{
+        background: white;
+    }
+
+    .report-container{
+        border: none;
+        width: 100%;
+    }
+}
+</style>
+
+<div class="report-container">
+
+    <!-- HEADER -->
+    <table class="header-table">
+        <tr>
+            <td width="12%">
+                <img src="{{ school.logo_url }}" class="school-logo">
+            </td>
+
+            <td width="73%">
+                <div class="main-title">
+                    {{ school.name|upper }}
+                </div>
+
+                <div class="sub-title">
+                    P.O BOX {{ school.box_number }}, {{ school.address }}
+                </div>
+
+                <div class="sub-title">
+                    EMAIL: {{ school.email }}
+                </div>
+
+                <div class="sub-title">
+                    CONTACTS:
+                    {{ school.phone_1 }}
+                    {% if school.phone_2 %}
+                    | {{ school.phone_2 }}
+                    {% endif %}
+                </div>
+            </td>
+
+            <td width="15%" class="right">
+                <img src="{{ student.photo_url }}" class="passport">
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- REPORT TITLE -->
+    <div class="section-title">
+        A LEVEL END OF TERM {{ term.name|upper }} REPORT CARD {{ term.year }}
+    </div>
+
+    <!-- STUDENT INFO -->
+    <table class="info-table">
+        <tr>
+            <td class="bold">NAME:</td>
+            <td class="blue bold">{{ student.full_name|upper }}</td>
+
+            <td class="bold">GENDER:</td>
+            <td>{{ student.gender }}</td>
+        </tr>
+
+        <tr>
+            <td class="bold">AGE</td>
+            <td>{{ student.age }}</td>
+
+            <td class="bold">ROLL NO</td>
+            <td>{{ student.roll_no }}</td>
+        </tr>
+
+        <tr>
+            <td class="bold">CLASS</td>
+            <td class="blue bold">{{ student.class_name }}</td>
+
+            <td class="bold">STREAM</td>
+            <td>{{ student.stream_name }}</td>
+        </tr>
+
+        <tr>
+            <td class="bold">COMBINATION</td>
+            <td>{{ student.combination }}</td>
+
+            <td class="bold">TERM</td>
+            <td>{{ term.name }}</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- PERFORMANCE TITLE -->
+    <div class="section-title">
+        TERM PERFORMANCE RECORDS
+    </div>
+
+    <!-- PERFORMANCE TABLE -->
+    <table class="performance-table">
+
+        <thead>
+            <tr>
+                <th rowspan="2">Code</th>
+                <th rowspan="2">Subject</th>
+
+                <th colspan="4">FORMATIVE</th>
+
+                <th rowspan="2">20%</th>
+
+                <th colspan="3">SUMMATIVE</th>
+
+                <th rowspan="2">Grade</th>
+                <th rowspan="2">Comment</th>
+                <th rowspan="2">TR</th>
+            </tr>
+
+            <tr>
+                <th>A1</th>
+                <th>A2</th>
+                <th>A3</th>
+                <th>AVG</th>
+
+                <th>EOT</th>
+                <th>80%</th>
+                <th>100%</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for result in results %}
+            <tr>
+                <td>{{ result.subject_code }}</td>
+
+                <td class="bold">
+                    {{ result.subject_name }}
+                </td>
+
+                <td class="red">{{ result.a1 }}</td>
+                <td class="red">{{ result.a2 }}</td>
+                <td class="red">{{ result.a3 }}</td>
+
+                <td>{{ result.average }}</td>
+
+                <td>{{ result.coursework_20 }}</td>
+
+                <td>{{ result.eot_mark }}</td>
+
+                <td class="red">
+                    {{ result.eot_80 }}
+                </td>
+
+                <td class="blue bold">
+                    {{ result.final_mark }}
+                </td>
+
+                <td class="bold">
+                    {{ result.grade }}
+                </td>
+
+                <td class="red">
+                    {{ result.comment }}
+                </td>
+
+                <td>
+                    {{ result.teacher_initials }}
+                </td>
+            </tr>
+            {% endfor %}
+
+            <!-- AVERAGE ROW -->
+            <tr>
+                <td colspan="6" class="bold center">
+                    AVERAGE SCORES
+                </td>
+
+                <td class="red bold">
+                    {{ summary.avg_coursework }}
+                </td>
+
+                <td></td>
+
+                <td class="red bold">
+                    {{ summary.avg_eot }}
+                </td>
+
+                <td class="blue bold">
+                    {{ summary.final_average }}
+                </td>
+
+                <td class="bold">
+                    {{ summary.grade }}
+                </td>
+
+                <td class="red bold">
+                    {{ summary.comment }}
+                </td>
+
+                <td></td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <br>
+
+    <!-- GRADING SYSTEM -->
+    <table class="grade-table">
+        <tr>
+            <th>GRADE</th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+        </tr>
+
+        <tr>
+            <th>SCORES</th>
+            <td>75-100</td>
+            <td>65-74</td>
+            <td>50-64</td>
+            <td>35-49</td>
+            <td>0-34</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- PROJECT WORK -->
+    <div class="section-title">
+        STUDENT'S PROJECTS WORK
+    </div>
+
+    <table>
+        <tr>
+            <th>TERM PROJECT WORK</th>
+            <th>AVERAGE SCORE(10)</th>
+            <th>OUT OF 100</th>
+            <th>GRADE</th>
+            <th>REMARKS</th>
+            <th>TEACHER</th>
+        </tr>
+
+        <tr>
+            <td>{{ project.name }}</td>
+            <td>{{ project.score }}</td>
+            <td>{{ project.percentage }}%</td>
+            <td>{{ project.grade }}</td>
+            <td>{{ project.remark }}</td>
+            <td>{{ project.teacher }}</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <!-- COMMENTS -->
+    <table>
+        <tr>
+            <td width="20%" class="bold">
+                Class Teacher's Comment:
+            </td>
+
+            <td class="comment-box">
+                {{ comments.class_teacher }}
+            </td>
+        </tr>
+
+        <tr>
+            <td class="bold">
+                Headteacher's Comment:
+            </td>
+
+            <td class="comment-box">
+                {{ comments.headteacher }}
+            </td>
+        </tr>
+    </table>
+
+    <br><br>
+
+    <!-- FOOTER -->
+    <table class="footer-table">
+        <tr>
+            <td>
+                {{ footer.term_end }}
+
+                <br>
+
+                TERM ENDED ON
+            </td>
+
+            <td>
+                {{ footer.next_term }}
+
+                <br>
+
+                NEXT TERM BEGINS
+            </td>
+
+            <td>
+                UGX {{ footer.balance }}
+
+                <br>
+
+                FEES BALANCE
+            </td>
+
+            <td>
+                UGX {{ footer.next_fees }}
+
+                <br>
+
+                FEES NEXT TERM
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <div class="center bold">
+        SUCCESS AFTER STRUGGLE
+    </div>
+
+</div>
+
+{% endblock %}

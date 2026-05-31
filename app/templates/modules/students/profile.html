@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+:root {
+  --navy:#0f2044;
+  --gold:#c9a84c;
+  --gray:#6b7280;
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --border:#e5e7eb;
+}
+
+body{
+  background:var(--bg);
+  font-family:DM Sans, sans-serif;
+}
+
+.wrapper{
+  max-width:1100px;
+  margin:30px auto;
+  padding:20px;
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+  border-bottom:2px solid var(--gold);
+  padding-bottom:12px;
+}
+
+.header h1{
+  color:var(--navy);
+  font-size:22px;
+}
+
+.badge{
+  background:var(--navy);
+  color:white;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+@media(max-width:900px){
+  .grid{ grid-template-columns:1fr; }
+}
+
+/* CARD */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+.card h2{
+  font-size:14px;
+  color:var(--gold);
+  margin-bottom:12px;
+  text-transform:uppercase;
+}
+
+/* FIELD */
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:8px 0;
+  border-bottom:1px dashed var(--border);
+}
+
+.label{
+  color:var(--gray);
+  font-size:13px;
+}
+
+.value{
+  font-weight:500;
+  color:#111827;
+}
+
+/* DOCUMENTS */
+.doc{
+  display:flex;
+  justify-content:space-between;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-bottom:8px;
+}
+
+.doc a{
+  color:var(--navy);
+  text-decoration:none;
+  font-size:13px;
+}
+
+.doc a:hover{
+  text-decoration:underline;
+}
+
+/* IMAGE */
+.avatar{
+  width:90px;
+  height:90px;
+  border-radius:50%;
+  object-fit:cover;
+  border:3px solid var(--gold);
+}
+
+.top{
+  display:flex;
+  gap:20px;
+  align-items:center;
+}
+</style>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Student Profile</h1>
+    <span class="badge">{{ student.student_code }}</span>
+  </div>
+
+  <!-- TOP INFO -->
+  <div class="card top" style="margin-bottom:20px;">
+    
+    {% if student.photo_url %}
+<img
+  src="{{ url_for('static', filename=student.photo_url.replace('app/static/', '')) }}"
+  class="avatar"
+> {% else %}
+      <div class="avatar" style="background:#ddd;"></div>
+    {% endif %}
+
+    <div>
+      <h2 style="color:var(--navy); margin:0;">
+        {{ student.first_name }} {{ student.last_name }}
+      </h2>
+      <p style="color:var(--gray); margin-top:5px;">
+        {{ student.gender }} • {{ class_obj.name if class_obj else '' }}
+      </p>
+    </div>
+
+  </div>
+
+  <!-- GRID -->
+  <div class="grid">
+
+    <!-- STUDENT INFO -->
+    <div class="card">
+      <h2>Student Information</h2>
+
+      <div class="row"><span class="label">Admission No</span><span class="value">{{ student.admission_number }}</span></div>
+      <div class="row"><span class="label">DOB</span><span class="value">{{ student.date_of_birth }}</span></div>
+      <div class="row"><span class="label">Gender</span><span class="value">{{ student.gender }}</span></div>
+      <div class="row"><span class="label">Nationality</span><span class="value">{{ student.nationality or '-' }}</span></div>
+      <div class="row"><span class="label">NIN</span><span class="value">{{ student.nin or '-' }}</span></div>
+      {% if school.school_type == "secondary" %}
+      <div class="row"><span class="label">Level</span><span class="value">{{ student.level or '-' }}</span></div>
+ {% endif %}
+    </div>
+
+    <!-- ACADEMIC -->
+    <div class="card">
+      <h2>Academic Info</h2>
+
+      <div class="row"><span class="label">Class</span><span class="value">{{ class_obj.name if class_obj else '-' }}</span></div>
+      <div class="row"><span class="label">student type</span><span class="value">{{ student.student_type }}</span></div>
+
+      {% if academic %}
+      <div class="row"><span class="label">Record ID</span><span class="value">{{ academic.id }}</span></div>
+      {% endif %}
+    </div>
+
+    <!-- GUARDIAN -->
+<div class="card">
+  <h2>Guardian</h2>
+
+  <div class="row">
+    <span class="label">Name</span>
+    <span class="value">{{ guardian.name if guardian else '-' }}</span>
+  </div>
+
+  <div class="row">
+    <span class="label">Relationship</span>
+    <span class="value">{{ guardian.relationship if guardian and guardian.relationship else '-' }}</span>
+  </div>
+
+  <div class="row">
+    <span class="label">Contact</span>
+    <span class="value">{{ guardian.contact if guardian and guardian.contact else '-' }}</span>
+  </div>
+
+  <div class="row">
+    <span class="label">Occupation</span>
+    <span class="value">{{ guardian.occupation if guardian and guardian.occupation else '-' }}</span>
+  </div>
+
+  <div class="row">
+    <span class="label">Address</span>
+    <span class="value">{{ guardian.address if guardian and guardian.address else '-' }}</span>
+  </div>
+
+  {% if guardian and guardian.photo_url %}
+  <img
+    src="{{ url_for('static', filename=guardian.photo_url.replace('app/static/', '')) }}"
+    class="avatar"
+  >
+  {% else %}
+  <div class="avatar" style="background:#ddd;"></div>
+  {% endif %}
+
+</div>
+
+    <!-- MEDICAL -->
+    <div class="card">
+      <h2>Medical Information</h2>
+
+<div class="row">
+    <span class="label">Conditions</span>
+
+    <span class="value">
+        {% if medical %}
+
+            {% set conditions = [] %}
+
+            {% if medical.has_asthma %}
+                {% set _ = conditions.append('Asthma') %}
+            {% endif %}
+
+            {% if medical.has_heart_problem %}
+                {% set _ = conditions.append('Heart Problem') %}
+            {% endif %}
+
+            {% if medical.has_sickle_cell %}
+                {% set _ = conditions.append('Sickle Cell') %}
+            {% endif %}
+
+            {% if medical.has_hiv %}
+                {% set _ = conditions.append('HIV') %}
+            {% endif %}
+
+            {% if medical.other_conditions %}
+                {% set _ = conditions.append(medical.other_conditions) %}
+            {% endif %}
+
+            {{ conditions | join(', ') if conditions else '-' }}
+
+        {% else %}
+            -
+        {% endif %}
+    </span>
+</div>
+
+    </div>
+
+  </div>
+
+  <!-- DOCUMENTS FULL WIDTH -->
+ <div class="card" style="margin-top:20px;">
+  <h2>Documents</h2>
+
+  {% if documents %}
+    {% for doc in documents %}
+      <div class="doc">
+        <a
+          href="{{ url_for('static', filename=doc.file_url.replace('app/static/', '')) }}"
+          target="_blank"
+        >
+          {{ doc.document_type }}
+        </a>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="color:var(--gray); font-size:13px;">
+      No documents uploaded
+    </p>
+  {% endif %}
+
+</div>
+
+</div>
+{% endblock %}

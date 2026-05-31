@@ -1,0 +1,798 @@
+{% extends "base.html" %}
+{% block title %}Record Attendance{% endblock %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --ink:#0a0f1e; --ink-2:#3d4a63; --ink-3:#8492a6; --line:#e8ecf3;
+    --surface:#ffffff; --bg:#f4f6fb;
+    --blue:#2352ff; --blue-dim:#e8edff; --blue-dark:#1438cc;
+    --green:#00c07a; --green-dim:#e0faf0;
+    --rose:#f43f5e; --rose-dim:#ffe4e9;
+    --amber:#f59e0b; --amber-dim:#fef3c7;
+    --purple:#7c3aed; --purple-dim:#ede9fe;
+    --r-sm:8px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+    --shadow-sm:0 1px 4px rgba(10,15,30,.06);
+    --shadow-md:0 4px 20px rgba(10,15,30,.08);
+    --shadow-xl:0 24px 64px rgba(10,15,30,.18);
+    --font-display:'Syne',sans-serif;
+    --font-body:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
+
+/* ── Toast ── */
+#toast-rack{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;color:#fff;padding:14px 20px;border-radius:var(--r-md);font-size:14px;font-weight:500;box-shadow:var(--shadow-xl);animation:toastIn .3s cubic-bezier(.16,1,.3,1) forwards;pointer-events:auto;max-width:360px}
+.toast.success{background:#0d1f0f;border-left:3px solid var(--green)}
+.toast.error  {background:#200a0e;border-left:3px solid var(--rose)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(8px)}}
+.toast.leaving{animation:toastOut .25s ease forwards}
+
+/* ── Page header ── */
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px;flex-wrap:wrap}
+.header-eyebrow{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.header-title{font-family:var(--font-display);font-size:30px;font-weight:800;line-height:1.1}
+.header-sub{margin-top:6px;font-size:14px;color:var(--ink-3)}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:4px;margin-bottom:24px;box-shadow:var(--shadow-sm);width:fit-content}
+.tab-btn{height:40px;padding:0 20px;border:none;border-radius:10px;background:none;font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--ink-3);cursor:pointer;transition:all .18s}
+.tab-btn.active{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(35,82,255,.3)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── Card ── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:20px}
+.card-header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.card-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+.card-body{padding:24px}
+
+/* ── Form controls ── */
+.field{display:flex;flex-direction:column;gap:7px}
+.field label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
+.fc{height:46px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:0 14px;font-size:14px;font-family:var(--font-body);color:var(--ink);background:var(--bg);outline:none;transition:border-color .18s,box-shadow .18s;width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238492a6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;cursor:pointer}
+.fc.no-arrow{background-image:none;padding-right:14px;cursor:text}
+.fc:focus{border-color:var(--blue);background-color:var(--surface);box-shadow:0 0 0 3px rgba(35,82,255,.12)}
+.fc:disabled{opacity:.5;cursor:not-allowed}
+
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;align-items:end}
+
+/* ── Buttons ── */
+.btn{height:46px;padding:0 22px;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-primary:disabled{opacity:.6;pointer-events:none}
+.btn-ghost{background:none;border:1.5px solid var(--line);color:var(--ink-2)}
+.btn-ghost:hover{border-color:var(--ink-2);color:var(--ink)}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{background:#00a368}
+.btn-success:disabled{opacity:.6;pointer-events:none}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn.loading .spinner{display:block}
+.btn.loading .btn-label{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Assignment cards ── */
+.assignment-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.assignment-card{border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;cursor:pointer;transition:all .18s;background:var(--surface);position:relative}
+.assignment-card:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(35,82,255,.12)}
+.assignment-card.selected{border-color:var(--blue);background:var(--blue-dim)}
+.assignment-card .ac-subject{font-family:var(--font-display);font-size:15px;font-weight:800;margin-bottom:6px}
+.assignment-card .ac-stream{font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:12px}
+.assignment-card .ac-meta{display:flex;gap:8px;flex-wrap:wrap}
+.meta-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
+.meta-pill.subject{background:var(--purple-dim);color:var(--purple)}
+.meta-pill.stream{background:var(--amber-dim);color:#92400e}
+.ac-check{position:absolute;top:14px;right:14px;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .18s}
+.assignment-card.selected .ac-check{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* ── Student attendance table ── */
+.att-table-wrap{overflow-x:auto}
+.att-table{width:100%;border-collapse:collapse}
+.att-table th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);background:#f8fafd;border-bottom:1px solid var(--line)}
+.att-table td{padding:14px 16px;border-top:1px solid var(--line);font-size:14px;vertical-align:middle}
+.att-table tbody tr:hover{background:#f8fafd}
+.name-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:9px;background:var(--blue-dim);color:var(--blue);font-family:var(--font-display);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ── Status toggle ── */
+.status-toggle{display:flex;gap:6px}
+.st-btn{height:34px;padding:0 14px;border-radius:6px;border:1.5px solid var(--line);background:none;font-family:var(--font-body);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--ink-3)}
+.st-btn.present.active{background:var(--green-dim);border-color:var(--green);color:#065f46}
+.st-btn.absent.active {background:var(--rose-dim);border-color:var(--rose);color:#9f1239}
+.st-btn.late.active   {background:var(--amber-dim);border-color:var(--amber);color:#92400e}
+.st-btn:hover{border-color:var(--ink-3)}
+
+/* ── Status badges ── */
+.badge{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge.present{background:var(--green-dim);color:#065f46}
+.badge.absent {background:var(--rose-dim);color:#9f1239}
+.badge.late   {background:var(--amber-dim);color:#92400e}
+
+/* ── Summary bar ── */
+.summary-bar{display:flex;gap:16px;flex-wrap:wrap;padding:16px 24px;background:#f8fafd;border-top:1px solid var(--line)}
+.sum-item{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.sum-dot{width:10px;height:10px;border-radius:3px}
+.sum-dot.present{background:var(--green)}
+.sum-dot.absent {background:var(--rose)}
+.sum-dot.late   {background:var(--amber)}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:56px 24px}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.empty-sub{font-size:13px;color:var(--ink-3)}
+
+/* ── Pagination ── */
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;border-top:1px solid var(--line);background:#f8fafd;flex-wrap:wrap}
+.pagination-info{font-size:13px;color:var(--ink-3);font-weight:500}
+.pagination-info strong{color:var(--ink-2)}
+.page-btns{display:flex;align-items:center;gap:6px}
+.page-btn{height:34px;min-width:34px;padding:0 10px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:var(--surface);font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.page-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.page-btn.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.page-ellipsis{font-size:13px;color:var(--ink-3);padding:0 4px}
+
+@media(max-width:768px){
+    .page-header{flex-direction:column}
+    .filter-grid{grid-template-columns:1fr}
+    .assignment-grid{grid-template-columns:1fr}
+    .tabs{width:100%}
+    .tab-btn{flex:1;text-align:center}
+    .pagination{flex-direction:column;align-items:flex-start}
+}
+</style>
+
+<div id="toast-rack"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div>
+        <div class="header-eyebrow">Teachers Module</div>
+        <h2 class="header-title">Record Attendance</h2>
+        <p class="header-sub">
+            Mark student attendance for your assigned classes
+            &nbsp;·&nbsp;
+            <strong>{{ teacher_name }}</strong>
+        </p>
+    </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('record', this)">
+        ✏️ Mark Attendance
+    </button>
+    <button class="tab-btn" onclick="switchTab('history', this)">
+        📋 View History
+    </button>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     TAB 1 — MARK ATTENDANCE
+════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-record">
+
+    <!-- Step 1: Pick assignment -->
+    <div class="card" id="stepAssignment">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Step 1 — Select Class &amp; Subject</div>
+                <div style="font-size:13px;color:var(--ink-3);margin-top:3px">
+                    Choose which lesson you are marking attendance for
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+
+            {% if assignments %}
+            <div class="assignment-grid" id="assignmentGrid">
+                {% for a in assignments %}
+                <div class="assignment-card"
+                    data-id="{{ a.id }}"
+                    data-stream-id="{{ a.stream_id or '' }}"
+                    data-subject="{{ a.subject_name }}"
+                    data-stream="{{ a.stream_label or 'Whole Class' }}"
+                    onclick="selectAssignment(this)">
+                    <div class="ac-check">✓</div>
+                    <div class="ac-subject">{{ a.subject_name }}</div>
+                    <div class="ac-stream">{{ a.stream_label or 'Whole Class' }}</div>
+                    <div class="ac-meta">
+                        <span class="meta-pill subject">{{ a.subject_name }}</span>
+                        <span class="meta-pill stream">{{ a.stream_label or '—' }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📚</div>
+                <div class="empty-title">No assignments found</div>
+                <div class="empty-sub">You have no teaching assignments yet. Ask an admin to assign you to a class.</div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Step 2: Date + mark students -->
+    <div class="card" id="stepMark" style="display:none">
+        <div class="card-header">
+            <div>
+                <div class="card-title" id="markTitle">Step 2 — Mark Students</div>
+                <div style="font-size:13px;color:var(--ink-3);margin-top:3px" id="markSub">Select a date then mark each student</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <div class="field">
+                    <input type="date" id="attendanceDate" class="fc no-arrow" style="width:180px">
+                </div>
+                <button class="btn btn-ghost" onclick="loadStudents(1)">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    <span class="btn-label">Load Students</span>
+                </button>
+                <button class="btn btn-ghost" onclick="resetAssignment()">
+                    ← Change
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick mark all -->
+        <div style="padding:12px 24px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:600;color:var(--ink-2)">Mark all as:</span>
+            <button class="btn btn-ghost" style="height:34px;padding:0 14px;font-size:12px" onclick="markAll('present')">✅ Present</button>
+            <button class="btn btn-ghost" style="height:34px;padding:0 14px;font-size:12px" onclick="markAll('absent')">❌ Absent</button>
+            <button class="btn btn-ghost" style="height:34px;padding:0 14px;font-size:12px" onclick="markAll('late')">⏰ Late</button>
+        </div>
+
+        <div class="att-table-wrap">
+            <table class="att-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Code</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTbody">
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-state">
+                                <div class="empty-icon">👆</div>
+                                <div class="empty-title">Select a date and click Load Students</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Students pagination -->
+        <div id="studentsPagination" style="display:none">
+            <div class="pagination">
+                <div class="pagination-info" id="studentsPageInfo">Showing 0 students</div>
+                <div class="page-btns" id="studentsPageBtns"></div>
+            </div>
+        </div>
+
+        <div class="summary-bar" id="summaryBar" style="display:none">
+            <div class="sum-item">
+                <span class="sum-dot present"></span>
+                <span id="sumPresent">0 present</span>
+            </div>
+            <div class="sum-item">
+                <span class="sum-dot absent"></span>
+                <span id="sumAbsent">0 absent</span>
+            </div>
+            <div class="sum-item">
+                <span class="sum-dot late"></span>
+                <span id="sumLate">0 late</span>
+            </div>
+        </div>
+
+        <div style="padding:18px 24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <span style="font-size:12px;color:var(--ink-3)" id="savePaginationNote"></span>
+            <button class="btn btn-success" id="saveBtn" onclick="saveAttendance()">
+                <div class="spinner"></div>
+                <span class="btn-label">💾 Save Attendance</span>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ════════════════════════════════════════
+     TAB 2 — VIEW HISTORY
+════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-history">
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Filter Records</div>
+        </div>
+        <div class="card-body">
+            <div class="filter-grid">
+
+                <div class="field">
+                    <label>Date</label>
+                    <input type="date" id="histDate" class="fc no-arrow">
+                </div>
+
+                <div class="field">
+                    <label>Assignment</label>
+                    <select id="histAssignment" class="fc">
+                        <option value="">All Assignments</option>
+                        {% for a in assignments %}
+                        <option value="{{ a.id }}">
+                            {{ a.subject_name }} — {{ a.stream_label or 'Whole Class' }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="loadHistory(1)">
+                        <div class="spinner"></div>
+                        <span class="btn-label">Apply Filter</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Attendance History</div>
+            <span id="histBadge" style="background:var(--blue-dim);color:var(--blue);font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">
+                0 records
+            </span>
+        </div>
+        <div class="att-table-wrap">
+            <table class="att-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Stream</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="histTbody">
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-title">No records loaded</div>
+                                <div class="empty-sub">Use the filters above and click Apply Filter</div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- History pagination -->
+        <div id="histPagination" style="display:none">
+            <div class="pagination">
+                <div class="pagination-info" id="histPageInfo">Showing 0 records</div>
+                <div class="page-btns" id="histPageBtns"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+/* ── State ── */
+let selectedAssignmentId       = null;
+let selectedAssignmentStreamId = null;
+
+// Stores ALL statuses set by the teacher keyed by student_id,
+// across all pages of the current session.
+let statusMap = {};
+
+// Pagination state for students
+let studentsPag = { page: 1, total: 0, total_pages: 1, per_page: 30 };
+
+// Pagination state for history
+let histPag = { page: 1, total: 0, total_pages: 1, per_page: 25 };
+
+// Cached existing attendance for current date (all pages, fetched once)
+let existingAttCache = {};
+
+/* ── Token ── */
+function getToken() { return localStorage.getItem('access_token') || ''; }
+
+/* ── Auth headers ── */
+function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+}
+
+/* ── Toast ── */
+function toast(msg, type = 'success') {
+    const rack = document.getElementById('toast-rack');
+    const el   = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span style="font-size:16px">${type === 'success' ? '✅' : '❌'}</span><span>${msg}</span>`;
+    rack.appendChild(el);
+    setTimeout(() => { el.classList.add('leaving'); el.addEventListener('animationend', () => el.remove()); }, 3600);
+}
+
+/* ── Tab switching ── */
+function switchTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+}
+
+/* ── Select assignment card ── */
+function selectAssignment(card) {
+    document.querySelectorAll('.assignment-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+
+    selectedAssignmentId       = parseInt(card.dataset.id);
+    selectedAssignmentStreamId = card.dataset.streamId ? parseInt(card.dataset.streamId) : null;
+
+    document.getElementById('markTitle').textContent =
+        `Step 2 — ${card.dataset.subject} · ${card.dataset.stream}`;
+    document.getElementById('markSub').textContent =
+        'Select a date then click Load Students';
+
+    // Reset state for new assignment
+    statusMap        = {};
+    existingAttCache = {};
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('attendanceDate').value = today;
+
+    document.getElementById('stepMark').style.display = 'block';
+    document.getElementById('stepMark').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Reset assignment selection ── */
+function resetAssignment() {
+    selectedAssignmentId = null;
+    statusMap            = {};
+    existingAttCache     = {};
+    document.querySelectorAll('.assignment-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('stepMark').style.display      = 'none';
+    document.getElementById('studentsTbody').innerHTML     = '';
+    document.getElementById('summaryBar').style.display    = 'none';
+    document.getElementById('studentsPagination').style.display = 'none';
+    document.getElementById('savePaginationNote').textContent   = '';
+}
+
+/* ── Load students for selected assignment + date ── */
+async function loadStudents(page) {
+    if (!selectedAssignmentId) {
+        toast('Please select an assignment first', 'error'); return;
+    }
+    const date = document.getElementById('attendanceDate').value;
+    if (!date) { toast('Please select a date', 'error'); return; }
+
+    // Reset status map and cache when reloading from scratch (page 1 = new filter)
+    if (page === 1) {
+        statusMap        = {};
+        existingAttCache = {};
+    }
+
+    const tbody = document.getElementById('studentsTbody');
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--ink-3)">Loading…</td></tr>`;
+
+    try {
+        const params = new URLSearchParams({
+            assignment_id: selectedAssignmentId,
+            date,
+            page,
+            per_page: studentsPag.per_page,
+        });
+
+        const resp = await fetch(`/api/teachers/attendance/students?${params}`, {
+            headers: authHeaders()
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.message || 'Failed to load students');
+
+        // Merge existing_attendance into cache (returned on every page)
+        (data.existing_attendance || []).forEach(e => {
+            existingAttCache[e.student_id] = e.status;
+        });
+
+        studentsPag = { ...studentsPag, ...data.pagination };
+
+        renderStudentRows(data.students);
+        updateSummary();
+        document.getElementById('summaryBar').style.display = 'flex';
+        renderStudentsPagination(data.pagination);
+
+        // Show note when there are multiple pages so the teacher knows
+        // Save will submit ALL pages' statuses, not just the current view.
+        if (data.pagination.total_pages > 1) {
+            document.getElementById('savePaginationNote').textContent =
+                `⚠️ ${data.pagination.total} students across ${data.pagination.total_pages} pages — Save submits all marked statuses.`;
+        } else {
+            document.getElementById('savePaginationNote').textContent = '';
+        }
+
+    } catch (e) {
+        toast(e.message, 'error');
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">${e.message}</div></div></td></tr>`;
+    }
+}
+
+/* ── Render student rows ── */
+function renderStudentRows(students) {
+    const tbody = document.getElementById('studentsTbody');
+
+    if (!students.length) {
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🎓</div><div class="empty-title">No students in this stream</div></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = students.map(s => {
+        const initials = (s.first_name[0] + s.last_name[0]).toUpperCase();
+        // Priority: statusMap (teacher already touched this student) → existingAttCache → 'present'
+        const cur = statusMap[s.id] ?? existingAttCache[s.id] ?? 'present';
+        // Persist default into statusMap so Save captures it even if teacher never clicks
+        if (statusMap[s.id] === undefined) {
+            statusMap[s.id] = cur;
+        }
+        return `
+        <tr id="srow-${s.id}">
+            <td>
+                <div class="name-cell">
+                    <div class="avatar">${initials}</div>
+                    <div>
+                        <div style="font-weight:600">${s.first_name} ${s.last_name}</div>
+                    </div>
+                </div>
+            </td>
+            <td><span style="font-size:12px;font-weight:700;background:var(--ink);color:#fff;padding:3px 9px;border-radius:5px">${s.student_code}</span></td>
+            <td>
+                <div class="status-toggle">
+                    <button class="st-btn present ${cur === 'present' ? 'active' : ''}"
+                        onclick="setStatus(${s.id}, 'present', this)">Present</button>
+                    <button class="st-btn late   ${cur === 'late'    ? 'active' : ''}"
+                        onclick="setStatus(${s.id}, 'late',    this)">Late</button>
+                    <button class="st-btn absent ${cur === 'absent'  ? 'active' : ''}"
+                        onclick="setStatus(${s.id}, 'absent',  this)">Absent</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+/* ── Set individual student status ── */
+function setStatus(studentId, status, btn) {
+    // Persist into global map
+    statusMap[studentId] = status;
+
+    const row  = document.getElementById('srow-' + studentId);
+    const btns = row.querySelectorAll('.st-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateSummary();
+}
+
+/* ── Mark all students on the CURRENT PAGE with one status ── */
+function markAll(status) {
+    document.querySelectorAll('.st-btn.' + status).forEach(btn => {
+        const row = btn.closest('tr[id^="srow-"]');
+        if (!row) return;
+        const studentId = parseInt(row.id.replace('srow-', ''));
+        statusMap[studentId] = status;
+        row.querySelectorAll('.st-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    });
+    updateSummary();
+}
+
+/* ── Update summary counts (current page only) ── */
+function updateSummary() {
+    let present = 0, absent = 0, late = 0;
+    document.querySelectorAll('#studentsTbody tr[id^="srow-"]').forEach(row => {
+        const active = row.querySelector('.st-btn.active');
+        if (!active) return;
+        if (active.classList.contains('present')) present++;
+        else if (active.classList.contains('absent'))  absent++;
+        else if (active.classList.contains('late'))    late++;
+    });
+    document.getElementById('sumPresent').textContent = `${present} present`;
+    document.getElementById('sumAbsent').textContent  = `${absent} absent`;
+    document.getElementById('sumLate').textContent    = `${late} late`;
+}
+
+/* ── Render students pagination controls ── */
+function renderStudentsPagination(pag) {
+    const wrap = document.getElementById('studentsPagination');
+    const info = document.getElementById('studentsPageInfo');
+    const btns = document.getElementById('studentsPageBtns');
+
+    if (pag.total === 0) { wrap.style.display = 'none'; return; }
+
+    const start = (pag.page - 1) * pag.per_page + 1;
+    const end   = Math.min(pag.page * pag.per_page, pag.total);
+    info.innerHTML = `Showing <strong>${start}–${end}</strong> of <strong>${pag.total}</strong> students`;
+
+    btns.innerHTML  = buildPageButtons(pag, 'loadStudents');
+    wrap.style.display = 'block';
+}
+
+/* ── Save attendance — submits the full statusMap (all pages) ── */
+async function saveAttendance() {
+    if (!selectedAssignmentId) { toast('No assignment selected', 'error'); return; }
+    const date = document.getElementById('attendanceDate').value;
+    if (!date) { toast('Please select a date', 'error'); return; }
+
+    const records = Object.entries(statusMap).map(([sid, status]) => ({
+        student_id: parseInt(sid),
+        status,
+    }));
+
+    if (!records.length) { toast('No students to save', 'error'); return; }
+
+    const btn = document.getElementById('saveBtn');
+    btn.classList.add('loading'); btn.disabled = true;
+
+    try {
+        const resp = await fetch('/api/teachers/attendance/save', {
+            method : 'POST',
+            headers: authHeaders(),
+            body   : JSON.stringify({
+                assignment_id: selectedAssignmentId,
+                date,
+                records,
+            }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.message || 'Save failed');
+        toast(`Attendance saved — ${records.length} students recorded`);
+    } catch (e) {
+        toast(e.message, 'error');
+    } finally {
+        btn.classList.remove('loading'); btn.disabled = false;
+    }
+}
+
+/* ── Load history ── */
+async function loadHistory(page) {
+    const date         = document.getElementById('histDate').value;
+    const assignmentId = document.getElementById('histAssignment').value;
+
+    const btn = document.querySelector('#tab-history .btn-primary');
+    btn.classList.add('loading'); btn.disabled = true;
+
+    const params = new URLSearchParams({ page, per_page: histPag.per_page });
+    if (date)         params.set('date', date);
+    if (assignmentId) params.set('assignment_id', assignmentId);
+
+    try {
+        const resp = await fetch(`/api/teachers/attendance/history?${params}`, {
+            headers: authHeaders(),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.message || 'Failed to load history');
+
+        histPag = { ...histPag, ...data.pagination };
+
+        renderHistory(data.records);
+        renderHistoryPagination(data.pagination);
+
+        document.getElementById('histBadge').textContent =
+            `${data.pagination.total} record${data.pagination.total !== 1 ? 's' : ''}`;
+
+    } catch (e) {
+        toast(e.message, 'error');
+    } finally {
+        btn.classList.remove('loading'); btn.disabled = false;
+    }
+}
+
+/* ── Render history table ── */
+function renderHistory(records) {
+    const tbody = document.getElementById('histTbody');
+
+    if (!records.length) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No records found</div><div class="empty-sub">Try different filters</div></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = records.map(r => {
+        const sc = r.status === 'present' ? 'present' : r.status === 'absent' ? 'absent' : 'late';
+        return `
+        <tr>
+            <td style="white-space:nowrap;font-weight:600">${r.date}</td>
+            <td>
+                <div class="name-cell">
+                    <div class="avatar" style="width:30px;height:30px;font-size:11px">
+                        ${r.first_name[0]}${r.last_name[0]}
+                    </div>
+                    <span>${r.first_name} ${r.last_name}</span>
+                </div>
+            </td>
+            <td style="font-weight:600">${r.subject_name}</td>
+            <td style="color:var(--ink-3)">${r.stream_label || '—'}</td>
+            <td><span class="badge ${sc}">${r.status}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+/* ── Render history pagination ── */
+function renderHistoryPagination(pag) {
+    const wrap = document.getElementById('histPagination');
+    const info = document.getElementById('histPageInfo');
+    const btns = document.getElementById('histPageBtns');
+
+    if (pag.total === 0) { wrap.style.display = 'none'; return; }
+
+    const start = (pag.page - 1) * pag.per_page + 1;
+    const end   = Math.min(pag.page * pag.per_page, pag.total);
+    info.innerHTML = `Showing <strong>${start}–${end}</strong> of <strong>${pag.total}</strong> records`;
+
+    btns.innerHTML  = buildPageButtons(pag, 'loadHistory');
+    wrap.style.display = 'block';
+}
+
+/* ── Build page-button HTML (shared helper) ── */
+function buildPageButtons(pag, fnName) {
+    const { page, total_pages } = pag;
+    if (total_pages <= 1) return '';
+
+    let html = '';
+
+    // Prev
+    html += `<button class="page-btn" onclick="${fnName}(${page - 1})" ${page === 1 ? 'disabled' : ''}>
+        ← Prev
+    </button>`;
+
+    // Page numbers — show first, last, and a window around current
+    const pages = buildPageRange(page, total_pages);
+    let prev = null;
+    for (const p of pages) {
+        if (prev !== null && p - prev > 1) {
+            html += `<span class="page-ellipsis">…</span>`;
+        }
+        html += `<button class="page-btn ${p === page ? 'active' : ''}"
+            onclick="${fnName}(${p})">${p}</button>`;
+        prev = p;
+    }
+
+    // Next
+    html += `<button class="page-btn" onclick="${fnName}(${page + 1})" ${page === total_pages ? 'disabled' : ''}>
+        Next →
+    </button>`;
+
+    return html;
+}
+
+/* ── Generate page numbers to show (first, last, window of 2 around current) ── */
+function buildPageRange(current, total) {
+    const set = new Set([1, total]);
+    for (let p = current - 2; p <= current + 2; p++) {
+        if (p >= 1 && p <= total) set.add(p);
+    }
+    return [...set].sort((a, b) => a - b);
+}
+
+/* ── Set today as default date on load ── */
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('histDate').value = today;
+});
+</script>
+
+{% endblock %}

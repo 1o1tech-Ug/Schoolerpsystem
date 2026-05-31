@@ -1,0 +1,759 @@
+{% extends "base.html" %}
+{% block title %}Fees Collection{% endblock %}
+
+{% block content %}
+<style>
+
+.fc-wrap{ font-family:'Inter',sans-serif; color:#0f172a; }
+
+/* ── TOP BAR ── */
+.fc-topbar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:22px;
+}
+
+.fc-input{
+    height:42px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    padding:0 14px;
+    font-size:13.5px;
+    outline:none;
+    background:#fff;
+    transition:.15s;
+}
+.fc-input:focus{ border-color:#0f172a; }
+.fc-input.wide{ width:230px; }
+
+.fc-btn{
+    height:42px;
+    padding:0 18px;
+    border:none;
+    border-radius:10px;
+    font-size:13.5px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+.fc-btn.primary{ background:#0f172a; color:#fff; }
+.fc-btn.primary:hover{ background:#1e293b; }
+.fc-btn.ghost{ background:#f1f5f9; color:#0f172a; border:1px solid #e2e8f0; }
+.fc-btn.ghost:hover{ background:#e2e8f0; }
+
+/* ── TABLE CARD ── */
+.fc-card{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 2px 12px rgba(15,23,42,0.05);
+}
+
+.fc-table-wrap{ overflow-x:auto; }
+
+table{ width:100%; border-collapse:collapse; }
+
+thead th{
+    background:#f8fafc;
+    padding:13px 16px;
+    text-align:left;
+    font-size:12px;
+    font-weight:700;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    white-space:nowrap;
+}
+
+tbody td{
+    padding:13px 16px;
+    border-top:1px solid #f1f5f9;
+    font-size:13.5px;
+}
+
+tbody tr:hover td{ background:#fafafa; }
+
+.balance-badge{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+}
+.balance-badge.paid   { background:#dcfce7; color:#15803d; }
+.balance-badge.partial{ background:#fef9c3; color:#854d0e; }
+.balance-badge.unpaid { background:#fef2f2; color:#dc2626; }
+
+.action-btn{
+    padding:7px 12px;
+    border:none;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.15s;
+    white-space:nowrap;
+}
+.btn-invoice { background:#dbeafe; color:#1d4ed8; }
+.btn-invoice:hover { background:#bfdbfe; }
+.btn-pay     { background:#dcfce7; color:#15803d; }
+.btn-pay:hover { background:#bbf7d0; }
+.btn-history { background:#ede9fe; color:#6d28d9; }
+.btn-history:hover { background:#ddd6fe; }
+
+.no-data{ text-align:center; padding:48px; color:#94a3b8; font-size:14px; }
+
+/* ── PAGINATION ── */
+.fc-pagination{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    padding:14px 18px;
+    border-top:1px solid #f1f5f9;
+    background:#fafafa;
+}
+.fc-pagination .pg-info{
+    font-size:13px;
+    color:#64748b;
+}
+.pg-controls{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+.pg-btn{
+    min-width:34px;
+    height:34px;
+    padding:0 10px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    background:#fff;
+    font-size:13px;
+    font-weight:600;
+    color:#0f172a;
+    cursor:pointer;
+    transition:.15s;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+.pg-btn:hover:not(:disabled){ background:#f1f5f9; }
+.pg-btn.active{
+    background:#0f172a;
+    color:#fff;
+    border-color:#0f172a;
+}
+.pg-btn:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+}
+.pg-ellipsis{
+    font-size:13px;
+    color:#94a3b8;
+    padding:0 4px;
+    user-select:none;
+}
+
+/* ── MODAL ── */
+.modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:2000;
+}
+.modal-overlay.open{ display:flex; }
+
+.modal-box{
+    background:#fff;
+    border-radius:20px;
+    padding:28px;
+    width:100%;
+    max-width:600px;
+    max-height:90vh;
+    overflow-y:auto;
+    position:relative;
+    animation:modalIn .25s ease;
+}
+@keyframes modalIn{
+    from{ opacity:0; transform:translateY(18px); }
+    to  { opacity:1; transform:translateY(0); }
+}
+
+.modal-close{
+    position:absolute;
+    top:16px; right:16px;
+    width:32px; height:32px;
+    border-radius:50%;
+    border:none;
+    background:#ef4444;
+    color:#fff;
+    font-size:16px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+}
+
+.modal-title{
+    font-size:20px;
+    font-weight:800;
+    margin-bottom:20px;
+    color:#0f172a;
+}
+
+/* INVOICE MODAL */
+.inv-meta{ margin-bottom:16px; font-size:13.5px; color:#475569; line-height:1.8; }
+.inv-meta strong{ color:#0f172a; }
+
+.inv-table { width:100%; border-collapse:collapse; margin-bottom:18px; }
+.inv-table th{ background:#f8fafc; padding:10px 12px; text-align:left; font-size:12px; color:#64748b; font-weight:700; text-transform:uppercase; }
+.inv-table td{ padding:10px 12px; border-top:1px solid #f1f5f9; font-size:13.5px; }
+
+.inv-summary{ background:#f8fafc; border-radius:12px; padding:16px; }
+.inv-summary-row{
+    display:flex; justify-content:space-between;
+    font-size:13.5px; padding:5px 0;
+    border-bottom:1px solid #e2e8f0;
+}
+.inv-summary-row:last-child{ border:none; font-weight:800; font-size:15px; }
+.inv-summary-row span:last-child{ font-weight:700; }
+.text-green{ color:#15803d; }
+.text-red  { color:#dc2626; }
+
+/* PAYMENT MODAL */
+.pay-form{ display:flex; flex-direction:column; gap:14px; }
+.pay-form label{ font-size:12.5px; font-weight:700; color:#64748b; margin-bottom:4px; display:block; }
+.pay-form .fc-input{ width:100%; }
+.pay-balance-info{
+    background:#fef9c3;
+    border:1px solid #fde68a;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:13px;
+    color:#854d0e;
+    font-weight:600;
+}
+
+/* HISTORY MODAL */
+.hist-filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.hist-summary{
+    display:flex; gap:12px; flex-wrap:wrap;
+    margin-bottom:18px;
+}
+.hist-stat{
+    flex:1; min-width:130px;
+    background:#f8fafc;
+    border-radius:12px;
+    padding:12px 16px;
+    font-size:13px;
+}
+.hist-stat strong{ display:block; font-size:18px; font-weight:800; color:#0f172a; }
+.hist-stat span{ color:#64748b; font-size:11.5px; }
+
+/* TOAST */
+.fc-toast{
+    position:fixed;
+    bottom:24px; right:24px;
+    padding:13px 20px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:700;
+    color:#fff;
+    opacity:0;
+    transform:translateY(10px);
+    transition:.3s ease;
+    z-index:9999;
+    pointer-events:none;
+}
+.fc-toast.show{ opacity:1; transform:translateY(0); }
+.fc-toast.success{ background:#16a34a; }
+.fc-toast.error  { background:#dc2626; }
+
+</style>
+
+<div class="fc-wrap">
+
+    <!-- TOP BAR -->
+    <div class="fc-topbar">
+        <input class="fc-input wide" id="searchInput" type="text"
+               placeholder="🔍  Search by name or code…" oninput="debounceLoad()">
+        <select class="fc-input" id="classFilter" onchange="resetAndLoad()">
+            <option value="">All Classes</option>
+        </select>
+        <button class="fc-btn ghost" onclick="clearFilters()">Clear</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="fc-card">
+        <div class="fc-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Total Fees</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Invoice</th>
+                        <th>Payment</th>
+                        <th>History</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTbody">
+                    <tr><td colspan="10" class="no-data">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- PAGINATION -->
+        <div class="fc-pagination" id="fcPagination" style="display:none">
+            <span class="pg-info" id="pgInfo"></span>
+            <div class="pg-controls" id="pgControls"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══ INVOICE MODAL ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="invoiceModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('invoiceModal')">×</button>
+        <div class="modal-title">📄 Invoice</div>
+        <div id="invoiceBody">Loading…</div>
+    </div>
+</div>
+
+<!-- ══ PAYMENT MODAL ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('paymentModal')">×</button>
+        <div class="modal-title">💵 Record Payment</div>
+        <div id="paymentBody">Loading…</div>
+    </div>
+</div>
+
+<!-- ══ HISTORY MODAL ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="historyModal">
+    <div class="modal-box" style="max-width:700px">
+        <button class="modal-close" onclick="closeModal('historyModal')">×</button>
+        <div class="modal-title">📋 Payment History</div>
+        <div id="historyBody">Loading…</div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="fc-toast" id="toast"></div>
+
+<script>
+
+// ── UTILS ──────────────────────────────────────────────────────────
+const fmt = n => "UGX " + Number(n || 0).toLocaleString();
+
+function showToast(msg, type = "success"){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className   = `fc-toast ${type} show`;
+    setTimeout(() => t.classList.remove("show"), 3600);
+}
+
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id){ document.getElementById(id).classList.remove("open"); }
+
+document.querySelectorAll(".modal-overlay").forEach(m => {
+    m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); });
+});
+
+// ── PAGINATION STATE ───────────────────────────────────────────────
+let fcCurrentPage = 1;
+
+let _debounceTimer;
+function debounceLoad(){
+    clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => { fcCurrentPage = 1; loadStudents(); }, 350);
+}
+
+function resetAndLoad(){
+    fcCurrentPage = 1;
+    loadStudents();
+}
+
+function clearFilters(){
+    document.getElementById("searchInput").value = "";
+    document.getElementById("classFilter").value = "";
+    fcCurrentPage = 1;
+    loadStudents();
+}
+
+// ── BUILD PAGINATION CONTROLS ──────────────────────────────────────
+function renderPagination(p){
+    const bar      = document.getElementById("fcPagination");
+    const info     = document.getElementById("pgInfo");
+    const controls = document.getElementById("pgControls");
+
+    if (p.pages <= 1 && p.total === 0) { bar.style.display = "none"; return; }
+    bar.style.display = "flex";
+
+    const start = (p.page - 1) * p.per_page + 1;
+    const end   = Math.min(p.page * p.per_page, p.total);
+    info.textContent = `Showing ${start}–${end} of ${p.total} students`;
+
+    // Generate page numbers with ellipsis
+    const pages = buildPageNumbers(p.page, p.pages);
+
+    controls.innerHTML = "";
+
+    // Prev button
+    const prev = btn("←", () => goPage(p.page - 1), p.page === 1);
+    controls.appendChild(prev);
+
+    pages.forEach(item => {
+        if (item === "…"){
+            const el = document.createElement("span");
+            el.className   = "pg-ellipsis";
+            el.textContent = "…";
+            controls.appendChild(el);
+        } else {
+            const b = btn(item, () => goPage(item), false, item === p.page);
+            controls.appendChild(b);
+        }
+    });
+
+    // Next button
+    const next = btn("→", () => goPage(p.page + 1), p.page === p.pages);
+    controls.appendChild(next);
+}
+
+function btn(label, onClick, disabled = false, active = false){
+    const b = document.createElement("button");
+    b.className   = "pg-btn" + (active ? " active" : "");
+    b.textContent = label;
+    b.disabled    = disabled;
+    if (!disabled) b.addEventListener("click", onClick);
+    return b;
+}
+
+function buildPageNumbers(current, total){
+    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+    const pages = [];
+    pages.push(1);
+    if (current > 3)              pages.push("…");
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++){
+        pages.push(i);
+    }
+    if (current < total - 2)      pages.push("…");
+    pages.push(total);
+    return pages;
+}
+
+function goPage(page){
+    fcCurrentPage = page;
+    loadStudents();
+    // scroll table into view
+    document.querySelector(".fc-card").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+// ── LOAD CLASSES INTO FILTER ───────────────────────────────────────
+async function loadClasses(){
+    try {
+        const res  = await fetch("/finance/api/fees/classes");
+        const data = await res.json();
+        const sel  = document.getElementById("classFilter");
+        data.classes.forEach(c => {
+            const o = document.createElement("option");
+            o.value       = c.id;
+            o.textContent = c.name;
+            sel.appendChild(o);
+        });
+    } catch(e){ console.error(e); }
+}
+
+// ── LOAD STUDENTS ──────────────────────────────────────────────────
+async function loadStudents(){
+    const search  = document.getElementById("searchInput").value.trim();
+    const classId = document.getElementById("classFilter").value;
+    const tbody   = document.getElementById("studentsTbody");
+
+    tbody.innerHTML = `<tr><td colspan="10" class="no-data">Loading…</td></tr>`;
+    document.getElementById("fcPagination").style.display = "none";
+
+    const params = new URLSearchParams({ page: fcCurrentPage });
+    if (search)  params.append("search",   search);
+    if (classId) params.append("class_id", classId);
+
+    try {
+        const res  = await fetch("/finance/api/fees/students?" + params);
+        const data = await res.json();
+
+        if (!data.students || !data.students.length){
+            tbody.innerHTML = `<tr><td colspan="10" class="no-data">No students found for current term.</td></tr>`;
+            renderPagination(data.pagination || {page:1, per_page:20, total:0, pages:1});
+            return;
+        }
+
+        tbody.innerHTML = data.students.map(s => {
+            const status =
+                s.balance <= 0    ? `<span class="balance-badge paid">Paid</span>` :
+                s.amount_paid > 0 ? `<span class="balance-badge partial">Partial</span>` :
+                                    `<span class="balance-badge unpaid">Unpaid</span>`;
+            const payDisabled = s.balance <= 0
+                ? 'disabled style="opacity:.4;cursor:not-allowed"' : "";
+            return `
+            <tr>
+                <td><code>${s.student_code}</code></td>
+                <td>${s.first_name} ${s.last_name}</td>
+                <td>${s.class_name}</td>
+                <td>${fmt(s.total_amount)}</td>
+                <td>${fmt(s.amount_paid)}</td>
+                <td>${fmt(Math.max(s.balance, 0))}</td>
+                <td>${status}</td>
+                <td><button class="action-btn btn-invoice" onclick="openInvoice(${s.invoice_id})">View</button></td>
+                <td><button class="action-btn btn-pay" onclick="openPayment(${s.invoice_id},${s.balance},'${s.first_name} ${s.last_name}')" ${payDisabled}>Pay</button></td>
+                <td><button class="action-btn btn-history" onclick="openHistory(${s.student_id})">History</button></td>
+            </tr>`;
+        }).join("");
+
+        renderPagination(data.pagination);
+
+    } catch(e){
+        tbody.innerHTML = `<tr><td colspan="10" class="no-data">Failed to load students.</td></tr>`;
+        console.error(e);
+    }
+}
+
+// ── INVOICE MODAL ──────────────────────────────────────────────────
+async function openInvoice(invoiceId){
+    openModal("invoiceModal");
+    document.getElementById("invoiceBody").innerHTML = "Loading…";
+    try {
+        const res = await fetch(`/finance/api/fees/invoice/${invoiceId}`);
+        const d   = await res.json();
+        const items = d.items.map(i => `
+            <tr>
+                <td>${i.fee_type}</td>
+                <td style="text-align:right">${fmt(i.amount)}</td>
+            </tr>`).join("");
+        const balanceColor = d.balance > 0 ? "text-red" : "text-green";
+        document.getElementById("invoiceBody").innerHTML = `
+            <div class="inv-meta">
+                <strong>Student:</strong> ${d.student_name}<br>
+                <strong>Class:</strong>   ${d.class_name}<br>
+                <strong>Term:</strong>    ${d.term_name}<br>
+                <strong>Year:</strong>    ${d.year_name}
+            </div>
+            <table class="inv-table">
+                <thead><tr><th>Fee Item</th><th style="text-align:right">Amount</th></tr></thead>
+                <tbody>${items}</tbody>
+            </table>
+            <div class="inv-summary">
+                <div class="inv-summary-row"><span>Total Invoiced</span><span>${fmt(d.total_amount)}</span></div>
+                <div class="inv-summary-row"><span>Amount Paid</span><span class="text-green">${fmt(d.amount_paid)}</span></div>
+                <div class="inv-summary-row"><span>Balance Due</span><span class="${balanceColor}">${fmt(Math.max(d.balance, 0))}</span></div>
+            </div>`;
+    } catch(e){
+        document.getElementById("invoiceBody").innerHTML = "Failed to load invoice.";
+    }
+}
+
+// ── PAYMENT MODAL ──────────────────────────────────────────────────
+function openPayment(invoiceId, balance, studentName){
+    openModal("paymentModal");
+    document.getElementById("paymentBody").innerHTML = `
+        <div class="pay-balance-info">
+            💳 Recording payment for <strong>${studentName}</strong> — Balance: <strong>${fmt(balance)}</strong>
+        </div>
+        <div class="pay-form" style="margin-top:16px">
+            <div>
+                <label>Amount (UGX)</label>
+                <input class="fc-input" id="payAmount" type="number" min="1" max="${balance}" placeholder="Enter amount">
+            </div>
+            <div>
+                <label>Payment Method</label>
+                <select class="fc-input" id="payMethod">
+                    <option value="cash">Cash</option>
+                    <option value="bank">Bank Transfer</option>
+                    <option value="mobile_money">Mobile Money</option>
+                    <option value="cheque">Cheque</option>
+                </select>
+            </div>
+            <div>
+                <label>Reference / Receipt No. <span style="color:#94a3b8;font-weight:400">(optional)</span></label>
+                <input class="fc-input" id="payRef" type="text" placeholder="e.g. MTN-12345">
+            </div>
+            <button class="fc-btn primary" onclick="submitPayment(${invoiceId})">Record Payment</button>
+        </div>`;
+}
+
+async function submitPayment(invoiceId){
+    const amount = parseFloat(document.getElementById("payAmount").value);
+    const method = document.getElementById("payMethod").value;
+    const ref    = document.getElementById("payRef").value.trim();
+    if (!amount || amount <= 0){ showToast("Enter a valid amount.", "error"); return; }
+    try {
+        const res  = await fetch("/finance/api/fees/pay", {
+            method:  "POST",
+            headers: {"Content-Type": "application/json"},
+            body:    JSON.stringify({invoice_id: invoiceId, amount, method, reference: ref}),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Payment failed");
+        showToast("Payment recorded successfully!", "success");
+        closeModal("paymentModal");
+        loadStudents();
+    } catch(e){
+        showToast(e.message, "error");
+    }
+}
+
+// ── HISTORY MODAL ──────────────────────────────────────────────────
+let histStudentId = null;
+let histPage      = 1;
+
+async function openHistory(studentId){
+    histStudentId = studentId;
+    histPage      = 1;
+    openModal("historyModal");
+    document.getElementById("historyBody").innerHTML = `
+        <div class="hist-filters">
+            <select class="fc-input" id="histYear" onchange="resetHistPage()">
+                <option value="">All Years</option>
+            </select>
+            <select class="fc-input" id="histTerm" onchange="resetHistPage()">
+                <option value="">All Terms</option>
+                <option value="Term 1">Term 1</option>
+                <option value="Term 2">Term 2</option>
+                <option value="Term 3">Term 3</option>
+            </select>
+        </div>
+        <div id="histContent">Loading…</div>`;
+
+    // populate year options then render
+    try {
+        const res  = await fetch(`/finance/api/fees/history/${studentId}`);
+        const data = await res.json();
+        const years = [...new Set(data.payments.map(p => p.year))].sort().reverse();
+        const sel   = document.getElementById("histYear");
+        if (sel){
+            years.forEach(y => {
+                const o = document.createElement("option");
+                o.value = y; o.textContent = y;
+                sel.appendChild(o);
+            });
+        }
+    } catch(e){}
+
+    await renderHistory();
+}
+
+function resetHistPage(){
+    histPage = 1;
+    renderHistory();
+}
+
+async function renderHistory(){
+    const year    = document.getElementById("histYear")?.value  || "";
+    const term    = document.getElementById("histTerm")?.value  || "";
+    const content = document.getElementById("histContent");
+    if (content) content.innerHTML = "Loading…";
+
+    const params = new URLSearchParams({page: histPage});
+    if (year) params.append("year", year);
+    if (term) params.append("term", term);
+
+    try {
+        const res  = await fetch(`/finance/api/fees/history/${histStudentId}?` + params);
+        const data = await res.json();
+        const p    = data.pagination;
+
+        const rows = data.payments.length
+            ? data.payments.map(p => `
+                <tr>
+                    <td><code>${p.reference || p.id}</code></td>
+                    <td>${p.term_name} ${p.year}</td>
+                    <td>${p.method}</td>
+                    <td>${fmt(p.amount)}</td>
+                    <td>${new Date(p.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}</td>
+                    <td><code style="font-size:11px">${p.receipt_number || "—"}</code></td>
+                </tr>`).join("")
+            : `<tr><td colspan="6" class="no-data">No payments found.</td></tr>`;
+
+        const start = (p.page - 1) * p.per_page + 1;
+        const end   = Math.min(p.page * p.per_page, p.total);
+        const pgInfo = p.total > 0
+            ? `<span class="pg-info">Showing ${start}–${end} of ${p.total} payments</span>`
+            : "";
+
+        const pgButtons = buildHistPagination(p);
+
+        document.getElementById("histContent").innerHTML = `
+            <div class="hist-summary">
+                <div class="hist-stat">
+                    <strong>${fmt(data.summary.total_paid)}</strong>
+                    <span>Total Paid</span>
+                </div>
+                <div class="hist-stat">
+                    <strong>${p.total}</strong>
+                    <span>Transactions</span>
+                </div>
+                <div class="hist-stat">
+                    <strong>${fmt(data.summary.balance)}</strong>
+                    <span>Current Balance</span>
+                </div>
+            </div>
+            <div class="fc-table-wrap">
+                <table class="inv-table">
+                    <thead>
+                        <tr>
+                            <th>Ref / ID</th><th>Term</th><th>Method</th>
+                            <th>Amount</th><th>Date</th><th>Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            ${p.pages > 1 ? `
+            <div class="fc-pagination" style="margin-top:10px;border-top:none;padding-top:10px">
+                ${pgInfo}
+                <div class="pg-controls">${pgButtons}</div>
+            </div>` : ""}`;
+
+    } catch(e){
+        const content = document.getElementById("histContent");
+        if (content) content.innerHTML = "Failed to load history.";
+    }
+}
+
+function buildHistPagination(p){
+    if (p.pages <= 1) return "";
+    const pages = buildPageNumbers(p.page, p.pages);
+    let html = `<button class="pg-btn" onclick="histGoPage(${p.page - 1})" ${p.page === 1 ? "disabled" : ""}>←</button>`;
+    pages.forEach(item => {
+        if (item === "…"){
+            html += `<span class="pg-ellipsis">…</span>`;
+        } else {
+            html += `<button class="pg-btn${item === p.page ? " active" : ""}" onclick="histGoPage(${item})">${item}</button>`;
+        }
+    });
+    html += `<button class="pg-btn" onclick="histGoPage(${p.page + 1})" ${p.page === p.pages ? "disabled" : ""}>→</button>`;
+    return html;
+}
+
+function histGoPage(page){
+    histPage = page;
+    renderHistory();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────
+loadClasses();
+loadStudents();
+
+</script>
+
+{% endblock %}

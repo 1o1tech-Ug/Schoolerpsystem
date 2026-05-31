@@ -1,0 +1,626 @@
+{% extends "base.html" %}
+{% block title %}Marks Entry{% endblock %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --bg:#f0f4f8; --surface:#fff; --border:#e2e8f0; --border-soft:#f1f5f9;
+  --txt:#0f172a; --txt-2:#475569; --txt-3:#94a3b8;
+  --blue:#2563eb; --blue-soft:#eff6ff; --blue-dark:#1d4ed8;
+  --amber:#f59e0b; --amber-dark:#d97706;
+  --green:#16a34a; --green-dark:#15803d;
+  --red:#ef4444;
+  --r-sm:8px; --r:14px; --r-lg:20px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+  font-family:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+.me-wrap{max-width:1280px;margin:0 auto;padding:28px 20px 60px}
+
+.me-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;gap:12px;flex-wrap:wrap}
+.me-title{font-size:26px;font-weight:700;color:var(--txt);letter-spacing:-.5px}
+.me-school{font-size:13px;font-weight:500;color:var(--txt-2);background:var(--border-soft);padding:6px 14px;border-radius:999px;border:1px solid var(--border)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;margin-bottom:24px;box-shadow:var(--shadow)}
+.card-title{font-size:16px;font-weight:700;color:var(--txt);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.card-title-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
+
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;align-items:end}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--txt-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.field select{
+  width:100%;height:44px;border:1.5px solid var(--border);border-radius:var(--r-sm);
+  padding:0 36px 0 12px;font-size:14px;font-family:inherit;color:var(--txt);
+  background:var(--surface);outline:none;transition:border-color .15s;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:44px;border:none;border-radius:var(--r-sm);padding:0 20px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s,box-shadow .15s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-dark);box-shadow:0 4px 12px rgba(37,99,235,.35)}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-amber:hover{background:var(--amber-dark)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:var(--green-dark)}
+.btn-red{background:var(--red);color:#fff}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:var(--r-sm)}
+.btn-full{width:100%}
+.btn:disabled{opacity:.55;pointer-events:none}
+
+.table-wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead tr{background:var(--border-soft)}
+th,td{border:1px solid var(--border);padding:11px 13px;text-align:center;vertical-align:middle;color:var(--txt)}
+th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-2)}
+.th-subject{background:var(--blue-soft);color:var(--blue-dark)}
+.paper-hint{display:block;font-size:10px;color:var(--txt-3);font-weight:400;text-transform:none;letter-spacing:0;margin-top:2px}
+tbody tr:hover{background:#f8fafc}
+.score-pill{display:inline-block;background:var(--border-soft);border-radius:999px;padding:2px 10px;font-family:'DM Mono',monospace;font-size:13px;color:var(--txt-2)}
+.score-pill.entered{background:#dcfce7;color:#166534}
+.score-pill.na{background:var(--border-soft);color:var(--txt-3);font-style:italic}
+
+.empty-state{padding:40px 20px;text-align:center;color:var(--txt-3);font-size:14px}
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#toast{position:fixed;bottom:28px;right:28px;background:var(--txt);color:#fff;padding:12px 20px;border-radius:var(--r-sm);font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;z-index:9999;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+#toast.ok {border-left:4px solid var(--green)}
+#toast.err{border-left:4px solid var(--red)}
+
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;justify-content:center;align-items:center;z-index:2000;padding:20px;backdrop-filter:blur(3px)}
+.modal.open{display:flex}
+.modal-box{background:var(--surface);width:100%;max-width:720px;border-radius:var(--r-lg);padding:28px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:popIn .2s ease}
+@keyframes popIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-head h3{font-size:18px;font-weight:700;color:var(--txt)}
+.modal-student-tag{font-size:13px;background:var(--blue-soft);color:var(--blue-dark);padding:4px 12px;border-radius:999px;font-weight:600;font-family:'DM Mono',monospace}
+
+.subject-box{border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.subject-box-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.subject-box-title .badge{font-size:11px;background:var(--blue-soft);color:var(--blue-dark);padding:2px 8px;border-radius:999px;font-weight:600}
+.paper-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.paper-item label{display:block;font-size:12px;font-weight:600;color:var(--txt-2);margin-bottom:6px}
+.paper-item .max-hint{font-size:11px;color:var(--txt-3);font-weight:400;margin-left:4px}
+.paper-item input[type="number"]{width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:0 12px;font-size:14px;font-family:'DM Mono',monospace;color:var(--txt);outline:none;transition:border-color .15s}
+.paper-item input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.paper-item input.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.1)}
+.modal-footer{margin-top:22px;display:flex;gap:10px;justify-content:flex-end}
+</style>
+
+<div class="me-wrap">
+
+  <div class="me-header">
+    <div class="me-title">Marks Entry</div>
+    <div class="me-school">{{ school.name }}</div>
+  </div>
+
+  <!-- ── ENTER MARKS ── -->
+  <div class="card">
+    <div class="card-title"><div class="card-title-dot"></div>Enter Marks</div>
+
+    <div class="filters" style="margin-bottom:20px">
+      <div class="field">
+        <label>Term</label>
+        <select id="entry_term_id">
+          <option value="">Select term…</option>
+          {% for t in terms %}
+          <option value="{{ t.id }}" {% if current_term_id and t.id == current_term_id %}selected{% endif %}>
+            {{ t.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Class &amp; Stream</label>
+        <select id="stream_id">
+          <option value="">Select stream…</option>
+          {% for stream in streams %}
+          <option value="{{ stream.id }}">{{ stream.class_.name }} – {{ stream.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Exam Type</label>
+        <select id="exam_type">
+          <option value="">Select type…</option>
+          <option value="BOT">BOT</option>
+          <option value="MID">MID</option>
+          <option value="EOT">EOT</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary btn-full" id="loadBtn" onclick="loadStudents()">Load Students</button>
+      </div>
+    </div>
+
+    <div id="studentsTable">
+      <div class="empty-state">Select a term, stream and exam type, then click Load Students.</div>
+    </div>
+  </div>
+
+  <!-- ── SAVED MARKS ── -->
+  <div class="card">
+    <div class="card-title"><div class="card-title-dot" style="background:var(--green)"></div>Saved Marks</div>
+
+    <div class="filters">
+      <div class="field">
+        <label>Academic Year</label>
+        <select id="year_filter">
+          <option value="">Select year…</option>
+          {% for y in academic_years %}
+          <option value="{{ y.id }}" {% if current_year_id and y.id == current_year_id %}selected{% endif %}>
+            {{ y.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Term</label>
+        <select id="term_filter">
+          <option value="">Select term…</option>
+          {% for t in terms %}
+          <option value="{{ t.id }}" {% if current_term_id and t.id == current_term_id %}selected{% endif %}>
+            {{ t.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Exam Type</label>
+        <select id="exam_filter">
+          <option value="">Select type…</option>
+          <option value="BOT">BOT</option>
+          <option value="MID">MID</option>
+          <option value="EOT">EOT</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Class &amp; Stream</label>
+        <select id="stream_filter">
+          <option value="">Select stream…</option>
+          {% for stream in streams %}
+          <option value="{{ stream.id }}">{{ stream.class_.name }} – {{ stream.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary btn-full" onclick="loadSavedMarks()">Apply Filter</button>
+      </div>
+    </div>
+
+    <div id="savedMarksTable">
+      <div class="empty-state">Fill the filters above and click Apply Filter.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── EDIT MODAL ── -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Edit Marks</h3>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="modal-student-tag" id="modalStudentTag"></div>
+        <button class="btn btn-red btn-icon" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+    <div id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn" style="background:var(--border-soft);color:var(--txt-2)" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" id="saveBtn" onclick="submitMarks()">Save Marks</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let currentStudent = null;
+let loadedSubjects = [];   // from last /load response
+
+const API = path => `/api/academics2${path}`;
+
+function toast(msg, ok = true) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className   = "show " + (ok ? "ok" : "err");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = "", 3500);
+}
+
+function setLoading(id, msg) {
+  document.getElementById(id).innerHTML =
+    `<div class="empty-state"><span class="spinner"></span>${msg}</div>`;
+}
+
+function getEntryFilters() {
+  return {
+    termId:   document.getElementById("entry_term_id").value,
+    streamId: document.getElementById("stream_id").value,
+    examType: document.getElementById("exam_type").value,
+  };
+}
+
+/* ══════════════════════════════════════════
+   LOAD STUDENTS
+══════════════════════════════════════════ */
+async function loadStudents() {
+  const { termId, streamId, examType } = getEntryFilters();
+  if (!termId || !streamId || !examType) {
+    toast("Please select term, stream and exam type.", false); return;
+  }
+
+  const btn = document.getElementById("loadBtn");
+  btn.disabled = true;
+  setLoading("studentsTable", "Fetching students…");
+
+  try {
+    /* ✅ term_id is now passed to /load */
+    const res  = await fetch(
+      API(`/marks-entry/load?stream_id=${streamId}&term_id=${termId}&exam_type=${examType}`)
+    );
+    const data = await res.json();
+    if (!res.ok) { toast(data.message || "Failed to load.", false); return; }
+
+    loadedSubjects = data.subjects || [];
+    renderStudentTable(data);
+
+  } catch(e) {
+    toast("Network error.", false);
+    document.getElementById("studentsTable").innerHTML =
+      `<div class="empty-state">Failed to load. Please try again.</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderStudentTable(data) {
+  const { students, subjects } = data;
+
+  if (!students || !students.length) {
+    document.getElementById("studentsTable").innerHTML =
+      `<div class="empty-state">No students found in this stream.</div>`;
+    return;
+  }
+
+  /* Build column headers — one col per paper OR one col per whole-subject */
+  const cols = [];
+  subjects.forEach(s => {
+    if (s.has_papers && s.papers.length) {
+      s.papers.forEach(p => cols.push({
+        label: p.name, subjectName: s.name, max_marks: p.max_marks,
+        subjectId: s.id, paperId: p.id, isPaper: true
+      }));
+    } else {
+      cols.push({ label: s.name, subjectName: null, subjectId: s.id, paperId: null, isPaper: false });
+    }
+  });
+
+  let html = `<div class="table-wrap"><table><thead><tr>
+    <th>Code</th><th style="text-align:left">Student</th>`;
+  cols.forEach(c => {
+    const hint = c.subjectName ? `<span class="paper-hint">${c.subjectName}</span>` : "";
+    const mx   = c.max_marks   ? `<span class="paper-hint">/${c.max_marks}</span>` : "";
+    html += `<th class="th-subject">${c.label}${hint}${mx}</th>`;
+  });
+  html += `<th>Edit</th></tr></thead><tbody>`;
+
+  students.forEach(st => {
+    html += `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:13px">${st.student_code}</td>
+      <td style="text-align:left;font-weight:500">${st.name}</td>`;
+
+    cols.forEach(c => {
+      let score = null;
+      const subjectScores = st.scores ? st.scores[String(c.subjectId)] : undefined;
+      if (c.isPaper) {
+        score = (subjectScores && typeof subjectScores === "object")
+          ? subjectScores[String(c.paperId)]
+          : null;
+      } else {
+        score = (subjectScores !== null && subjectScores !== undefined && typeof subjectScores !== "object")
+          ? subjectScores : null;
+      }
+      const has = score !== null && score !== undefined && score !== "";
+      html += `<td><span class="score-pill ${has ? "entered" : ""}">${has ? score : "—"}</span></td>`;
+    });
+
+    html += `<td><button class="btn btn-amber btn-icon" title="Edit marks"
+      onclick="editStudent(${st.id},'${st.name.replace(/'/g,"\\'")}')">✎</button></td></tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  document.getElementById("studentsTable").innerHTML = html;
+}
+
+/* ══════════════════════════════════════════
+   OPEN EDIT MODAL
+══════════════════════════════════════════ */
+async function editStudent(studentId, studentName) {
+  const { termId, streamId, examType } = getEntryFilters();
+  if (!termId || !streamId || !examType) {
+    toast("Please load the student table first.", false); return;
+  }
+
+  currentStudent = studentId;
+  document.getElementById("modalStudentTag").textContent = studentName;
+  document.getElementById("modalBody").innerHTML =
+    `<div class="empty-state"><span class="spinner"></span>Loading subjects…</div>`;
+  document.getElementById("editModal").classList.add("open");
+
+  try {
+    /* ✅ term_id now passed to /student */
+    const url = API(
+      `/marks-entry/student?student_id=${studentId}&stream_id=${streamId}&term_id=${termId}&exam_type=${examType}`
+    );
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) { toast(data.message || "Error.", false); closeModal(); return; }
+
+    if (!data.subjects || !data.subjects.length) {
+      document.getElementById("modalBody").innerHTML =
+        `<div class="empty-state">No subjects found for this student.</div>`;
+      return;
+    }
+
+    let html = "";
+    data.subjects.forEach(subject => {
+      const hasPapers = subject.papers && subject.papers.length > 0;
+      html += `<div class="subject-box">
+        <div class="subject-box-title">${subject.name}
+          ${hasPapers
+            ? `<span class="badge">${subject.papers.length} paper${subject.papers.length > 1 ? "s" : ""}</span>`
+            : ""}
+        </div>
+        <div class="paper-grid">`;
+
+      if (hasPapers) {
+        subject.papers.forEach(paper => {
+          const maxVal  = paper.max_marks != null ? parseFloat(paper.max_marks) : "";
+          const maxAttr = maxVal !== "" ? `max="${maxVal}"` : "";
+          const maxLbl  = maxVal !== "" ? `<span class="max-hint">/ ${maxVal}</span>` : "";
+          const val     = (paper.score !== "" && paper.score !== null) ? paper.score : "";
+          html += `<div class="paper-item">
+            <label>${paper.name}${maxLbl}</label>
+            <input type="number" min="0" ${maxAttr} step="0.5"
+              class="mark-input"
+              data-subject-id="${subject.id}"
+              data-paper-id="${paper.id}"
+              data-max="${maxVal}"
+              value="${val}"
+              oninput="validateScore(this)">
+          </div>`;
+        });
+      } else {
+        const val = (subject.score !== "" && subject.score !== null) ? subject.score : "";
+        html += `<div class="paper-item">
+          <label>Score</label>
+          <input type="number" min="0" step="0.5"
+            class="mark-input"
+            data-subject-id="${subject.id}"
+            data-paper-id=""
+            data-max=""
+            value="${val}"
+            oninput="validateScore(this)">
+        </div>`;
+      }
+
+      html += `</div></div>`;
+    });
+
+    document.getElementById("modalBody").innerHTML = html;
+
+  } catch(e) {
+    toast("Network error.", false);
+    closeModal();
+  }
+}
+
+function validateScore(input) {
+  const val = parseFloat(input.value);
+  const max = parseFloat(input.dataset.max);
+  if (!isNaN(max) && !isNaN(val) && val > max) {
+    input.classList.add("invalid");
+    input.title = `Cannot exceed ${max}`;
+  } else {
+    input.classList.remove("invalid");
+    input.title = "";
+  }
+}
+
+function closeModal() {
+  document.getElementById("editModal").classList.remove("open");
+  currentStudent = null;
+}
+
+/* ══════════════════════════════════════════
+   SAVE MARKS
+══════════════════════════════════════════ */
+async function submitMarks() {
+  const { termId, streamId, examType } = getEntryFilters();
+
+  if (document.querySelectorAll(".mark-input.invalid").length) {
+    toast("Fix scores that exceed the maximum before saving.", false); return;
+  }
+
+  const marks = [];
+  document.querySelectorAll(".mark-input").forEach(input => {
+    const val = input.value.trim();
+    if (val === "") return;
+    marks.push({
+      subject_id: parseInt(input.dataset.subjectId),
+      paper_id:   input.dataset.paperId ? parseInt(input.dataset.paperId) : null,
+      score:      parseFloat(val),
+    });
+  });
+
+  if (!marks.length) { toast("No scores entered.", false); return; }
+
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true;
+
+  try {
+    /* ✅ term_id now passed to /save */
+    const res  = await fetch(API("/marks-entry/save"), {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        student_id: currentStudent,
+        stream_id:  parseInt(streamId),
+        term_id:    parseInt(termId),
+        exam_type:  examType,
+        marks,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast(data.message || "Saved!", true);
+      closeModal();
+      loadStudents();   // refresh table to show updated scores
+    } else {
+      toast(data.message || "Failed to save.", false);
+    }
+  } catch(e) {
+    toast("Network error.", false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ══════════════════════════════════════════
+   SAVED MARKS TABLE
+══════════════════════════════════════════ */
+async function loadSavedMarks() {
+  const year   = document.getElementById("year_filter").value;
+  const term   = document.getElementById("term_filter").value;
+  const exam   = document.getElementById("exam_filter").value;
+  const stream = document.getElementById("stream_filter").value;
+
+  if (!year || !term || !exam || !stream) {
+    toast("Please fill all four filters.", false);
+    return;
+  }
+
+  setLoading("savedMarksTable", "Loading saved marks…");
+
+  try {
+    const res = await fetch(
+      API(`/marks-entry/saved?stream_id=${stream}&term_id=${term}&exam_type=${exam}`)
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      toast(data.message || "Failed.", false);
+      return;
+    }
+
+    if (!data.students || !data.students.length) {
+      document.getElementById("savedMarksTable").innerHTML =
+        `<div class="empty-state">No saved marks found for this selection.</div>`;
+      return;
+    }
+
+    const columns = data.columns || [];
+
+    let html = `
+      <div class="table-wrap">
+      <table>
+      <thead>
+      <tr>
+        <th>Code</th>
+        <th style="text-align:left">Student</th>
+    `;
+
+    columns.forEach(col => {
+
+      const hint = col.subject_name
+        ? `<span class="paper-hint">${col.subject_name}</span>`
+        : "";
+
+      const maxMarks = col.max_marks
+        ? `<span class="paper-hint">/${col.max_marks}</span>`
+        : "";
+
+      html += `
+        <th class="th-subject">
+          ${col.label}
+          ${hint}
+          ${maxMarks}
+        </th>
+      `;
+    });
+
+    html += `</tr></thead><tbody>`;
+
+    data.students.forEach(st => {
+
+      html += `
+        <tr>
+          <td style="font-family:'DM Mono',monospace;font-size:13px">
+            ${st.student_code}
+          </td>
+
+          <td style="text-align:left;font-weight:500">
+            ${st.name}
+          </td>
+      `;
+
+      columns.forEach(col => {
+
+        const raw = st.scores[col.key];
+
+        const isNA     = raw === "N/A";
+        const isDash   = raw === "-" || raw === null || raw === "";
+        const hasScore = !isNA && !isDash;
+
+        let cls = "score-pill";
+        let display = "–";
+
+        if (isNA) {
+          cls += " na";
+          display = "N/A";
+        }
+        else if (hasScore) {
+          cls += " entered";
+          display = raw;
+        }
+
+        html += `
+          <td>
+            <span class="${cls}">
+              ${display}
+            </span>
+          </td>
+        `;
+      });
+
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    document.getElementById("savedMarksTable").innerHTML = html;
+
+  } catch (e) {
+    console.error(e);
+    toast("Network error.", false);
+  }
+}
+
+document.getElementById("editModal").addEventListener("click", e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+</script>
+
+{% endblock %}

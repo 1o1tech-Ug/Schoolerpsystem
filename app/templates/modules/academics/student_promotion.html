@@ -1,0 +1,1193 @@
+{% extends "base.html" %}
+
+{% block title %}Promote Students{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* ── Embed stream metadata so JS can filter without extra fetches ── */
+
+/* ── Tab navigation ─────────────────────────────────────────────── */
+.tab-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: #f1f5f9;
+    padding: 5px;
+    border-radius: 14px;
+    width: fit-content;
+}
+
+.tab-btn {
+    padding: 10px 22px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    transition: all .18s ease;
+    white-space: nowrap;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #0f172a;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── General ────────────────────────────────────────────────────── */
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.page-header p {
+    color: #64748b;
+    font-size: 15px;
+}
+
+.filters-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.form-group select,
+.form-group input[type="text"] {
+    padding: 13px 14px;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    background: white;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s;
+}
+
+.form-group select:focus,
+.form-group input[type="text"]:focus {
+    border-color: #2563eb;
+}
+
+.form-group select:disabled {
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.action-row {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.action-btn {
+    border: none;
+    padding: 12px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all .2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.action-btn.primary  { background: #2563eb; color: white; }
+.action-btn.primary:hover:not(:disabled)  { background: #1d4ed8; }
+
+.action-btn.success  { background: #16a34a; color: white; }
+.action-btn.success:hover:not(:disabled)  { background: #15803d; }
+
+.action-btn.danger   { background: #dc2626; color: white; }
+.action-btn.danger:hover:not(:disabled)   { background: #b91c1c; }
+
+.action-btn.warning  { background: #d97706; color: white; }
+.action-btn.warning:hover:not(:disabled)  { background: #b45309; }
+
+.action-btn.secondary { background: #e2e8f0; color: #334155; }
+.action-btn.secondary:hover:not(:disabled) { background: #cbd5e1; }
+
+.action-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Level-exit notice ──────────────────────────────────────────── */
+.level-exit-notice {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-radius: 12px;
+    color: #713f12;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.level-exit-notice.visible { display: flex; }
+
+.level-exit-notice svg { flex-shrink: 0; margin-top: 1px; }
+
+/* Graduate action box — shown when level-exit class selected */
+.graduate-box {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 14px;
+}
+
+.graduate-box.visible { display: block; }
+
+.graduate-box h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #9a3412;
+    margin: 0 0 10px;
+}
+
+.graduate-box p {
+    font-size: 14px;
+    color: #92400e;
+    margin: 0 0 14px;
+}
+
+.graduate-box .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ── Table card ─────────────────────────────────────────────────── */
+.table-card {
+    background: white;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.table-top {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.table-top h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.table-top-meta {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.table-wrap { overflow: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+
+th, td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    white-space: nowrap;
+}
+
+th {
+    background: #f8fafc;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #475569;
+}
+
+td { font-size: 14px; }
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status.pending      { background: #fef3c7; color: #92400e; }
+.status.done         { background: #dcfce7; color: #166534; }
+.status.exit         { background: #e0f2fe; color: #0369a1; }
+.status.discharged   { background: #f3e8ff; color: #6b21a8; }
+.status.graduated    { background: #e2e8f0; color: #334155; }
+.status.lvl-complete { background: #dbeafe; color: #1e40af; }
+
+.promoted-row   { background: #f0fdf4; }
+.discharged-row { background: #faf5ff; }
+
+.empty-state {
+    padding: 48px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 15px;
+}
+
+.loading {
+    padding: 30px;
+    text-align: center;
+    color: #64748b;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+}
+
+.page-link {
+    padding: 7px 13px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    transition: all .15s;
+}
+
+.page-link:hover  { background: #f1f5f9; }
+.page-link.active { background: #2563eb; color: white; border-color: #2563eb; }
+.page-link:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+}
+
+</style>
+
+{# ── Hidden stream metadata for JS filtering ──────────────────────── #}
+<div id="stream-data" style="display:none">
+    {% for stream in streams %}
+    <span
+        data-stream-id="{{ stream.id }}"
+        data-class-id="{{ stream.class_id }}"
+        data-label="{{ stream.class_.name }} — {{ stream.name }}"
+    ></span>
+    {% endfor %}
+</div>
+
+{# ── CLASS metadata for JS ─────────────────────────────────────────── #}
+<script id="class-meta" type="application/json">
+{
+    "progression": {
+        "KG1":"KG2","KG2":"KG3","Baby":"Middle","Middle":"Top",
+        "P1":"P2","P2":"P3","P3":"P4","P4":"P5","P5":"P6","P6":"P7",
+        "S1":"S2","S2":"S3","S3":"S4",
+        "S5":"S6"
+    },
+    "levelExit": ["KG3","Top","P7","S4","S6"],
+    "levelExitStatuses": {
+        "KG3":"level_complete","Top":"level_complete",
+        "P7":"level_complete","S4":"level_complete","S6":"graduated"
+    },
+    "levelExitLabels": {
+        "KG3":"Completed Nursery","Top":"Completed Nursery",
+        "P7":"Completed Primary","S4":"Completed O-Level","S6":"Graduated"
+    },
+    "classes": {
+        {% for class_ in classes %}
+        "{{ class_.id }}": "{{ class_.name }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    }
+}
+</script>
+
+<div class="page-header">
+    <h1>Student Progression</h1>
+    <p>Promote students within a level, discharge level completers, and view progression history.</p>
+</div>
+
+{# ── Tabs ──────────────────────────────────────────────────────────── #}
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('promote')">Promote Students</button>
+    <button class="tab-btn"        onclick="switchTab('history')">Graduated / Discharged</button>
+</div>
+
+
+{# ══════════════════════════════════════════════════════════════════════
+   TAB 1 — PROMOTE
+══════════════════════════════════════════════════════════════════════ #}
+<div id="tab-promote" class="tab-panel active">
+
+    <div class="filters-card">
+
+        <div class="filters">
+
+            <div class="form-group">
+                <label>Academic Year</label>
+                <select id="academicYear">
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}">{{ year.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Current Class</label>
+                <select id="classSelect" onchange="onClassChange()">
+                    <option value="">Select Class</option>
+                    {% for class_ in classes %}
+                    <option value="{{ class_.id }}">{{ class_.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Current Stream</label>
+                <select id="streamSelect">
+                    <option value="">Select Stream</option>
+                    {% for stream in streams %}
+                    <option
+                        value="{{ stream.id }}"
+                        data-class-id="{{ stream.class_id }}"
+                    >
+                        {{ stream.class_.name }} — {{ stream.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" id="nextStreamGroup">
+                <label>
+                    Next Stream
+                    <span id="nextStreamLabel" style="font-weight:400;color:#94a3b8;"></span>
+                </label>
+                <select id="nextStreamSelect" disabled>
+                    <option value="">— select class first —</option>
+                </select>
+            </div>
+
+        </div>
+
+        {# ── Level-exit notice ─────────────────────────────────────── #}
+        <div class="level-exit-notice" id="levelExitNotice">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8"  x2="12"    y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="levelExitText"></span>
+        </div>
+
+        {# ── Graduate / discharge action box ───────────────────────── #}
+        <div class="graduate-box" id="graduateBox">
+            <h4 id="graduateBoxTitle">Discharge Students from This Level</h4>
+            <p id="graduateBoxDesc"></p>
+            <div class="btn-row">
+                <button class="action-btn primary" id="loadLevelExitBtn" onclick="loadStudents()">
+                    Load Students
+                </button>
+                <button class="action-btn warning" id="dischargeAllBtn" onclick="dischargeAll()" disabled>
+                    Discharge All
+                </button>
+            </div>
+        </div>
+
+        {# ── Standard promotion action row (hidden for level-exit classes) ── #}
+        <div class="action-row" id="promoteActionRow">
+            <button class="action-btn primary"  id="loadBtn"        onclick="loadStudents()">
+                Load Students
+            </button>
+            <button class="action-btn success"  id="promoteAllBtn"  onclick="promoteAllStudents()">
+                Promote All
+            </button>
+        </div>
+
+    </div>
+
+    {# ── Students table ────────────────────────────────────────────── #}
+    <div class="table-card">
+        <div class="table-top">
+            <h3 id="tableTitle">Students</h3>
+            <span class="table-top-meta" id="tableMetaLabel"></span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead id="tableHead">
+                    <tr>
+                        <th>Admission No</th>
+                        <th>Student Name</th>
+                        <th>Current Class</th>
+                        <th>Next Class</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTable">
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                Select a class and stream, then click <strong>Load Students</strong>.
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>{# /tab-promote #}
+
+
+{# ══════════════════════════════════════════════════════════════════════
+   TAB 2 — HISTORY: Graduated / Level-complete students
+══════════════════════════════════════════════════════════════════════ #}
+<div id="tab-history" class="tab-panel">
+
+    <div class="filters-card">
+        <div class="filters">
+
+            <div class="form-group">
+                <label>Academic Year</label>
+                <select id="h_academicYear">
+                    <option value="">All Years</option>
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}">{{ year.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Exited From</label>
+                <select id="h_classSelect">
+                    <option value="">All Level-Exit Classes</option>
+                    {% for class_ in classes %}
+                    <option value="{{ class_.id }}">{{ class_.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select id="h_status">
+                    <option value="all">All</option>
+                    <option value="level_complete">Level Complete</option>
+                    <option value="graduated">Graduated</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Search</label>
+                <input
+                    type="text"
+                    id="h_search"
+                    placeholder="Name or admission number…"
+                    oninput="debounceHistorySearch()"
+                />
+            </div>
+
+        </div>
+
+        <div class="action-row">
+            <button class="action-btn primary" onclick="loadHistory(1)">Search</button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-top">
+            <h3>Graduated &amp; Discharged Students</h3>
+            <span class="table-top-meta" id="h_metaLabel"></span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Admission No</th>
+                        <th>Student Name</th>
+                        <th>Gender</th>
+                        <th>Exited Class</th>
+                        <th>Stream</th>
+                        <th>Academic Year</th>
+                        <th>Status</th>
+                        <th>Date Discharged</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTable">
+                    <tr>
+                        <td colspan="9">
+                            <div class="empty-state">Use the filters above to view discharged students.</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" id="h_pagination"></div>
+    </div>
+
+</div>{# /tab-history #}
+
+
+<script>
+(function () {
+
+    /* ── Static metadata ────────────────────────────────────────── */
+    const META            = JSON.parse(document.getElementById("class-meta").textContent)
+    const PROGRESSION     = META.progression
+    const LEVEL_EXIT      = new Set(META.levelExit)
+    const CLASS_NAMES     = META.classes           // { "12": "P3", ... }
+    const EXIT_LABELS     = META.levelExitLabels   // { "S6": "Graduated", ... }
+
+    /* ── Stream lookup: class_id → [{id, label}, ...] ───────────── */
+    const STREAMS_BY_CLASS = {}
+    document.querySelectorAll("#stream-data span").forEach(el => {
+        const cid = el.dataset.classId
+        if (!STREAMS_BY_CLASS[cid]) STREAMS_BY_CLASS[cid] = []
+        STREAMS_BY_CLASS[cid].push({ id: el.dataset.streamId, label: el.dataset.label })
+    })
+
+    /* ── Reverse: class_name → class_id ─────────────────────────── */
+    const CLASS_ID_BY_NAME = {}
+    Object.entries(CLASS_NAMES).forEach(([id, name]) => CLASS_ID_BY_NAME[name] = id)
+
+    /* ── DOM refs ───────────────────────────────────────────────── */
+    const studentsTable   = document.getElementById("studentsTable")
+    const nextStreamSel   = document.getElementById("nextStreamSelect")
+    const nextStreamLabel = document.getElementById("nextStreamLabel")
+    const levelExitNotice = document.getElementById("levelExitNotice")
+    const levelExitText   = document.getElementById("levelExitText")
+    const tableMetaLabel  = document.getElementById("tableMetaLabel")
+    const promoteAllBtn   = document.getElementById("promoteAllBtn")
+    const promoteActionRow= document.getElementById("promoteActionRow")
+    const graduateBox     = document.getElementById("graduateBox")
+    const graduateBoxDesc = document.getElementById("graduateBoxDesc")
+    const graduateBoxTitle= document.getElementById("graduateBoxTitle")
+    const dischargeAllBtn = document.getElementById("dischargeAllBtn")
+    const tableTitle      = document.getElementById("tableTitle")
+
+    /* State: are we in level-exit mode? */
+    let _isLevelExitMode = false
+    let _currentClassId  = null   // for undo-discharge calls
+
+    /* ════════════════════════════════════════════════════════════
+       Tab switching
+    ════════════════════════════════════════════════════════════ */
+    window.switchTab = function (tab) {
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"))
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"))
+        document.getElementById(`tab-${tab}`).classList.add("active")
+        document.querySelectorAll(".tab-btn").forEach(b => {
+            if (b.textContent.toLowerCase().includes(tab === "promote" ? "promot" : "grad")) {
+                b.classList.add("active")
+            }
+        })
+        if (tab === "history") loadHistory(1)
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       onClassChange — rebuilds stream dropdowns + shows notices
+    ════════════════════════════════════════════════════════════ */
+    window.onClassChange = function () {
+        const classId   = document.getElementById("classSelect").value
+        const className = CLASS_NAMES[classId] || ""
+        _currentClassId = classId
+
+        // Rebuild "Current Stream"
+        const streamSel = document.getElementById("streamSelect")
+        streamSel.innerHTML = '<option value="">Select Stream</option>'
+        ;(STREAMS_BY_CLASS[classId] || []).forEach(s => {
+            const opt = document.createElement("option")
+            opt.value = s.id
+            opt.dataset.classId = classId
+            opt.textContent = s.label
+            streamSel.appendChild(opt)
+        })
+
+        if (LEVEL_EXIT.has(className)) {
+            _showLevelExitMode(className)
+            return
+        }
+
+        _hideLevelExitMode()
+
+        const nextClassName = PROGRESSION[className]
+        if (!nextClassName) {
+            // Graduating class but not in LEVEL_EXIT (edge case)
+            nextStreamSel.innerHTML = '<option value="">Graduating class — no promotion</option>'
+            nextStreamSel.disabled  = true
+            nextStreamLabel.textContent = ""
+            promoteAllBtn.disabled  = true
+            return
+        }
+
+        const nextClassId = CLASS_ID_BY_NAME[nextClassName]
+        const nextStreams  = STREAMS_BY_CLASS[nextClassId] || []
+
+        nextStreamLabel.textContent = nextClassName ? `(${nextClassName})` : ""
+        nextStreamSel.innerHTML     = '<option value="">Select Next Stream</option>'
+        nextStreamSel.disabled      = false
+        promoteAllBtn.disabled      = false
+
+        nextStreams.forEach(s => {
+            const opt = document.createElement("option")
+            opt.value = s.id
+            opt.textContent = s.label
+            nextStreamSel.appendChild(opt)
+        })
+
+        if (nextStreams.length === 0) {
+            nextStreamSel.innerHTML = `<option value="">No streams found for ${nextClassName}</option>`
+            nextStreamSel.disabled  = true
+        }
+    }
+
+    function _showLevelExitMode(className) {
+        _isLevelExitMode = true
+
+        const hints = {
+            "KG3": "Students who have completed Nursery (KG3) must be admitted to Primary (P1) via the enrolment flow. Discharge them here to remove them from class registers.",
+            "Top": "Students who have completed Top class must be admitted to Primary (P1). Discharge them here first.",
+            "P7":  "P7 completers must be admitted to O-Level (S1). Discharge them here to clear them from Primary registers.",
+            "S4":  "S4 completers must be admitted to A-Level (S5). Discharge them here to clear them from O-Level registers.",
+            "S6":  "S6 is a graduating class. Once discharged, students are marked as Graduated and will no longer appear in any register.",
+        }
+
+        const isGraduating = className === "S6"
+
+        levelExitText.textContent = `${className} is a level-exit class — standard promotion is disabled.`
+        levelExitNotice.classList.add("visible")
+
+        graduateBoxTitle.textContent = isGraduating
+            ? `Graduate Students from ${className}`
+            : `Discharge Students from ${className}`
+        graduateBoxDesc.textContent = hints[className] || `Discharge ${className} students before admitting them to the next level.`
+        graduateBox.classList.add("visible")
+        dischargeAllBtn.disabled = false
+
+        promoteActionRow.style.display = "none"
+        document.getElementById("nextStreamGroup").style.display = "none"
+
+        tableTitle.textContent = isGraduating ? "Students to Graduate" : "Students to Discharge"
+    }
+
+    function _hideLevelExitMode() {
+        _isLevelExitMode = false
+        levelExitNotice.classList.remove("visible")
+        graduateBox.classList.remove("visible")
+        promoteActionRow.style.display = ""
+        document.getElementById("nextStreamGroup").style.display = ""
+        tableTitle.textContent = "Students"
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       loadStudents — works for both promotion and level-exit modes
+    ════════════════════════════════════════════════════════════ */
+    window.loadStudents = async function () {
+        const classId  = document.getElementById("classSelect").value
+        const streamId = document.getElementById("streamSelect").value
+
+        if (!classId || !streamId) {
+            alert("Please select a class and a stream.")
+            return
+        }
+
+        _setTableLoading()
+
+        try {
+            const res  = await fetch(
+                `/api/academics/progression/students?class_id=${classId}&stream_id=${streamId}`
+            )
+            const data = await res.json()
+
+            if (!res.ok) throw new Error(data.message || "Failed to load students")
+
+            const students = data.students || []
+
+            tableMetaLabel.textContent = students.length
+                ? `${students.length} student${students.length !== 1 ? "s" : ""}`
+                : ""
+
+            if (students.length === 0) {
+                _setTableMessage(
+                    data.level_exit
+                        ? "No students currently in this stream."
+                        : "No students found in this stream."
+                )
+                return
+            }
+
+            studentsTable.innerHTML = ""
+
+            if (data.level_exit) {
+                // Render level-exit table (discharge mode)
+                _renderLevelExitTable(students, classId, streamId)
+                dischargeAllBtn.disabled = false
+            } else {
+                // Standard promotion table
+                students.forEach(s => _appendPromoteRow(s, classId))
+            }
+
+        } catch (err) {
+            _setTableMessage(err.message)
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       _renderLevelExitTable
+    ════════════════════════════════════════════════════════════ */
+    function _renderLevelExitTable(students, classId, streamId) {
+        students.forEach(student => {
+            const tr = document.createElement("tr")
+            tr.id = `row-${student.id}`
+            if (student.discharged) tr.classList.add("discharged-row")
+
+            const statusBadge = student.discharged
+                ? (student.discharge_status === "graduated"
+                    ? `<span class="status graduated">Graduated</span>`
+                    : `<span class="status lvl-complete">Level Complete</span>`)
+                : `<span class="status pending">Pending Discharge</span>`
+
+            const actionCell = student.discharged
+                ? `<button
+                        class="action-btn secondary"
+                        onclick="undoDischarge(${student.id}, ${classId}, ${streamId})"
+                        style="font-size:12px;padding:8px 12px;"
+                   >Undo</button>`
+                : `<button
+                        class="action-btn danger"
+                        id="btn-${student.id}"
+                        onclick="dischargeOne(${student.id}, ${classId}, ${streamId})"
+                   >Discharge</button>`
+
+            tr.innerHTML = `
+                <td>${student.student_code || student.admission_number || "—"}</td>
+                <td>${student.name}</td>
+                <td>${student.current_class || "—"}</td>
+                <td><em style="color:#94a3b8;font-size:13px;">Use admission flow</em></td>
+                <td>${statusBadge}</td>
+                <td>${actionCell}</td>`
+            studentsTable.appendChild(tr)
+        })
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       dischargeOne — single student
+    ════════════════════════════════════════════════════════════ */
+    window.dischargeOne = async function (studentId, classId, streamId) {
+        const academicYearId = document.getElementById("academicYear").value
+        if (!academicYearId) { alert("Please select an academic year."); return }
+
+        const btn = document.getElementById(`btn-${studentId}`)
+        _setBtnLoading(btn, "Discharging…")
+
+        try {
+            const res = await fetch("/api/academics/progression/graduate-from-level", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    class_id:         parseInt(classId),
+                    stream_id:        parseInt(streamId),
+                    academic_year_id: parseInt(academicYearId),
+                    student_ids:      [studentId],
+                }),
+            })
+           const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Discharge failed")
+
+            _markRowDischarged(studentId, classId, streamId, data.status)
+
+        } catch (err) {
+            _resetBtn(btn, "Discharge")
+            alert(err.message)
+        }
+    }
+
+    function _markRowDischarged(studentId, classId, streamId, enrollStatus) {
+        const row = document.getElementById(`row-${studentId}`)
+        if (!row) return
+        row.classList.add("discharged-row")
+
+        const label = enrollStatus === "graduated"
+            ? `<span class="status graduated">Graduated</span>`
+            : `<span class="status lvl-complete">Level Complete</span>`
+
+        row.cells[4].innerHTML = label
+        row.cells[5].innerHTML = `<button
+            class="action-btn secondary"
+            onclick="undoDischarge(${studentId}, ${classId}, ${streamId})"
+            style="font-size:12px;padding:8px 12px;"
+        >Undo</button>`
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       dischargeAll — whole stream
+    ════════════════════════════════════════════════════════════ */
+    window.dischargeAll = async function () {
+        const classId        = document.getElementById("classSelect").value
+        const streamId       = document.getElementById("streamSelect").value
+        const academicYearId = document.getElementById("academicYear").value
+
+        if (!classId || !streamId || !academicYearId) {
+            alert("Please complete all filters first.")
+            return
+        }
+
+        const className = CLASS_NAMES[classId] || classId
+        const verb = className === "S6" ? "graduate" : "discharge"
+
+        if (!confirm(`${verb.charAt(0).toUpperCase() + verb.slice(1)} ALL students from ${className}?\n\nAlready-discharged students will be skipped.`)) return
+
+        _setBtnLoading(dischargeAllBtn, "Processing…")
+        dischargeAllBtn.disabled = true
+
+        try {
+            const res = await fetch("/api/academics/progression/graduate-from-level", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    class_id:         parseInt(classId),
+                    stream_id:        parseInt(streamId),
+                    academic_year_id: parseInt(academicYearId),
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Operation failed")
+
+            alert(`${data.message}\n\nProcessed: ${data.processed}\nSkipped (already done): ${data.skipped}`)
+            await loadStudents()
+
+        } catch (err) {
+            alert(err.message)
+        } finally {
+            _resetBtn(dischargeAllBtn, "Discharge All")
+            dischargeAllBtn.disabled = false
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       undoDischarge
+    ════════════════════════════════════════════════════════════ */
+    window.undoDischarge = async function (studentId, classId, streamId) {
+        const academicYearId = document.getElementById("academicYear").value
+        if (!academicYearId) { alert("Please select an academic year."); return }
+
+        if (!confirm("Undo discharge for this student? They will be returned to their stream.")) return
+
+        try {
+            const res = await fetch(`/api/academics/progression/undo-discharge/${studentId}`, {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    class_id:         parseInt(classId),
+                    stream_id:        parseInt(streamId),
+                    academic_year_id: parseInt(academicYearId),
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Undo failed")
+
+            // Reload table to show restored state
+            await loadStudents()
+
+        } catch (err) {
+            alert(err.message)
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       promoteStudent  (single)
+    ════════════════════════════════════════════════════════════ */
+    window.promoteStudent = async function (studentId, currentClassId) {
+        const academicYearId = document.getElementById("academicYear").value
+        const nextStreamId   = nextStreamSel.value
+
+        if (!academicYearId) { alert("Please select an academic year."); return }
+        if (!nextStreamId)   { alert("Please select the next stream."); return }
+
+        const btn = document.getElementById(`btn-${studentId}`)
+        _setBtnLoading(btn, "Promoting…")
+
+        try {
+            const res = await fetch(`/api/academics/progression/promote/${studentId}`, {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    academic_year_id: parseInt(academicYearId),
+                    next_stream_id:   parseInt(nextStreamId),
+                    current_class_id: parseInt(currentClassId),
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Promotion failed")
+
+            _markRowPromoted(studentId, data.to_class || "")
+
+        } catch (err) {
+            _resetBtn(btn, "Promote")
+            alert(err.message)
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       promoteAllStudents
+    ════════════════════════════════════════════════════════════ */
+    window.promoteAllStudents = async function () {
+        const classId        = document.getElementById("classSelect").value
+        const streamId       = document.getElementById("streamSelect").value
+        const academicYearId = document.getElementById("academicYear").value
+        const nextStreamId   = nextStreamSel.value
+
+        if (!classId || !streamId || !academicYearId || !nextStreamId) {
+            alert("Please complete all filters before promoting.")
+            return
+        }
+
+        const className = CLASS_NAMES[classId] || classId
+        if (!confirm(`Promote all eligible students from ${className}?\n\nAlready-promoted students will be skipped.`)) return
+
+        _setBtnLoading(promoteAllBtn, "Promoting all…")
+        promoteAllBtn.disabled = true
+
+        try {
+            const res = await fetch("/api/academics/progression/promote-all", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    class_id:         parseInt(classId),
+                    stream_id:        parseInt(streamId),
+                    academic_year_id: parseInt(academicYearId),
+                    next_stream_id:   parseInt(nextStreamId),
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Bulk promotion failed")
+
+            alert(`${data.message}\n\nPromoted: ${data.promoted}\nSkipped (already done): ${data.skipped}`)
+            await loadStudents()
+
+        } catch (err) {
+            alert(err.message)
+        } finally {
+            _resetBtn(promoteAllBtn, "Promote All")
+            promoteAllBtn.disabled = false
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       History tab
+    ════════════════════════════════════════════════════════════ */
+    let _historyPage    = 1
+    let _searchDebounce = null
+
+    window.loadHistory = async function (page) {
+        _historyPage = page || 1
+
+        const yearId  = document.getElementById("h_academicYear").value
+        const classId = document.getElementById("h_classSelect").value
+        const status  = document.getElementById("h_status").value
+        const search  = document.getElementById("h_search").value.trim()
+
+        const params = new URLSearchParams({ page: _historyPage, per_page: 50 })
+        if (yearId)  params.set("academic_year_id", yearId)
+        if (classId) params.set("class_id",         classId)
+        if (status !== "all") params.set("status",  status)
+        if (search)  params.set("search",           search)
+
+        const historyTable = document.getElementById("historyTable")
+        const h_meta       = document.getElementById("h_metaLabel")
+        const pagination   = document.getElementById("h_pagination")
+
+        historyTable.innerHTML = `<tr><td colspan="9"><div class="loading">Loading…</div></td></tr>`
+        pagination.innerHTML   = ""
+        h_meta.textContent     = ""
+
+        try {
+            const res  = await fetch(`/api/academics/progression/level-exit-history?${params}`)
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message || "Failed to load history")
+
+            const students = data.students || []
+            h_meta.textContent = `${data.total} record${data.total !== 1 ? "s" : ""}`
+
+            if (students.length === 0) {
+                historyTable.innerHTML = `<tr><td colspan="9"><div class="empty-state">No records found.</div></td></tr>`
+                return
+            }
+
+            historyTable.innerHTML = ""
+            students.forEach(s => {
+                const tr = document.createElement("tr")
+                tr.innerHTML = `
+                    <td>${s.student_code || s.admission_number || "—"}</td>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.gender || "—"}</td>
+                    <td>${s.class_name || "—"}</td>
+                    <td>${s.stream_name || "—"}</td>
+                    <td>${s.academic_year || "—"}</td>
+                    <td>${_historyStatusBadge(s.status)}</td>
+                    <td>${s.discharged_on || "—"}</td>
+                    <td>
+                        <a
+                            href="#"
+                            class="action-btn secondary"
+                            style="font-size:12px;padding:8px 12px;text-decoration:none;"
+                        >View</a>
+                    </td>`
+                historyTable.appendChild(tr)
+            })
+
+            // Pagination
+            if (data.pages > 1) {
+                for (let p = 1; p <= data.pages; p++) {
+                    const btn = document.createElement("button")
+                    btn.className = `page-link${p === data.page ? " active" : ""}`
+                    btn.textContent = p
+                    btn.onclick = () => loadHistory(p)
+                    pagination.appendChild(btn)
+                }
+            }
+
+        } catch (err) {
+            historyTable.innerHTML = `<tr><td colspan="9"><div class="empty-state">${err.message}</div></td></tr>`
+        }
+    }
+
+    window.debounceHistorySearch = function () {
+        clearTimeout(_searchDebounce)
+        _searchDebounce = setTimeout(() => loadHistory(1), 450)
+    }
+
+    function _historyStatusBadge(status) {
+        if (status === "graduated")     return `<span class="status graduated">Graduated</span>`
+        if (status === "level_complete") return `<span class="status lvl-complete">Level Complete</span>`
+        return `<span class="status exit">${status}</span>`
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       Standard promote-row helpers
+    ════════════════════════════════════════════════════════════ */
+    function _appendPromoteRow(student, currentClassId) {
+        const tr = document.createElement("tr")
+        tr.id = `row-${student.id}`
+        if (student.promoted) tr.classList.add("promoted-row")
+
+        const statusBadge = student.level_exit
+            ? `<span class="status exit">Level Exit</span>`
+            : !student.eligible
+            ? `<span class="status graduated">Graduating</span>`
+            : student.promoted
+            ? `<span class="status done">Promoted</span>`
+            : `<span class="status pending">Pending</span>`
+
+        const actionCell = student.eligible && !student.level_exit
+            ? `<button
+                    class="action-btn primary"
+                    id="btn-${student.id}"
+                    onclick="promoteStudent(${student.id}, ${currentClassId})"
+                    ${student.promoted ? "disabled" : ""}
+               >${student.promoted ? "Promoted" : "Promote"}</button>`
+            : `<span style="color:#94a3b8;font-size:13px;">—</span>`
+
+        tr.innerHTML = `
+            <td>${student.student_code || student.admission_number || "—"}</td>
+            <td>${student.name}</td>
+            <td>${student.current_class || "—"}</td>
+            <td>${student.next_class || "—"}</td>
+            <td>${statusBadge}</td>
+            <td>${actionCell}</td>`
+        studentsTable.appendChild(tr)
+    }
+
+    function _markRowPromoted(studentId, toClass) {
+        const btn = document.getElementById(`btn-${studentId}`)
+        if (btn) { btn.disabled = true; btn.textContent = "Promoted" }
+        const row = document.getElementById(`row-${studentId}`)
+        if (row) {
+            row.classList.add("promoted-row")
+            if (row.cells[4]) row.cells[4].innerHTML = `<span class="status done">Promoted</span>`
+            if (toClass && row.cells[3]) row.cells[3].textContent = toClass
+        }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       UI utilities
+    ════════════════════════════════════════════════════════════ */
+    function _setTableLoading() {
+        tableMetaLabel.textContent = ""
+        studentsTable.innerHTML = `<tr><td colspan="6"><div class="loading">Loading students…</div></td></tr>`
+    }
+
+    function _setTableMessage(msg) {
+        studentsTable.innerHTML = `<tr><td colspan="6"><div class="empty-state">${msg}</div></td></tr>`
+    }
+
+    function _setBtnLoading(btn, text) {
+        if (!btn) return
+        btn.disabled = true
+        btn.innerHTML = `<span class="spinner"></span> ${text}`
+    }
+
+    function _resetBtn(btn, text) {
+        if (!btn) return
+        btn.disabled = false
+        btn.textContent = text
+    }
+
+})()
+</script>
+
+{% endblock %}

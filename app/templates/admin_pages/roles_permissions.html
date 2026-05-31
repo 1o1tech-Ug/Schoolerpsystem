@@ -1,0 +1,300 @@
+{% extends "admin.html" %}
+
+{% block title %}Roles & Permissions{% endblock %}
+{% block page_title %}Roles & Permissions{% endblock %}
+
+{% block content %}
+
+<style>
+.table-card{
+    background:white;
+    border-radius:14px;
+    padding:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    text-align:left;
+    font-size:12px;
+    padding:12px;
+    color:#64748b;
+    border-bottom:1px solid #e2e8f0;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #f1f5f9;
+    font-size:14px;
+}
+
+.badge{
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.active{ background:#dcfce7; color:#166534; }
+.locked{ background:#fee2e2; color:#991b1b; }
+.none{ background:#e2e8f0; color:#334155; }
+
+button{
+    padding:6px 10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:12px;
+    margin-right:4px;
+}
+
+.edit{ background:#0f172a; color:white; }
+.lock{ background:#f59e0b; color:white; }
+.delete{ background:#dc2626; color:white; }
+.unlock{ background:#16a34a; color:white; }
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.modal-content{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    width:420px;
+}
+
+.modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.close{
+    background:none;
+    border:none;
+    font-size:20px;
+    cursor:pointer;
+}
+
+input, select{
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+}
+
+small{
+    color:#64748b;
+}
+</style>
+
+<div class="table-card">
+
+<table>
+    <thead>
+        <tr>
+            <th>Staff Code</th>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Access To</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for s in staff_list %}
+
+        {% set user = user_map.get(s.staff_code) %}
+
+        <tr>
+
+            <td><b>{{ s.staff_code }}</b></td>
+
+            <td>{{ s.first_name }} {{ s.last_name }}</td>
+
+            <td>
+                {% if user %}
+                    {{ user.username }}
+                {% else %}
+                    <span class="none">Not set</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% if user %}
+                    ********
+                {% else %}
+                    <span class="none">Not set</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% if user and user.user_modules %}
+                    {% for m in user.user_modules %}
+                        {{ m.module_name }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+
+            <td>
+                {% if not user %}
+                    <span class="badge none">Not created</span>
+                {% elif user.status == "active" %}
+                    <span class="badge active">Active</span>
+                {% else %}
+                    <span class="badge locked">Disabled</span>
+                {% endif %}
+            </td>
+
+            <td>
+                <button class="edit" onclick="openModal('{{ s.staff_code }}')">Edit</button>
+
+                {% if user %}
+                    {% if user.status == "active" %}
+                        <button class="lock" onclick="lockUser('{{ user.id }}')">Lock</button>
+                    {% else %}
+                        <button class="unlock" onclick="unlockUser('{{ user.id }}')">Unlock</button>
+                    {% endif %}
+
+                    <button class="delete" onclick="deleteUser('{{ user.id }}')">Delete</button>
+                {% endif %}
+            </td>
+
+        </tr>
+
+    {% endfor %}
+    </tbody>
+
+</table>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h3>Create / Edit Account</h3>
+            <button class="close" onclick="closeModal()">✕</button>
+        </div>
+
+        <form id="form">
+
+            <input type="hidden" id="staff_code">
+
+           
+            <small>Password (leave empty to keep current)</small>
+            <input id="password" type="password" placeholder="Enter password">
+
+            <small>Modules Access</small>
+            <select id="modules" multiple>
+                <option value="teachers">Teachers</option>
+                <option value="academics">Academics</option>
+                <option value="finance">Finance</option>
+                <option value="students">Students</option>
+            </select>
+
+            <button type="submit" class="edit">Save Account</button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+function openModal(code){
+
+    document.getElementById("staff_code").value = code;
+    document.getElementById("password").value = "";
+    
+    document.querySelectorAll("#modules option").forEach(o => o.selected = false);
+
+    fetch(`/admin/api/staff-account/${code}`)
+    .then(r => r.json())
+    .then(data => {
+
+        if(data.user){
+            
+            let mods = data.modules || [];
+            document.querySelectorAll("#modules option").forEach(o=>{
+                o.selected = mods.includes(o.value);
+            });
+        }
+
+        document.getElementById("modal").style.display = "flex";
+    });
+}
+
+function closeModal(){
+    document.getElementById("modal").style.display = "none";
+}
+
+document.getElementById("form").addEventListener("submit", async (e)=>{
+
+    e.preventDefault();
+
+    let payload = {
+        staff_code: document.getElementById("staff_code").value,
+ password: document.getElementById("password").value,
+        modules: Array.from(document.getElementById("modules").selectedOptions).map(o=>o.value)
+    };
+
+    let res = await fetch("/admin/api/staff-account/save", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    let data = await res.json();
+
+    alert(data.message || data.error);
+
+    if(res.ok){
+        location.reload();
+    }
+});
+
+async function lockUser(id){
+    await fetch(`/admin/api/staff-account/${id}/lock`, { method:"POST" });
+    location.reload();
+}
+
+async function unlockUser(id){
+    await fetch(`/admin/api/staff-account/${id}/unlock`, { method:"POST" });
+    location.reload();
+}
+
+async function deleteUser(id){
+
+    if(!confirm("Delete account permanently?")) return;
+
+    await fetch(`/admin/api/staff-account/${id}`, {
+        method:"DELETE"
+    });
+
+    location.reload();
+}
+
+</script>
+
+{% endblock %}

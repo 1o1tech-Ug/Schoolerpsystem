@@ -1,0 +1,758 @@
+{% extends "base.html" %}
+{% block title %}Students List{% endblock %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --ink:#0a0f1e; --ink-2:#3d4a63; --ink-3:#8492a6; --line:#e8ecf3;
+    --surface:#ffffff; --bg:#f4f6fb;
+    --blue:#2352ff; --blue-dim:#e8edff; --blue-dark:#1438cc;
+    --green:#00c07a; --rose:#f43f5e; --rose-dim:#ffe4e9;
+    --amber-dim:#fef3c7; --purple:#7c3aed; --purple-dim:#ede9fe;
+    --orange-dim:#fff0e5;
+    --r-sm:8px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+    --shadow-sm:0 1px 4px rgba(10,15,30,0.06);
+    --shadow-xl:0 24px 64px rgba(10,15,30,0.18);
+    --font-display:'Syne',sans-serif;
+    --font-body:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
+
+/* Toast */
+#toast-rack{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;color:#fff;padding:14px 20px;border-radius:var(--r-md);font-size:14px;font-weight:500;box-shadow:var(--shadow-xl);animation:toastIn .3s cubic-bezier(.16,1,.3,1) forwards;pointer-events:auto;max-width:340px}
+.toast.success{background:#0d1f0f;border-left:3px solid var(--green)}
+.toast.error{background:#200a0e;border-left:3px solid var(--rose)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(8px)}}
+.toast.leaving{animation:toastOut .25s ease forwards}
+
+/* Header */
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px}
+.header-eyebrow{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.header-title{font-family:var(--font-display);font-size:30px;font-weight:800;line-height:1.1}
+.header-sub{margin-top:6px;font-size:14px;color:var(--ink-3)}
+.header-stats{display:flex;gap:16px}
+.stat-chip{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 20px;text-align:center;box-shadow:var(--shadow-sm);min-width:90px}
+.stat-chip .val{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--blue);display:block}
+.stat-chip .lbl{font-size:11px;color:var(--ink-3);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+/* Filters */
+.filters-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+.filters-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.fg{display:flex;flex-direction:column;gap:7px;flex:1;min-width:180px}
+.fg label{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.04em}
+.fc{height:44px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:0 14px;font-size:14px;font-family:var(--font-body);color:var(--ink);background:var(--bg);outline:none;transition:border-color .18s,box-shadow .18s;width:100%}
+.fc:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(35,82,255,.12)}
+.search-wrap{position:relative;flex:2;min-width:200px}
+.search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
+.search-wrap .fc{padding-left:42px}
+.filter-btn{height:44px;padding:0 22px;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;transition:background .18s;white-space:nowrap;flex-shrink:0}
+.filter-btn:hover{background:var(--blue-dark)}
+.clear-link{font-size:13px;color:var(--ink-3);cursor:pointer;text-decoration:none;white-space:nowrap;flex-shrink:0;align-self:center;transition:color .15s}
+.clear-link:hover{color:var(--rose)}
+
+/* Table */
+.table-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm)}
+.table-toolbar{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.toolbar-title{font-family:var(--font-display);font-size:16px;font-weight:700}
+.result-badge{background:var(--blue-dim);color:var(--blue);font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead{background:#f8fafd}
+th{padding:13px 18px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;border-bottom:1px solid var(--line)}
+td{padding:15px 18px;border-top:1px solid var(--line);font-size:14px;vertical-align:middle}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:#f8fafd}
+
+.code-pill{font-family:var(--font-display);font-size:12px;font-weight:700;background:var(--ink);color:#fff;padding:4px 10px;border-radius:6px;letter-spacing:.06em;display:inline-block}
+.name-cell{display:flex;align-items:center;gap:11px}
+.avatar{width:36px;height:36px;border-radius:10px;background:var(--blue-dim);color:var(--blue);font-family:var(--font-display);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.name-main{font-weight:600}
+.class-badge{display:inline-flex;background:var(--amber-dim);color:#92400e;font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px}
+.stream-badge{display:inline-flex;background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px}
+
+.subject-tags{display:flex;flex-wrap:wrap;gap:5px}
+.stag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px}
+.stag.nursery        {background:#f0fdf4;color:#15803d}
+.stag.lower-primary  {background:#fef9c3;color:#854d0e}
+.stag.upper-primary  {background:var(--orange-dim);color:#c2410c}
+.stag.o-level        {background:#eff6ff;color:#1d4ed8}
+.stag.a-level        {background:#fdf4ff;color:#7e22ce}
+.stag.other          {background:#f8fafc;color:#475569}
+
+.edit-btn{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-2);padding:8px 14px;border-radius:var(--r-sm);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font-body);transition:all .18s}
+.edit-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+
+.empty-state{text-align:center;padding:64px 24px}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.empty-title{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.empty-sub{font-size:14px;color:var(--ink-3)}
+
+/* ── Pagination ── */
+.pagination-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;border-top:1px solid var(--line);
+    flex-wrap:wrap;gap:12px;
+}
+.pagination-info{font-size:13px;color:var(--ink-3);white-space:nowrap}
+.pagination-info strong{color:var(--ink);font-weight:700}
+.pagination-controls{display:flex;align-items:center;gap:4px}
+.pg-btn{
+    min-width:36px;height:36px;padding:0 10px;
+    border:1.5px solid var(--line);border-radius:var(--r-sm);
+    background:var(--surface);color:var(--ink-2);
+    font-family:var(--font-body);font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;
+}
+.pg-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.pg-btn:disabled{opacity:.38;cursor:not-allowed}
+.pg-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pg-ellipsis{min-width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:13px}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,15,30,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:4000;padding:20px}
+.modal-backdrop.show{display:flex;animation:bdIn .2s ease}
+@keyframes bdIn{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:660px;background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--shadow-xl);animation:modalIn .28s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;max-height:92vh;overflow:hidden}
+@keyframes modalIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-header{padding:22px 26px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-shrink:0}
+.modal-icon{width:44px;height:44px;border-radius:12px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;color:var(--blue);flex-shrink:0}
+.modal-header-text{flex:1}
+.modal-title{font-family:var(--font-display);font-size:18px;font-weight:800}
+.modal-student-name{font-size:13px;color:var(--ink-3);margin-top:2px}
+.close-btn{width:36px;height:36px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:none;cursor:pointer;font-size:16px;color:var(--ink-3);display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.close-btn:hover{border-color:var(--rose);color:var(--rose);background:var(--rose-dim)}
+.modal-body{padding:24px 26px;overflow-y:auto;flex:1}
+.field-group{margin-bottom:22px}
+.field-label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin-bottom:9px;display:block}
+.stream-select{width:100%;height:48px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:0 40px 0 16px;font-size:14px;font-family:var(--font-body);color:var(--ink);background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238492a6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 14px center;outline:none;appearance:none;cursor:pointer;transition:border-color .18s,box-shadow .18s}
+.stream-select:focus{border-color:var(--blue);background-color:var(--surface);box-shadow:0 0 0 3px rgba(35,82,255,.12)}
+
+/* Subject accordion */
+.subject-picker-wrap{border:1.5px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.level-block{border-bottom:1px solid var(--line)}
+.level-block:last-child{border-bottom:none}
+.level-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);cursor:pointer;user-select:none;transition:background .15s}
+.level-header:hover{background:#eef2fc}
+.level-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.level-name{flex:1;font-size:13px;font-weight:700;letter-spacing:.04em}
+.level-count{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--surface);border:1px solid var(--line);color:var(--ink-3);transition:all .15s}
+.level-count.has-selected{background:var(--blue-dim);border-color:var(--blue-dim);color:var(--blue)}
+.level-chevron{transition:transform .2s;color:var(--ink-3)}
+.level-block.open .level-chevron{transform:rotate(180deg)}
+.level-body{display:none;padding:12px 16px 14px;gap:8px;flex-wrap:wrap}
+.level-block.open .level-body{display:flex}
+
+.subj-chip{display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;color:var(--ink-2);user-select:none}
+.subj-chip:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.subj-chip.selected{border-color:var(--blue);background:var(--blue);color:#fff}
+.subj-chip input{position:absolute;opacity:0;pointer-events:none}
+.check-icon{width:16px;height:16px;border-radius:4px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
+.subj-chip.selected .check-icon{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.2)}
+
+.modal-footer{padding:18px 26px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:12px;flex-shrink:0}
+.cancel-btn{height:44px;padding:0 20px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:none;font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.cancel-btn:hover{border-color:var(--ink-2);color:var(--ink)}
+.save-btn{height:44px;padding:0 28px;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:14px;font-weight:700;cursor:pointer;transition:background .18s;display:flex;align-items:center;gap:8px}
+.save-btn:hover{background:var(--blue-dark)}
+.save-btn:disabled{opacity:.6;pointer-events:none}
+.save-btn .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.save-btn.loading .spinner{display:block}
+.save-btn.loading .btn-text{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+    .header-stats{display:none}
+    .page-header,.filters-row{flex-direction:column}
+    .fg{min-width:100%}
+    .filter-btn{width:100%}
+    .modal{max-height:98vh;border-radius:var(--r-lg)}
+    .pagination-bar{justify-content:center}
+}
+</style>
+
+<div id="toast-rack"></div>
+
+<!-- HEADER -->
+<div class="page-header">
+    <div>
+        <div class="header-eyebrow">Academy Management</div>
+        <h2 class="header-title">Students</h2>
+        <p class="header-sub">Manage enrolments, streams and subject combinations</p>
+    </div>
+    <div class="header-stats">
+        <div class="stat-chip">
+            <span class="val">{{ students | length }}</span>
+            <span class="lbl">Total</span>
+        </div>
+        <div class="stat-chip">
+            <span class="val">{{ classes | length }}</span>
+            <span class="lbl">Classes</span>
+        </div>
+    </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-card">
+    <form method="GET">
+        <div class="filters-row">
+            <div class="fg search-wrap">
+                <label>Search</label>
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" name="search" class="fc"
+                    placeholder="Name or admission number…"
+                    value="{{ request.args.get('search','') }}"
+                    autocomplete="off">
+            </div>
+
+            <div class="fg">
+                <label>Class</label>
+                <select name="class_id" class="fc">
+                    <option value="">All Classes</option>
+                    {% for cls in classes %}
+                    <option value="{{ cls.id }}"
+                        {% if request.args.get('class_id')|string == cls.id|string %}selected{% endif %}>
+                        {{ cls.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="fg">
+                <label>Subject</label>
+                <select name="subject_id" class="fc">
+                    <option value="">All Subjects</option>
+                    {% for subj in subjects %}
+                    <option value="{{ subj.id }}"
+                        {% if request.args.get('subject_id')|string == subj.id|string %}selected{% endif %}>
+                        {{ subj.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="filter-btn">Apply Filter</button>
+            <a class="clear-link" href="{{ request.path }}">Clear</a>
+        </div>
+    </form>
+</div>
+
+<!-- TABLE -->
+<div class="table-card">
+    <div class="table-toolbar">
+        <span class="toolbar-title">Registered Students</span>
+        <span class="result-badge" id="resultBadge">
+            {{ students|length }} result{{ 's' if students|length != 1 else '' }}
+        </span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Stream</th>
+                    <th>Subjects</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="studentTbody">
+
+                {% for student in students %}
+
+                {% set ss_row          = student.stream[0] if student.stream else None %}
+                {% set cur_stream_id   = ss_row.stream_id  if ss_row else None %}
+                {% set cur_stream_name = stream_map[cur_stream_id] if (cur_stream_id and cur_stream_id in stream_map) else '—' %}
+                {% set ns = namespace(subj_ids=[]) %}
+                {% for ss in student.subjects %}
+                    {% set ns.subj_ids = ns.subj_ids + [ss.subject_id] %}
+                {% endfor %}
+                {% set subj_ids = ns.subj_ids %}
+
+                <tr id="row-{{ student.id }}" class="student-row">
+
+                    <td>
+                        <span class="code-pill">{{ student.student_code }}</span>
+                    </td>
+
+                    <td>
+                        <div class="name-cell">
+                            <div class="avatar">
+                                {{ (student.first_name[0] ~ student.last_name[0]).upper() }}
+                            </div>
+                            <span class="name-main">
+                                {{ student.first_name }} {{ student.last_name }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="class-badge">
+                            {{ student.class_.name if student.class_ else '—' }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="stream-badge" id="stream-badge-{{ student.id }}">
+                            {{ cur_stream_name }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="subject-tags" id="tags-{{ student.id }}">
+                            {% for ss in student.subjects %}
+                                {% if ss.subject_id in subject_map %}
+                                    {% set info = subject_map[ss.subject_id] %}
+                                    {% set lvl_class = (info.level or 'other') | lower | replace(' ', '-') %}
+                                    <span class="stag {{ lvl_class }}">
+                                        {{ info.name }}
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+
+                    <td>
+                        <button
+                            class="edit-btn"
+                            data-id="{{ student.id }}"
+                            data-name="{{ (student.first_name ~ ' ' ~ student.last_name) | e }}"
+                            data-class-id="{{ student.class_id }}"
+                            data-stream="{{ cur_stream_id or '' }}"
+                            data-subjects="{{ subj_ids | tojson | e }}"
+                            onclick="handleEdit(this)">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                            </svg>
+                            Edit
+                        </button>
+                    </td>
+
+                </tr>
+
+                {% else %}
+                <tr id="emptyRow">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-icon">🎓</div>
+                            <div class="empty-title">No students found</div>
+                            <div class="empty-sub">Try adjusting your filters</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION BAR -->
+    <div class="pagination-bar" id="paginationBar">
+        <div class="pagination-info" id="pageInfo"></div>
+        <div class="pagination-controls" id="pageControls"></div>
+    </div>
+</div>
+
+
+<!-- EDIT MODAL -->
+<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+
+        <div class="modal-header">
+            <div class="modal-icon">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </div>
+            <div class="modal-header-text">
+                <div class="modal-title">Edit Student</div>
+                <div class="modal-student-name" id="modalStudentName">—</div>
+            </div>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- STREAM -->
+            <div class="field-group">
+                <label class="field-label">Stream</label>
+                <select class="stream-select" id="streamSelect">
+                    <option value="">— No Stream —</option>
+                </select>
+                <p id="streamError" style="color:#f43f5e;font-size:12px;margin-top:6px;display:none"></p>
+            </div>
+
+            <!-- SUBJECTS accordion -->
+            <div class="field-group">
+                <label class="field-label">Subjects</label>
+                <div class="subject-picker-wrap">
+
+                    {% for level_name, subjs in levels_with_subjects %}
+                    {% if subjs %}
+                    {% set slug_id = level_name | lower | replace(' ', '-') %}
+                    <div class="level-block" id="level-{{ slug_id }}">
+                        <div class="level-header" onclick="toggleLevel('{{ slug_id }}')">
+                            <span class="level-dot"></span>
+                            <span class="level-name">{{ level_name }}</span>
+                            <span class="level-count" id="cnt-{{ slug_id }}">
+                                {{ subjs | length }} subjects
+                            </span>
+                            <svg class="level-chevron" width="16" height="16" fill="none"
+                                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                        <div class="level-body">
+                            {% for subj in subjs %}
+                            <label class="subj-chip"
+                                id="chip-{{ subj.id }}"
+                                data-id="{{ subj.id }}"
+                                data-level="{{ slug_id }}">
+                                <input type="checkbox" value="{{ subj.id }}"
+                                    onchange="toggleChip(this)">
+                                <span class="check-icon">✓</span>
+                                {{ subj.name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+            <button class="save-btn" id="saveBtn" onclick="saveChanges()">
+                <div class="spinner"></div>
+                <span class="btn-text">Save Changes</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/* ── All streams from backend ── */
+const ALL_STREAMS = [
+    {% for s in streams %}
+    { id: {{ s.id }}, class_id: {{ s.class_id }}, label: {{ s.name | tojson }} }{% if not loop.last %},{% endif %}
+
+    {% endfor %}
+];
+
+let currentStudentId = null;
+let currentClassId   = null;
+
+/* ══════════════════════════════════════════════════════════════
+   PAGINATION
+   ══════════════════════════════════════════════════════════════ */
+const PAGE_SIZE = 20;
+let currentPage = 1;
+let allRows     = [];   // NodeList snapshot converted to array
+
+function initPagination() {
+    allRows = Array.from(document.querySelectorAll('.student-row'));
+
+    // Hide pagination if not needed
+    const bar = document.getElementById('paginationBar');
+    if (allRows.length <= PAGE_SIZE) {
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'flex';
+    renderPage(1);
+}
+
+function renderPage(page) {
+    const total      = allRows.length;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+
+    // Clamp
+    page = Math.max(1, Math.min(page, totalPages));
+    currentPage = page;
+
+    const start = (page - 1) * PAGE_SIZE;  // inclusive index
+    const end   = start + PAGE_SIZE;       // exclusive index
+
+    allRows.forEach((row, idx) => {
+        row.style.display = (idx >= start && idx < end) ? '' : 'none';
+    });
+
+    // Info text
+    const from = start + 1;
+    const to   = Math.min(end, total);
+    document.getElementById('pageInfo').innerHTML =
+        `Showing <strong>${from}–${to}</strong> of <strong>${total}</strong> students`;
+
+    // Build page number buttons
+    renderPageButtons(page, totalPages);
+}
+
+function renderPageButtons(current, total) {
+    const ctrl = document.getElementById('pageControls');
+    ctrl.innerHTML = '';
+
+    const btn = (label, page, disabled = false, active = false) => {
+        const b = document.createElement('button');
+        b.className = 'pg-btn' + (active ? ' active' : '');
+        b.textContent = label;
+        b.disabled = disabled;
+        if (!disabled && !active) b.onclick = () => renderPage(page);
+        return b;
+    };
+
+    const ellipsis = () => {
+        const s = document.createElement('span');
+        s.className = 'pg-ellipsis';
+        s.textContent = '…';
+        return s;
+    };
+
+    // Prev
+    ctrl.appendChild(btn('‹', current - 1, current === 1));
+
+    // Page numbers with ellipsis logic
+    const pages = buildPageRange(current, total);
+    pages.forEach(p => {
+        if (p === '…') {
+            ctrl.appendChild(ellipsis());
+        } else {
+            ctrl.appendChild(btn(p, p, false, p === current));
+        }
+    });
+
+    // Next
+    ctrl.appendChild(btn('›', current + 1, current === total));
+}
+
+/* Returns array like [1, '…', 5, 6, 7, '…', 12] */
+function buildPageRange(current, total) {
+    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+
+    const pages = new Set([1, total, current]);
+    if (current > 1) pages.add(current - 1);
+    if (current < total) pages.add(current + 1);
+
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+    const result = [];
+
+    sorted.forEach((p, i) => {
+        if (i > 0 && p - sorted[i - 1] > 1) result.push('…');
+        result.push(p);
+    });
+
+    return result;
+}
+
+/* ── Read data-* from edit button and open modal ── */
+function handleEdit(btn) {
+    const id      = parseInt(btn.dataset.id);
+    const name    = btn.dataset.name;
+    const classId = parseInt(btn.dataset.classId);
+
+    const rawStream   = btn.dataset.stream;
+    const rawSubjects = btn.dataset.subjects;
+
+    let subjectIds = [];
+    try {
+        subjectIds = JSON.parse(rawSubjects || '[]').map(Number);
+    } catch(e) {
+        toast('Failed to parse subject data: ' + e.message, 'error');
+        return;
+    }
+
+    const streamId = rawStream ? parseInt(rawStream) : null;
+    openModal(id, name, streamId, classId, subjectIds);
+}
+
+/* ── Toast ── */
+function toast(msg, type = 'success') {
+    const rack = document.getElementById('toast-rack');
+    const el   = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span style="font-size:18px">${type === 'success' ? '✅' : '❌'}</span>
+                    <span>${msg}</span>`;
+    rack.appendChild(el);
+    setTimeout(() => {
+        el.classList.add('leaving');
+        el.addEventListener('animationend', () => el.remove());
+    }, 3400);
+}
+
+/* ── Accordion ── */
+function toggleLevel(slug) {
+    document.getElementById('level-' + slug).classList.toggle('open');
+}
+
+/* ── Chip toggle ── */
+function toggleChip(cb) {
+    const chip = cb.closest('.subj-chip');
+    chip.classList.toggle('selected', cb.checked);
+    updateLevelCount(chip.dataset.level);
+}
+
+function updateLevelCount(slug) {
+    const block = document.getElementById('level-' + slug);
+    if (!block) return;
+    const all = block.querySelectorAll('.subj-chip').length;
+    const sel = block.querySelectorAll('.subj-chip.selected').length;
+    const cnt = document.getElementById('cnt-' + slug);
+    cnt.textContent = sel > 0 ? `${sel} / ${all} selected` : `${all} subjects`;
+    cnt.classList.toggle('has-selected', sel > 0);
+}
+
+/* ── Open modal ── */
+function openModal(studentId, name, streamId, classId, selectedSubjectIds) {
+    currentStudentId = studentId;
+    currentClassId   = classId;
+
+    document.getElementById('modalStudentName').textContent = name;
+    document.getElementById('streamError').style.display = 'none';
+
+    /* Rebuild stream dropdown filtered to this student's class */
+    const sel = document.getElementById('streamSelect');
+    sel.innerHTML = '<option value="">— No Stream —</option>';
+
+    const matching = ALL_STREAMS.filter(s => s.class_id === classId);
+    if (matching.length === 0) {
+        const opt = document.createElement('option');
+        opt.disabled = true;
+        opt.textContent = 'No streams in this class';
+        sel.appendChild(opt);
+    } else {
+        matching.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.label;
+            sel.appendChild(opt);
+        });
+    }
+    sel.value = streamId ? String(streamId) : '';
+
+    /* Reset then pre-select subject chips */
+    document.querySelectorAll('.subj-chip').forEach(chip => {
+        const cb = chip.querySelector('input');
+        const on = selectedSubjectIds.includes(parseInt(chip.dataset.id));
+        cb.checked = on;
+        chip.classList.toggle('selected', on);
+    });
+
+    /* Update counts; auto-open levels that have selections */
+    document.querySelectorAll('.level-block').forEach(block => {
+        const slug = block.id.replace('level-', '');
+        updateLevelCount(slug);
+        block.classList.toggle(
+            'open',
+            block.querySelectorAll('.subj-chip.selected').length > 0
+        );
+    });
+
+    document.getElementById('modalBackdrop').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+/* ── Close modal ── */
+function closeModal() {
+    document.getElementById('modalBackdrop').classList.remove('show');
+    document.body.style.overflow = '';
+    currentStudentId = null;
+}
+
+document.getElementById('modalBackdrop').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+});
+
+/* ── Collect selected subject ids ── */
+function getSelectedSubjectIds() {
+    return Array.from(document.querySelectorAll('.subj-chip.selected'))
+        .map(chip => parseInt(chip.dataset.id));
+}
+
+/* ── Save via PUT /api/academics/students/<id> ── */
+async function saveChanges() {
+    if (!currentStudentId) return;
+
+    const btn = document.getElementById('saveBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    const streamId   = document.getElementById('streamSelect').value;
+    const subjectIds = getSelectedSubjectIds();
+
+    try {
+        const resp = await fetch(`/api/academics/students/${currentStudentId}`, {
+            method : 'PUT',
+            headers: {
+                'Content-Type' : 'application/json',
+                'Authorization': `Bearer ${getAccessToken()}`,
+            },
+            body: JSON.stringify({
+                stream_id  : streamId ? parseInt(streamId) : null,
+                subject_ids: subjectIds,
+            }),
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.message || 'Something went wrong');
+
+        updateRow(data.student);
+        closeModal();
+        toast('Student updated successfully');
+
+    } catch (err) {
+        toast(err.message, 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+    }
+}
+
+/* ── Update table row in-place (no page reload) ── */
+function updateRow(s) {
+    const sb = document.getElementById('stream-badge-' + s.id);
+    if (sb) sb.textContent = s.stream_name || '—';
+
+    const tags = document.getElementById('tags-' + s.id);
+    if (tags) {
+        tags.innerHTML = s.subjects.map(subj => {
+            const lvl = (subj.level || 'other').toLowerCase().replace(/ /g, '-');
+            return `<span class="stag ${lvl}">${subj.name}</span>`;
+        }).join('');
+    }
+
+    const btn = document.querySelector(`[data-id="${s.id}"]`);
+    if (btn) {
+        btn.dataset.stream   = s.stream_id || '';
+        btn.dataset.subjects = JSON.stringify(s.subjects.map(sub => sub.id));
+    }
+
+    const row = document.getElementById('row-' + s.id);
+    if (row) {
+        row.style.background = '#e8edff';
+        setTimeout(() => { row.style.background = ''; }, 700);
+    }
+}
+
+/* ── JWT ── */
+function getAccessToken() {
+    return localStorage.getItem('access_token') || '';
+}
+
+/* ── Boot ── */
+document.addEventListener('DOMContentLoaded', initPagination);
+</script>
+
+{% endblock %}

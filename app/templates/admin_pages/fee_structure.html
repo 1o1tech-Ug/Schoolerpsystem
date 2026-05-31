@@ -1,0 +1,772 @@
+{% extends "admin.html" %}
+
+{% block title %}Fee Structures{% endblock %}
+{% block page_title %}Fee Structures{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* ================= UI ================= */
+
+.page-header{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    padding:24px;
+    border-radius:16px;
+    margin-bottom:20px;
+}
+
+.card{
+    background:white;
+    border-radius:16px;
+    padding:20px;
+    border:1px solid #e5e7eb;
+    margin-bottom:20px;
+}
+
+.btn{
+    padding:10px 14px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.2s ease;
+}
+
+.btn-primary{
+    background:#0f172a;
+    color:white;
+}
+
+.btn-outline{
+    background:white;
+    border:1px solid #e5e7eb;
+}
+
+.btn-danger{
+    background:#dc2626;
+    color:white;
+}
+
+.btn-disabled{
+    background: grey;
+    cursor:not-allowed;
+}
+
+/* ================= MODAL ================= */
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.modal-content{
+    background:white;
+    width:90%;
+    max-width:650px;
+    padding:20px;
+    border-radius:14px;
+}
+
+input,
+select{
+    width:100%;
+    padding:10px;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    outline:none;
+}
+
+.fee-row{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+}
+
+.fee-row select,
+.fee-row input{
+    flex:1;
+}
+
+/* ================= TABLE ================= */
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.table th,
+.table td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+    text-align:left;
+}
+
+.badge{
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+}
+
+.badge-draft{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.badge-active{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-locked{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.locked-text{
+    color:#64748b;
+    font-weight:600;
+}
+
+/* ================= FILTERS ================= */
+
+.filter-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.filter-group{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.empty-state{
+    text-align:center;
+    color:#64748b;
+    padding:30px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:768px){
+
+    .fee-row{
+        flex-direction:column;
+    }
+
+    .filter-bar{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .table{
+        display:block;
+        overflow-x:auto;
+    }
+}
+
+</style>
+
+<!-- ================= HEADER ================= -->
+
+<div class="page-header">
+
+    <h1>Fee Structures</h1>
+
+    <p>
+        Manage tuition fee structures for students
+    </p>
+
+</div>
+
+<!-- ================= CREATE ================= -->
+
+<div class="card">
+
+    <button
+        id="createFeeBtn"
+        class="btn btn-primary"
+        onclick="openModal()">
+
+        + Create Fee Structure
+
+    </button>
+
+</div>
+
+<!-- ================= MODAL ================= -->
+
+<div class="modal" id="feeModal">
+
+    <div class="modal-content">
+
+        <h2>Create Fee Structure</h2>
+
+        <br>
+
+        <label>Term</label>
+
+        <select id="termSelect"></select>
+
+        <br><br>
+
+        <label>Class</label>
+
+        <select id="classSelect"></select>
+
+        <br><br>
+
+        <label>Student Type</label>
+
+        <select id="typeSelect">
+
+            <option value="day">
+                Day
+            </option>
+
+            <option value="boarding">
+                Boarding
+            </option>
+
+        </select>
+
+        <hr>
+
+        <h3>Fee Items</h3>
+
+        <div id="feeItems"></div>
+
+        <button
+            class="btn btn-outline"
+            onclick="addFeeItem()">
+
+            + Add Item
+
+        </button>
+
+        <h3 id="totalText">
+            Total: UGX 0
+        </h3>
+
+        <br>
+
+        <div style="
+            display:flex;
+            justify-content:flex-end;
+            gap:10px;
+        ">
+
+            <button
+                class="btn btn-outline"
+                onclick="closeModal()">
+
+                Cancel
+
+            </button>
+
+            <button
+                class="btn btn-primary"
+                onclick="saveStructure()">
+
+                Save
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= EXISTING ================= -->
+
+<div class="card">
+
+    <div class="filter-bar">
+
+        <h3>Existing Fee Structures</h3>
+
+        <div class="filter-group">
+
+            <select id="filterYear">
+
+                <option value="2026">
+                    2026
+                </option>
+
+                <option value="2027">
+                    2027
+                </option>
+
+            </select>
+
+            <select id="filterTerm">
+
+                <option value="Term 1">
+                    Term 1
+                </option>
+
+                <option value="Term 2">
+                    Term 2
+                </option>
+
+                <option value="Term 3">
+                    Term 3
+                </option>
+
+            </select>
+
+            <button
+                class="btn btn-outline"
+                onclick="applyFilters()">
+
+                Apply Filter
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <table class="table">
+
+        <thead>
+
+            <tr>
+                <th>Class</th>
+                <th>Term</th>
+                <th>Academic Year</th>
+                <th>Type</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+
+        </thead>
+
+        <tbody id="existingTable"></tbody>
+
+    </table>
+
+</div>
+
+<script>
+
+const TERM_API = "/admin/api/terms";
+const CLASS_API = "/admin/api/classes";
+const FEE_API = "/admin/api/fee-structures";
+
+let hasActiveTerm = false;
+
+/* ================= ONLY TUITION ================= */
+
+const FEE_TYPES = [
+    "tuition"
+];
+
+/* ================= MODAL ================= */
+
+function openModal(){
+
+    if(hasActiveTerm){
+
+        alert(
+            "Cannot create fee structures while a term is active"
+        );
+
+        return;
+    }
+
+    document.getElementById("feeModal").style.display = "flex";
+}
+
+function closeModal(){
+
+    document.getElementById("feeModal").style.display = "none";
+}
+
+/* ================= LOAD ================= */
+
+async function loadData(){
+
+    let t = await fetch(TERM_API);
+
+    let td = await t.json();
+
+    let termSelect =
+        document.getElementById("termSelect");
+
+    termSelect.innerHTML = "";
+
+    const createBtn =
+        document.getElementById("createFeeBtn");
+
+    hasActiveTerm = td.has_active_term;
+
+    /* LOCK CREATE */
+
+    if(hasActiveTerm){
+
+        createBtn.disabled = true;
+
+        createBtn.classList.add("btn-disabled");
+
+        createBtn.innerText =
+            "Active Term Running";
+
+    }else{
+
+        createBtn.disabled = false;
+
+        createBtn.classList.remove("btn-disabled");
+
+        createBtn.innerText =
+            "+ Create Fee Structure";
+    }
+
+    /* ONLY DRAFT TERMS */
+
+    td.terms.forEach(term=>{
+
+        if(term.status === "draft"){
+
+            termSelect.innerHTML += `
+                <option value="${term.id}">
+                    ${term.year} - ${term.name}
+                </option>
+            `;
+        }
+    });
+
+    let c = await fetch(CLASS_API);
+
+    let cd = await c.json();
+
+    let classSelect =
+        document.getElementById("classSelect");
+
+    classSelect.innerHTML = "";
+
+    cd.classes.forEach(cls=>{
+
+        classSelect.innerHTML += `
+            <option value="${cls.id}">
+                ${cls.name}
+            </option>
+        `;
+    });
+
+    applyFilters();
+}
+
+/* ================= FEE ITEMS ================= */
+
+function addFeeItem(){
+
+    let options = FEE_TYPES.map(t =>
+
+        `<option value="${t}">${t}</option>`
+
+    ).join("");
+
+    document.getElementById("feeItems").innerHTML += `
+
+        <div class="fee-row">
+
+            <select class="fee-name">
+                ${options}
+            </select>
+
+            <input
+                type="number"
+                class="fee-amount"
+                placeholder="Amount"
+                oninput="calcTotal()">
+
+            <button
+                class="btn btn-danger"
+                onclick="this.parentElement.remove();calcTotal();">
+
+                X
+
+            </button>
+
+        </div>
+    `;
+}
+
+function calcTotal(){
+
+    let total = 0;
+
+    document.querySelectorAll(".fee-amount")
+    .forEach(i=>{
+
+        total += parseFloat(i.value) || 0;
+    });
+
+    document.getElementById("totalText").innerText =
+        "Total: UGX " + total.toLocaleString();
+}
+
+/* ================= SAVE ================= */
+
+async function saveStructure(){
+
+    if(hasActiveTerm){
+
+        alert(
+            "Cannot create fee structures while a term is active"
+        );
+
+        return;
+    }
+
+    let term_id =
+        document.getElementById("termSelect").value;
+
+    let class_id =
+        document.getElementById("classSelect").value;
+
+    let student_type =
+        document.getElementById("typeSelect").value;
+
+    let items = [];
+
+    document.querySelectorAll(".fee-row")
+    .forEach(r=>{
+
+        let fee_type =
+            r.querySelector(".fee-name").value;
+
+        let amount = parseFloat(
+            r.querySelector(".fee-amount").value
+        ) || 0;
+
+        if(amount > 0){
+
+            items.push({
+                fee_type,
+                amount
+            });
+        }
+    });
+
+    if(!term_id || !class_id || items.length === 0){
+
+        alert("Fill all fields");
+
+        return;
+    }
+
+    let payload = {
+
+        term_id,
+
+        class_id,
+
+        student_type,
+
+        total_amount:
+            items.reduce((a,b)=>a+b.amount,0),
+
+        items
+    };
+
+    let res = await fetch(FEE_API,{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify(payload)
+    });
+
+    let data = await res.json();
+
+    if(data.error){
+
+        alert(data.error);
+
+        return;
+    }
+
+    alert("Saved successfully");
+
+    closeModal();
+
+    document.getElementById("feeItems").innerHTML = "";
+
+    document.getElementById("totalText").innerText =
+        "Total: UGX 0";
+
+    applyFilters();
+}
+
+/* ================= FILTER ================= */
+
+function applyFilters(){
+
+    let year =
+        document.getElementById("filterYear").value;
+
+    let term =
+        document.getElementById("filterTerm").value;
+
+    loadExisting({
+        year,
+        term
+    });
+}
+
+/* ================= EXISTING ================= */
+
+async function loadExisting(filters = {}){
+
+    let query = "";
+
+    if(filters.year || filters.term){
+
+        query = "?";
+
+        if(filters.year){
+
+            query +=
+                `year=${encodeURIComponent(filters.year)}`;
+        }
+
+        if(filters.term){
+
+            if(filters.year){
+                query += "&";
+            }
+
+            query +=
+                `term=${encodeURIComponent(filters.term)}`;
+        }
+    }
+
+    let res = await fetch(FEE_API + query);
+
+    let data = await res.json();
+
+    let table =
+        document.getElementById("existingTable");
+
+    table.innerHTML = "";
+
+    if(!data.fee_structures ||
+       data.fee_structures.length === 0){
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty-state">
+                    No fee structures found
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    data.fee_structures.forEach(f=>{
+
+        table.innerHTML += `
+
+            <tr>
+
+                <td>${f.class_name}</td>
+
+                <td>${f.term_name}</td>
+
+                <td>${f.year_name}</td>
+
+                <td>${f.student_type}</td>
+
+                <td>
+                    UGX ${Number(f.total_amount)
+                        .toLocaleString()}
+                </td>
+
+                <td>
+
+                    <span
+                        class="badge badge-${f.status}">
+
+                        ${f.status}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    ${f.status === "draft" ? `
+
+                        <button
+                            class="btn btn-danger"
+                            onclick="deleteStructure(${f.id})">
+
+                            Delete
+
+                        </button>
+
+                    ` : `
+
+                        <span class="locked-text">
+                            Locked
+                        </span>
+
+                    `}
+
+                </td>
+
+            </tr>
+        `;
+    });
+}
+
+/* ================= DELETE ================= */
+
+async function deleteStructure(id){
+
+    if(!confirm(
+        "Delete this fee structure?"
+    )) return;
+
+    let res = await fetch(
+        `${FEE_API}/${id}`,
+        {
+            method:"DELETE"
+        }
+    );
+
+    let data = await res.json();
+
+    alert(data.message || data.error);
+
+    applyFilters();
+}
+
+/* ================= INIT ================= */
+
+loadData();
+
+</script>
+
+{% endblock %}

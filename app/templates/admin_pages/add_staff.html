@@ -1,0 +1,170 @@
+{% extends "admin.html" %}
+
+{% block title %}Add Staff{% endblock %}
+{% block page_title %}{% if staff %}Edit Staff{% else %}Add Staff{% endif %}{% endblock %}
+
+{% block content %}
+
+<style>
+
+.form-card{
+    background:white;
+    padding:24px;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.06);
+    max-width:600px;
+}
+
+.form-card h2{
+    margin-bottom:18px;
+    font-size:20px;
+    color:#0f172a;
+}
+
+form{
+    display:grid;
+    gap:12px;
+}
+
+input, select{
+    padding:12px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    outline:none;
+    font-size:14px;
+}
+
+input:focus, select:focus{
+    border-color:#0f172a;
+}
+
+button{
+    padding:12px;
+    background:#0f172a;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.9;
+}
+
+.file-input{
+    padding:10px;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+}
+
+.top-badge{
+    font-size:12px;
+    color:#64748b;
+    margin-bottom:10px;
+}
+
+</style>
+
+<div class="form-card">
+
+<div class="top-badge">
+    {% if staff %}✏️ Editing Staff: {{ staff.staff_code }}{% else %}➕ Create New Staff{% endif %}
+</div>
+
+<h2>
+    {% if staff %}Edit Staff{% else %}Add New Staff{% endif %}
+</h2>
+
+<form id="staffForm" enctype="multipart/form-data">
+
+    <!-- hidden ID for edit -->
+    <input type="hidden" name="staff_id" value="{{ staff.id if staff else '' }}">
+
+    <input name="first_name" placeholder="First Name"
+           value="{{ staff.first_name if staff else '' }}" required>
+
+    <input name="last_name" placeholder="Last Name"
+           value="{{ staff.last_name if staff else '' }}" required>
+
+    <select name="gender">
+        <option value="">Select Gender</option>
+        <option value="Male" {% if staff and staff.gender == 'Male' %}selected{% endif %}>Male</option>
+        <option value="Female" {% if staff and staff.gender == 'Female' %}selected{% endif %}>Female</option>
+    </select>
+
+    <input name="contact" placeholder="Contact"
+           value="{{ staff.contact if staff else '' }}">
+
+    <select name="staff_type">
+        <option value="teaching" {% if staff and staff.staff_type == 'teaching' %}selected{% endif %}>Teaching Staff</option>
+        <option value="non_teaching" {% if staff and staff.staff_type == 'non_teaching' %}selected{% endif %}>Non Teaching Staff</option>
+    </select>
+
+    <input class="file-input" type="file" name="photo">
+
+    <button type="submit">
+        {% if staff %}Update Staff{% else %}Save Staff{% endif %}
+    </button>
+
+</form>
+
+</div>
+
+<script>
+
+const form = document.getElementById("staffForm");
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const submitBtn = form.querySelector("button[type='submit']");
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Saving...";
+
+    try {
+
+        let formData = new FormData(form);
+
+        let res = await fetch("/admin/api/staff", {
+            method: "POST",
+            body: formData
+        });
+
+        let data = await res.json();
+
+        if(res.ok){
+
+            alert(data.message || "Saved successfully");
+
+            // ONLY clear form when creating new staff
+            const isEditMode = form.querySelector("[name='staff_id']").value;
+
+            if(!isEditMode){
+
+                form.reset();
+
+                // reset selects manually
+                form.querySelector("[name='gender']").selectedIndex = 0;
+                form.querySelector("[name='staff_type']").selectedIndex = 0;
+
+            }
+
+        }else{
+            alert(data.error || "Something went wrong");
+        }
+
+    } catch(err){
+        alert("Network error");
+        console.error(err);
+    }
+
+    submitBtn.disabled = false;
+    submitBtn.innerText = form.querySelector("[name='staff_id']").value
+        ? "Update Staff"
+        : "Save Staff";
+});
+
+</script>
+
+{% endblock %}

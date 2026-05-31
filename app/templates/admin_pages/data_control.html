@@ -1,0 +1,614 @@
+{% extends "admin.html" %}
+{% block title %}Data Control — 1O1 ERP{% endblock %}
+{% block page_title %}Data Control{% endblock %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@600;800&display=swap" rel="stylesheet">
+
+<style>
+
+/* ── RESET & BASE ── */
+.dc-wrap *{ box-sizing:border-box; }
+
+.dc-wrap{
+    font-family:'Syne', sans-serif;
+    color:#0f172a;
+    max-width:860px;
+}
+
+/* ── PAGE HEADER ── */
+.dc-header{
+    margin-bottom:32px;
+}
+
+.dc-header h1{
+    font-size:28px;
+    font-weight:800;
+    letter-spacing:-0.5px;
+    line-height:1.2;
+}
+
+.dc-header p{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:#64748b;
+    margin-top:6px;
+}
+
+/* ── SECTION CARDS ── */
+.dc-section{
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+    overflow:hidden;
+    margin-bottom:24px;
+    box-shadow:0 4px 20px rgba(15,23,42,0.06);
+}
+
+.dc-section-head{
+    padding:22px 26px 18px;
+    border-bottom:1px solid #f1f5f9;
+    display:flex;
+    align-items:flex-start;
+    gap:16px;
+}
+
+.dc-icon{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    flex-shrink:0;
+}
+
+.dc-icon.blue  { background:#eff6ff; }
+.dc-icon.red   { background:#fef2f2; }
+
+.dc-section-head h2{
+    font-size:17px;
+    font-weight:800;
+    margin-bottom:3px;
+}
+
+.dc-section-head p{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:#64748b;
+    line-height:1.6;
+}
+
+.dc-section-body{
+    padding:22px 26px;
+}
+
+/* ── EXPORT CHECKLIST ── */
+.export-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.export-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.15s;
+    font-size:13.5px;
+    font-weight:600;
+    user-select:none;
+}
+
+.export-item:hover{
+    border-color:#94a3b8;
+    background:#f8fafc;
+}
+
+.export-item input[type=checkbox]{
+    accent-color:#0f172a;
+    width:16px;
+    height:16px;
+    cursor:pointer;
+}
+
+.export-item.checked{
+    border-color:#0f172a;
+    background:#f8fafc;
+}
+
+/* ── INCLUDE FILES TOGGLE ── */
+.files-toggle{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 16px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    margin-bottom:20px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.files-toggle input[type=checkbox]{
+    accent-color:#0f172a;
+    width:17px;
+    height:17px;
+}
+
+.files-note{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:#94a3b8;
+    margin-left:auto;
+}
+
+/* ── BUTTONS ── */
+.dc-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:13px 24px;
+    border:none;
+    border-radius:12px;
+    font-family:'Syne', sans-serif;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.dc-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.btn-export{
+    background:#0f172a;
+    color:#fff;
+}
+
+.btn-export:hover:not(:disabled){
+    background:#1e293b;
+    transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(15,23,42,0.2);
+}
+
+.btn-reset{
+    background:#dc2626;
+    color:#fff;
+}
+
+.btn-reset:hover:not(:disabled){
+    background:#b91c1c;
+    transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(220,38,38,0.25);
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{
+    display:none;
+    margin-top:16px;
+    background:#f1f5f9;
+    border-radius:99px;
+    height:8px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    background:linear-gradient(90deg,#0f172a,#2563eb);
+    border-radius:99px;
+    width:0%;
+    transition:width .4s ease;
+}
+
+.progress-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:#64748b;
+    margin-top:8px;
+    display:none;
+}
+
+/* ── RESET DANGER ZONE ── */
+.danger-checklist{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:22px;
+}
+
+.danger-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:13.5px;
+    font-family:'JetBrains Mono', monospace;
+    color:#64748b;
+}
+
+.danger-item .dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#dc2626;
+    flex-shrink:0;
+}
+
+.confirm-input-wrap{
+    margin-bottom:20px;
+}
+
+.confirm-input-wrap label{
+    display:block;
+    font-size:12.5px;
+    font-family:'JetBrains Mono', monospace;
+    color:#64748b;
+    margin-bottom:8px;
+}
+
+.confirm-input-wrap label span{
+    font-weight:700;
+    color:#dc2626;
+}
+
+.confirm-input{
+    width:100%;
+    max-width:380px;
+    padding:12px 16px;
+    border:2px solid #e2e8f0;
+    border-radius:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    outline:none;
+    transition:.2s;
+}
+
+.confirm-input:focus{
+    border-color:#dc2626;
+}
+
+.confirm-input.valid{
+    border-color:#16a34a;
+    background:#f0fdf4;
+}
+
+/* ── STATUS TOAST ── */
+.dc-toast{
+    position:fixed;
+    bottom:28px;
+    right:28px;
+    padding:14px 22px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:700;
+    font-family:'Syne', sans-serif;
+    color:#fff;
+    opacity:0;
+    transform:translateY(12px);
+    transition:.3s ease;
+    z-index:9999;
+    pointer-events:none;
+}
+
+.dc-toast.show{
+    opacity:1;
+    transform:translateY(0);
+}
+
+.dc-toast.success{ background:#16a34a; }
+.dc-toast.error  { background:#dc2626; }
+.dc-toast.info   { background:#0f172a; }
+
+/* ── DIVIDER ── */
+.dc-divider{
+    height:1px;
+    background:#f1f5f9;
+    margin:0 -26px 22px;
+}
+
+@media(max-width:600px){
+    .export-grid{ grid-template-columns:1fr 1fr; }
+    .dc-section-head{ flex-direction:column; gap:10px; }
+}
+
+</style>
+
+<div class="dc-wrap">
+
+    <!-- PAGE HEADER -->
+    <div class="dc-header">
+        <h1>Data Control</h1>
+        <p>// export your school data or perform a factory reset</p>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1 — EXPORT
+    ═══════════════════════════════════════════ -->
+    <div class="dc-section">
+
+        <div class="dc-section-head">
+            <div class="dc-icon blue">📦</div>
+            <div>
+                <h2>Export School Data</h2>
+                <p>Download a ZIP archive containing CSV exports of your selected<br>
+                   data tables and optionally all uploaded files (photos, documents).</p>
+            </div>
+        </div>
+
+        <div class="dc-section-body">
+
+            <p style="font-size:13px;color:#64748b;margin-bottom:14px;font-family:'JetBrains Mono',monospace;">
+                SELECT TABLES TO INCLUDE:
+            </p>
+
+            <div class="export-grid" id="exportGrid">
+                <label class="export-item checked">
+                    <input type="checkbox" value="students" checked> Students
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="staff" checked> Staff
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="invoices" checked> Invoices
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="payments" checked> Payments
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="expenses" checked> Expenses
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="fee_structures" checked> Fee Structures
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="terms" checked> Terms
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="classes" checked> Classes
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="guardians" checked> Guardians
+                </label>
+                <label class="export-item checked">
+                    <input type="checkbox" value="receipts" checked> Receipts
+                </label>
+            </div>
+
+            <label class="files-toggle" id="filesToggle">
+                <input type="checkbox" id="includeFiles">
+                Include uploaded files (photos &amp; documents)
+                <span class="files-note">may increase ZIP size</span>
+            </label>
+
+            <div class="dc-divider"></div>
+
+            <button class="dc-btn btn-export" id="exportBtn" onclick="startExport()">
+                ⬇ Download ZIP
+            </button>
+
+            <div class="progress-wrap" id="exportProgress">
+                <div class="progress-bar" id="exportBar"></div>
+            </div>
+            <div class="progress-label" id="exportLabel">Preparing export...</div>
+
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2 — FACTORY RESET
+    ═══════════════════════════════════════════ -->
+    <div class="dc-section">
+
+        <div class="dc-section-head">
+            <div class="dc-icon red">⚠️</div>
+            <div>
+                <h2>Factory Reset</h2>
+                <p>Permanently delete all school data. Your admin account will be<br>
+                   preserved. <strong style="color:#dc2626">This action cannot be undone.</strong></p>
+            </div>
+        </div>
+
+        <div class="dc-section-body">
+
+            <p style="font-size:12px;font-family:'JetBrains Mono',monospace;color:#64748b;margin-bottom:14px;">
+                THE FOLLOWING WILL BE PERMANENTLY DELETED:
+            </p>
+
+            <div class="danger-checklist">
+                <div class="danger-item"><span class="dot"></span> All students and their academic records</div>
+                <div class="danger-item"><span class="dot"></span> All staff members</div>
+                <div class="danger-item"><span class="dot"></span> All invoices, payments and receipts</div>
+                <div class="danger-item"><span class="dot"></span> All expenses</div>
+                <div class="danger-item"><span class="dot"></span> All terms and academic years</div>
+                <div class="danger-item"><span class="dot"></span> All fee structures</div>
+                <div class="danger-item"><span class="dot"></span> All classes and streams</div>
+                <div class="danger-item"><span class="dot"></span> All uploaded photos and documents</div>
+                <div class="danger-item"><span class="dot"></span> All staff system accounts and permissions</div>
+            </div>
+
+            <div class="dc-divider"></div>
+
+            <div class="confirm-input-wrap">
+                <label>
+                    Type <span>RESET MY SCHOOL</span> to confirm:
+                </label>
+                <input
+                    class="confirm-input"
+                    id="resetConfirm"
+                    type="text"
+                    placeholder="RESET MY SCHOOL"
+                    oninput="checkResetConfirm()"
+                    autocomplete="off"
+                >
+            </div>
+
+            <button class="dc-btn btn-reset" id="resetBtn" onclick="startReset()" disabled>
+                🗑 Factory Reset
+            </button>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="dc-toast" id="toast"></div>
+
+<script>
+
+/* ── CHECKBOX STYLING ─────────────────────────── */
+document.querySelectorAll(".export-item input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", () => {
+        cb.closest(".export-item").classList.toggle("checked", cb.checked);
+    });
+});
+
+
+/* ── CONFIRM INPUT ────────────────────────────── */
+function checkResetConfirm(){
+    const val = document.getElementById("resetConfirm").value;
+    const btn = document.getElementById("resetBtn");
+    const inp = document.getElementById("resetConfirm");
+    const match = val === "RESET MY SCHOOL";
+    btn.disabled = !match;
+    inp.classList.toggle("valid", match);
+}
+
+
+/* ── TOAST ────────────────────────────────────── */
+function showToast(msg, type = "info"){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = `dc-toast ${type} show`;
+    setTimeout(() => { t.classList.remove("show"); }, 3800);
+}
+
+
+/* ── EXPORT ───────────────────────────────────── */
+async function startExport(){
+
+    const tables = [...document.querySelectorAll(".export-grid input:checked")]
+        .map(cb => cb.value);
+
+    if(!tables.length){
+        showToast("Select at least one table to export.", "error");
+        return;
+    }
+
+    const includeFiles = document.getElementById("includeFiles").checked;
+
+    const btn      = document.getElementById("exportBtn");
+    const progress = document.getElementById("exportProgress");
+    const bar      = document.getElementById("exportBar");
+    const label    = document.getElementById("exportLabel");
+
+    btn.disabled      = true;
+    btn.textContent   = "⏳ Preparing...";
+    progress.style.display = "block";
+    label.style.display    = "block";
+
+    // animate bar while waiting
+    let pct = 0;
+    const ticker = setInterval(() => {
+        pct = Math.min(pct + Math.random() * 12, 88);
+        bar.style.width = pct + "%";
+    }, 300);
+
+    try {
+        const res = await fetch("/admin/api/data-control/export", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tables, include_files: includeFiles })
+        });
+
+        clearInterval(ticker);
+
+        if(!res.ok){
+            const err = await res.json();
+            throw new Error(err.error || "Export failed");
+        }
+
+        bar.style.width = "100%";
+        label.textContent = "✅ Export ready — downloading...";
+
+        // trigger download
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href     = url;
+        a.download = `school_export_${Date.now()}.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast("Export downloaded successfully.", "success");
+
+    } catch(err){
+        clearInterval(ticker);
+        bar.style.width  = "0%";
+        label.textContent = "❌ " + err.message;
+        showToast(err.message, "error");
+    } finally {
+        btn.disabled    = false;
+        btn.textContent = "⬇ Download ZIP";
+        setTimeout(() => {
+            progress.style.display = "none";
+            label.style.display    = "none";
+            bar.style.width        = "0%";
+        }, 3000);
+    }
+}
+
+
+/* ── FACTORY RESET ────────────────────────────── */
+async function startReset(){
+
+    if(document.getElementById("resetConfirm").value !== "RESET MY SCHOOL") return;
+
+    const confirmed = confirm(
+        "⚠️ FINAL WARNING\n\n" +
+        "This will permanently delete ALL school data.\n" +
+        "Your admin account will be the only thing kept.\n\n" +
+        "Are you absolutely sure?"
+    );
+
+    if(!confirmed) return;
+
+    const btn = document.getElementById("resetBtn");
+    btn.disabled    = true;
+    btn.textContent = "⏳ Resetting...";
+
+    try {
+        const res  = await fetch("/admin/api/data-control/reset", { method: "POST" });
+        const data = await res.json();
+
+        if(!res.ok) throw new Error(data.error || "Reset failed");
+
+        showToast("Factory reset complete. Redirecting...", "success");
+
+        setTimeout(() => {
+            window.location.href = "/admin/dashboard";
+        }, 2000);
+
+    } catch(err){
+        showToast(err.message, "error");
+        btn.disabled    = false;
+        btn.textContent = "🗑 Factory Reset";
+    }
+}
+
+</script>
+
+{% endblock %}

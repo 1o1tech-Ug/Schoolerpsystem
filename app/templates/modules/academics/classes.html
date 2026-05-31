@@ -1,0 +1,733 @@
+{% extends "base.html" %}
+{% block title %}Classes{% endblock %}
+
+{% block content %}
+<style>
+/* ── PAGE HEADER ─────────────────────────────────────────── */
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:14px;
+}
+.page-title h1{ font-size:26px; font-weight:800; color:#0f172a; }
+.page-title p{ color:#64748b; margin-top:4px; font-size:14px; }
+
+/* ── FLASH TOAST ──────────────────────────────────────────── */
+#toast{
+    position:fixed;
+    top:80px;
+    right:24px;
+    padding:14px 22px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:600;
+    color:white;
+    opacity:0;
+    transform:translateY(-10px);
+    transition:.3s ease;
+    z-index:9999;
+    pointer-events:none;
+}
+#toast.show{ opacity:1; transform:translateY(0); }
+#toast.success{ background:#16a34a; }
+#toast.error{ background:#dc2626; }
+
+/* ── PRIMARY BUTTON ───────────────────────────────────────── */
+.primary-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:11px 18px;
+    border-radius:10px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:.2s;
+    white-space:nowrap;
+}
+.primary-btn:hover{ background:#1d4ed8; transform:translateY(-1px); }
+
+/* ── TABLE CARD — responsive wrapper ─────────────────────── */
+.table-card{
+    background:white;
+    border-radius:18px;
+    overflow:hidden;          /* keeps rounded corners */
+    box-shadow:0 4px 15px rgba(0,0,0,.05);
+}
+.table-scroll{
+    overflow-x:auto;          /* horizontal scroll on small screens */
+    -webkit-overflow-scrolling:touch;
+}
+.table-card table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:560px;          /* prevents squishing; triggers scroll */
+}
+.table-card thead{ background:#f8fafc; }
+.table-card th{
+    padding:14px 16px;
+    text-align:left;
+    font-size:12px;
+    text-transform:uppercase;
+    color:#64748b;
+    letter-spacing:.5px;
+    border-bottom:1px solid #e2e8f0;
+    white-space:nowrap;
+}
+.table-card td{
+    padding:14px 16px;
+    border-bottom:1px solid #f1f5f9;
+    font-size:14px;
+    color:#0f172a;
+    vertical-align:middle;
+}
+.table-card tr:last-child td{ border-bottom:none; }
+.table-card tr:hover td{ background:#f8fafc; }
+
+.class-label{ font-weight:700; font-size:15px; }
+.stream-label{ color:#475569; }
+
+/* ── CAPACITY DISPLAY ─────────────────────────────────────── */
+.cap{
+    font-weight:700;
+    font-size:13px;
+    font-variant-numeric:tabular-nums;
+}
+.cap-ok   { color:#16a34a; }
+.cap-warn { color:#d97706; }
+.cap-full { color:#dc2626; }
+
+/* ── BADGE ────────────────────────────────────────────────── */
+.badge{
+    background:#dbeafe;
+    color:#1d4ed8;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+/* ── ACTION BUTTONS ───────────────────────────────────────── */
+.action-btn{
+    border:none;
+    padding:7px 13px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:600;
+    margin-right:6px;
+    transition:.15s;
+    white-space:nowrap;
+}
+.edit-btn  { background:#dbeafe; color:#1d4ed8; }
+.edit-btn:hover  { background:#bfdbfe; }
+.delete-btn{ background:#fee2e2; color:#dc2626; }
+.delete-btn:hover{ background:#fecaca; }
+
+/* actions cell never wraps */
+.actions-cell{ white-space:nowrap; }
+
+/* ── EMPTY STATE ──────────────────────────────────────────── */
+.empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:#94a3b8;
+}
+.empty-state .icon{ font-size:48px; margin-bottom:12px; }
+.empty-state p{ font-size:15px; }
+
+/* ── MODAL ────────────────────────────────────────────────── */
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:3000;
+    padding:20px;
+}
+.modal.show{ display:flex; }
+.modal-card{
+    width:100%;
+    max-width:540px;
+    background:white;
+    border-radius:20px;
+    padding:30px;
+    animation:popup .25s ease;
+    max-height:90vh;
+    overflow-y:auto;
+}
+@keyframes popup{
+    from{ transform:translateY(20px); opacity:0; }
+    to{   transform:translateY(0);    opacity:1; }
+}
+.modal-card h2{ margin-bottom:22px; font-size:22px; font-weight:800; color:#0f172a; }
+.form-group{ margin-bottom:18px; }
+.form-group label{
+    display:block;
+    margin-bottom:7px;
+    font-size:13px;
+    font-weight:600;
+    color:#334155;
+}
+.form-control{
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid #cbd5e1;
+    border-radius:10px;
+    outline:none;
+    font-size:14px;
+    transition:.2s;
+    background:#fff;
+    box-sizing:border-box;
+}
+.form-control:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.form-control.input-error{ border-color:#dc2626; }
+
+.field-hint{
+    font-size:12px;
+    color:#64748b;
+    margin-top:5px;
+}
+.field-error-msg{
+    font-size:12px;
+    color:#dc2626;
+    margin-top:5px;
+    display:none;
+}
+.field-error-msg.show{ display:block; }
+
+.modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    margin-top:26px;
+}
+.cancel-btn{
+    background:#e2e8f0;
+    color:#0f172a;
+    border:none;
+    padding:11px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+}
+.save-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:11px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:14px;
+    transition:.2s;
+}
+.save-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.save-btn:not(:disabled):hover{ background:#1d4ed8; }
+
+/* ── CONFIRM DIALOG ───────────────────────────────────────── */
+.confirm-card{
+    width:100%;
+    max-width:400px;
+    background:white;
+    border-radius:20px;
+    padding:28px;
+    animation:popup .2s ease;
+}
+.confirm-card h3{ font-size:18px; font-weight:700; margin-bottom:10px; color:#0f172a; }
+.confirm-card p{ color:#64748b; font-size:14px; margin-bottom:22px; }
+.danger-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:11px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+}
+.danger-btn:hover{ background:#b91c1c; }
+</style>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="page-title">
+        <h1>Classes &amp; Streams</h1>
+        <p>Manage classes, streams, capacities and class teachers</p>
+    </div>
+    <button class="primary-btn" onclick="openCreateModal()">➕ Add Class / Stream</button>
+</div>
+
+<!-- TABLE -->
+<div class="table-card">
+    <div class="table-scroll">
+        <table id="classTable">
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Stream</th>
+                    <th>Class Teacher</th>
+                    <th>Enrolment</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="classTableBody">
+            {% if rows %}
+                {% for row in rows %}
+                <tr data-stream-id="{{ row.stream_id or '' }}"
+                    data-class-id="{{ row.class_id }}">
+                    <td><span class="class-label">{{ row.class_name }}</span></td>
+                    <td><span class="stream-label">{{ row.stream_name }}</span></td>
+                    <td>{{ row.teacher }}</td>
+                    <td>
+                        {% if row.capacity and row.capacity != '—' %}
+                            {% set pct = (row.student_count / row.capacity) if row.capacity else 0 %}
+                            <span class="cap {% if pct >= 1 %}cap-full{% elif pct >= 0.85 %}cap-warn{% else %}cap-ok{% endif %}">
+                                {{ row.student_count }}/{{ row.capacity }}
+                            </span>
+                        {% else %}
+                            <span class="badge">{{ row.student_count }} enrolled</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions-cell">
+                        {% if row.stream_id %}
+                        <button class="action-btn edit-btn"
+                            onclick="openEditStreamModal({{ row.stream_id }})">
+                            ✏️ Edit
+                        </button>
+                        <button class="action-btn delete-btn"
+    onclick="confirmDelete(
+        'stream',
+        {{ row.stream_id }},
+        '{{ row.class_name }} – {{ row.stream_name }}',
+        {{ row.class_id }}
+    )">
+    🗑 Delete
+</button>
+                        {% else %}
+                        <button class="action-btn delete-btn"
+                            onclick="confirmDelete('class', {{ row.class_id }}, '{{ row.class_name }}')">
+                            🗑 Delete
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr id="emptyRow">
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <div class="icon">🏫</div>
+                            <p>No classes yet. Click <strong>Add Class / Stream</strong> to get started.</p>
+                        </div>
+                    </td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══ CREATE MODAL ══════════════════════════════════════════ -->
+<div class="modal" id="createModal">
+    <div class="modal-card">
+        <h2>Add Class / Stream</h2>
+
+        <!-- Class name — dropdown populated from school type -->
+        <div class="form-group">
+            <label>Class <span style="color:#dc2626">*</span></label>
+            <select id="c_class_name" class="form-control">
+                <option value="">— Select class —</option>
+                <!-- JS fills options based on school.school_type -->
+            </select>
+            <div class="field-error-msg" id="err_c_class">Please select a class.</div>
+        </div>
+
+        <div class="form-group">
+            <label>Stream Name
+                <small style="color:#94a3b8;font-weight:400">
+                    (optional — leave blank to create class only)
+                </small>
+            </label>
+            <input type="text" id="c_stream_name" class="form-control"
+                placeholder="e.g. East, Blue, North">
+        </div>
+
+        <div class="form-group">
+            <label>Capacity <small style="color:#94a3b8;font-weight:400">(seats available)</small></label>
+            <!-- inputmode="numeric" shows number keyboard on mobile -->
+            <input type="text" id="c_capacity" class="form-control"
+                inputmode="numeric" placeholder="e.g. 45">
+            <div class="field-hint">Numbers only. Leave blank if no limit.</div>
+            <div class="field-error-msg" id="err_c_capacity">
+                Capacity must be a whole number greater than zero.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Class Teacher</label>
+            <select id="c_teacher_id" class="form-control">
+                <option value="">— None —</option>
+                {% for s in staff %}
+                <option value="{{ s.id }}">{{ s.first_name }} {{ s.last_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button class="cancel-btn" onclick="closeModal('createModal')">Cancel</button>
+            <button class="save-btn" id="createBtn" onclick="createClass()">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ EDIT STREAM MODAL ═════════════════════════════════════ -->
+<div class="modal" id="editStreamModal">
+    <div class="modal-card">
+        <h2>Edit Stream</h2>
+        <input type="hidden" id="e_stream_id">
+
+        <div class="form-group">
+            <label>Stream Name</label>
+            <input type="text" id="e_stream_name" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Capacity</label>
+            <input type="text" id="e_capacity" class="form-control"
+                inputmode="numeric" placeholder="e.g. 45">
+            <div class="field-hint">Numbers only.</div>
+            <div class="field-error-msg" id="err_e_capacity">
+                Capacity must be a whole number greater than zero.
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Class Teacher</label>
+            <select id="e_teacher_id" class="form-control">
+                <option value="">— None / Remove —</option>
+                {% for s in staff %}
+                <option value="{{ s.id }}">{{ s.first_name }} {{ s.last_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button class="cancel-btn" onclick="closeModal('editStreamModal')">Cancel</button>
+            <button class="save-btn" id="editStreamBtn" onclick="saveStream()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ CONFIRM DELETE ════════════════════════════════════════ -->
+<div class="modal" id="confirmModal">
+    <div class="confirm-card">
+        <h3>Confirm Delete</h3>
+        <p id="confirmText">Are you sure you want to delete this item?</p>
+        <div style="display:flex;gap:12px;justify-content:flex-end">
+            <button class="cancel-btn" onclick="closeModal('confirmModal')">Cancel</button>
+            <button class="danger-btn" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── CLASS NAME SETS PER SCHOOL TYPE ──────────────────────────
+const CLASS_NAMES = {
+    secondary:    ['S1','S2','S3','S4','S5','S6'],
+    primary:      ['DAYCARE','KG1','KG2','KG3','P1','P2','P3','P4','P5','P6','P7'],
+    nursery:      ['Baby Class','Middle Class','Top Class'],
+    college:      ['Year 1','Year 2','Year 3','Year 4'],
+    'high school':['Form 1','Form 2','Form 3','Form 4','Form 5','Form 6'],
+};
+
+// school_type is injected from Flask via the `school` object
+const SCHOOL_TYPE = "{{ school.school_type | lower }}";
+
+const CLASSES_API = "/api/academics/classes";
+const STREAMS_API = "/api/academics/streams";
+
+/* ── POPULATE CLASS DROPDOWN ───────────────────────────────── */
+(function populateClassSelect(){
+    const names = CLASS_NAMES[SCHOOL_TYPE] || CLASS_NAMES['secondary'];
+    const sel   = document.getElementById('c_class_name');
+    names.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = n;
+        sel.appendChild(opt);
+    });
+})();
+
+/* ── VALIDATION HELPERS ────────────────────────────────────── */
+function isPositiveInt(v){
+    return /^\d+$/.test(String(v).trim()) && parseInt(v) > 0;
+}
+
+function setError(inputId, errId, show){
+    const inp = document.getElementById(inputId);
+    const err = document.getElementById(errId);
+    if (!inp || !err) return;
+    inp.classList.toggle('input-error', show);
+    err.classList.toggle('show', show);
+}
+
+/* ── TOAST ─────────────────────────────────────────────────── */
+function toast(msg, type="success"){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.className   = `show ${type}`;
+    setTimeout(() => { el.className = ""; }, 3000);
+}
+
+/* ── MODAL HELPERS ─────────────────────────────────────────── */
+function openModal(id) { document.getElementById(id).classList.add("show");    }
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+
+function openCreateModal(){
+    document.getElementById("c_class_name").value  = "";
+    document.getElementById("c_stream_name").value = "";
+    document.getElementById("c_capacity").value    = "";
+    document.getElementById("c_teacher_id").value  = "";
+    setError('c_class_name', 'err_c_class',    false);
+    setError('c_capacity',   'err_c_capacity', false);
+    openModal("createModal");
+}
+
+/* ── FETCH WRAPPER ─────────────────────────────────────────── */
+async function api(url, method="GET", body=null){
+    const opts = {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res  = await fetch(url, opts);
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, status: res.status, data };
+}
+
+/* ── ADD ROW TO TABLE ──────────────────────────────────────── */
+function removeEmptyRow(){
+    const e = document.getElementById("emptyRow");
+    if (e) e.remove();
+}
+
+function buildCapacityCell(studentCount, capacity){
+    if (!capacity) return `<span class="badge">${studentCount} enrolled</span>`;
+    const cap = parseInt(capacity);
+    const pct = cap ? studentCount / cap : 0;
+    const cls = pct >= 1 ? 'cap-full' : pct >= 0.85 ? 'cap-warn' : 'cap-ok';
+    return `<span class="cap ${cls}">${studentCount}/${cap}</span>`;
+}
+
+function addTableRow(row){
+    removeEmptyRow();
+    const tbody = document.getElementById("classTableBody");
+    const tr    = document.createElement("tr");
+    tr.dataset.streamId = row.stream_id || "";
+    tr.dataset.classId  = row.class_id;
+
+    tr.innerHTML = `
+        <td><span class="class-label">${row.class_name}</span></td>
+        <td><span class="stream-label">${row.stream_name || 'No stream'}</span></td>
+        <td>${row.teacher || '—'}</td>
+        <td>${buildCapacityCell(0, row.capacity)}</td>
+        <td class="actions-cell">
+            ${row.stream_id ? `
+            <button class="action-btn edit-btn"
+                onclick="openEditStreamModal(${row.stream_id})">✏️ Edit</button>
+            <button class="action-btn delete-btn"
+                onclick="confirmDelete('stream',${row.stream_id},'${row.class_name} – ${row.stream_name}')">🗑 Delete</button>
+            ` : `
+            <button class="action-btn delete-btn"
+                onclick="confirmDelete('class',${row.class_id},'${row.class_name}')">🗑 Delete</button>
+            `}
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+/* ── CREATE ────────────────────────────────────────────────── */
+async function createClass(){
+    const btn         = document.getElementById("createBtn");
+    const class_name  = document.getElementById("c_class_name").value.trim();
+    const stream_name = document.getElementById("c_stream_name").value.trim();
+    const capacity    = document.getElementById("c_capacity").value.trim();
+    const teacher_id  = document.getElementById("c_teacher_id").value;
+
+    let valid = true;
+
+    // Validate class selection
+    if (!class_name){
+        setError('c_class_name', 'err_c_class', true);
+        valid = false;
+    } else {
+        setError('c_class_name', 'err_c_class', false);
+    }
+
+    // Validate capacity — must be empty OR a positive integer
+    if (capacity !== "" && !isPositiveInt(capacity)){
+        setError('c_capacity', 'err_c_capacity', true);
+        valid = false;
+    } else {
+        setError('c_capacity', 'err_c_capacity', false);
+    }
+
+    if (!valid) return;
+
+    btn.disabled    = true;
+    btn.textContent = "Saving…";
+
+    const { ok, data } = await api(CLASSES_API, "POST", {
+        class_name,
+        stream_name,
+        capacity:   capacity ? parseInt(capacity) : null,
+        teacher_id: teacher_id ? parseInt(teacher_id) : null,
+    });
+
+    btn.disabled    = false;
+    btn.textContent = "Create";
+
+    if (!ok){
+        toast(data.message || "Error creating", "error");
+        return;
+    }
+
+    toast("Created successfully");
+    closeModal("createModal");
+
+    const teacherSelect = document.getElementById("c_teacher_id");
+    const teacherName   = teacher_id
+        ? teacherSelect.options[teacherSelect.selectedIndex].text
+        : "—";
+
+    addTableRow({
+        class_id:    data.class_id,
+        class_name,
+        stream_id:   data.stream_id,
+        stream_name: stream_name || "",
+        capacity,
+        teacher:     teacherName,
+    });
+}
+
+/* ── EDIT STREAM ───────────────────────────────────────────── */
+async function openEditStreamModal(streamId){
+    const { ok, data } = await api(`${STREAMS_API}/${streamId}/detail`);
+    if (!ok){ toast("Failed to load stream", "error"); return; }
+
+    document.getElementById("e_stream_id").value   = streamId;
+    document.getElementById("e_stream_name").value = data.name       || "";
+    document.getElementById("e_capacity").value    = data.capacity   || "";
+    document.getElementById("e_teacher_id").value  = data.teacher_id || "";
+    setError('e_capacity', 'err_e_capacity', false);
+    openModal("editStreamModal");
+}
+
+async function saveStream(){
+    const btn         = document.getElementById("editStreamBtn");
+    const stream_id   = document.getElementById("e_stream_id").value;
+    const stream_name = document.getElementById("e_stream_name").value.trim();
+    const capacity    = document.getElementById("e_capacity").value.trim();
+    const teacher_id  = document.getElementById("e_teacher_id").value;
+
+    // Validate capacity
+    if (capacity !== "" && !isPositiveInt(capacity)){
+        setError('e_capacity', 'err_e_capacity', true);
+        return;
+    }
+    setError('e_capacity', 'err_e_capacity', false);
+
+    btn.disabled    = true;
+    btn.textContent = "Saving…";
+
+    const { ok, data } = await api(`${STREAMS_API}/${stream_id}`, "PUT", {
+        stream_name,
+        capacity:   capacity ? parseInt(capacity) : null,
+        teacher_id: teacher_id ? parseInt(teacher_id) : 0,
+    });
+
+    btn.disabled    = false;
+    btn.textContent = "Save";
+
+    if (!ok){ toast(data.message || "Error updating", "error"); return; }
+
+    toast("Stream updated");
+    closeModal("editStreamModal");
+    setTimeout(() => location.reload(), 600);
+}
+
+/* ── LIVE CAPACITY VALIDATION ──────────────────────────────── */
+['c_capacity', 'e_capacity'].forEach(id => {
+    const errId = id === 'c_capacity' ? 'err_c_capacity' : 'err_e_capacity';
+    document.getElementById(id).addEventListener('input', function(){
+        const v = this.value.trim();
+        if (v === ""){
+            setError(id, errId, false);
+        } else {
+            setError(id, errId, !isPositiveInt(v));
+        }
+    });
+});
+
+/* ── DELETE ────────────────────────────────────────────────── */
+let _deleteType = null,
+    _deleteId   = null,
+    _deleteClassId = null;
+function confirmDelete(type, id, label, classId=null){
+    _deleteType    = type;
+    _deleteId      = id;
+    _deleteClassId = classId;
+
+    document.getElementById("confirmText").textContent =
+        `Delete "${label}"? This cannot be undone.`;
+
+    openModal("confirmModal");
+}
+
+document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
+    const url = _deleteType === "stream"
+    ? `${STREAMS_API}/${_deleteId}?class_id=${_deleteClassId}`
+    : `${CLASSES_API}/${_deleteId}`;
+
+    const { ok, data } = await api(url, "DELETE");
+    closeModal("confirmModal");
+
+    if (!ok){ toast(data.message || "Error deleting", "error"); return; }
+
+    toast("Deleted successfully");
+
+    if (_deleteType === "stream"){
+        document.querySelectorAll(`tr[data-stream-id="${_deleteId}"]`).forEach(r => r.remove());
+    } else {
+        document.querySelectorAll(`tr[data-class-id="${_deleteId}"]`).forEach(r => r.remove());
+    }
+
+    if (!document.querySelector("#classTableBody tr[data-class-id]")){
+        document.getElementById("classTableBody").innerHTML = `
+            <tr id="emptyRow"><td colspan="5">
+                <div class="empty-state">
+                    <div class="icon">🏫</div>
+                    <p>No classes yet. Click <strong>Add Class / Stream</strong> to get started.</p>
+                </div>
+            </td></tr>`;
+    }
+});
+
+/* ── CLOSE MODAL ON BACKDROP CLICK ─────────────────────────── */
+document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', e => {
+        if (e.target === m) m.classList.remove('show');
+    });
+});
+</script>
+{% endblock %}

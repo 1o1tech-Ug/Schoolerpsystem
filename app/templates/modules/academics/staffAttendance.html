@@ -1,0 +1,810 @@
+{% extends "base.html" %}
+{% block title %}Staff Attendance{% endblock %}
+
+{% block content %}
+
+<style>
+
+    body{
+        font-family:Arial,sans-serif;
+        background:#f4f6f9;
+    }
+
+    .attendance-container{
+        max-width:1250px;
+        margin:auto;
+    }
+
+    .page-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+        gap:15px;
+        flex-wrap:wrap;
+    }
+
+    .page-title{
+        font-size:28px;
+        font-weight:700;
+        color:#111827;
+    }
+
+    .page-subtitle{
+        color:#6b7280;
+        margin-top:5px;
+        font-size:14px;
+    }
+
+    .today-badge{
+        background:#2563eb;
+        color:white;
+        padding:10px 16px;
+        border-radius:10px;
+        font-size:14px;
+        font-weight:600;
+    }
+
+    /* FILTER BAR */
+
+    .filter-bar{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:16px;
+        background:white;
+        padding:20px;
+        border-radius:14px;
+        margin-bottom:24px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .filter-group{
+        display:flex;
+        flex-direction:column;
+        gap:7px;
+    }
+
+    .filter-group label{
+        font-size:13px;
+        font-weight:600;
+        color:#374151;
+    }
+
+    .filter-group input,
+    .filter-group select{
+        height:45px;
+        border:1px solid #d1d5db;
+        border-radius:10px;
+        padding:0 14px;
+        font-size:14px;
+        outline:none;
+        background:white;
+        transition:0.2s;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus{
+        border-color:#2563eb;
+    }
+
+    .filter-btn{
+        height:45px;
+        margin-top:24px;
+        border:none;
+        border-radius:10px;
+        background:#2563eb;
+        color:white;
+        font-weight:600;
+        cursor:pointer;
+        transition:0.2s;
+    }
+
+    .filter-btn:hover{
+        background:#1d4ed8;
+    }
+
+    /* TABLE CARD */
+
+    .table-card{
+        background:white;
+        border-radius:14px;
+        overflow:hidden;
+        box-shadow:0 2px 10px rgba(0,0,0,0.06);
+        margin-bottom:30px;
+    }
+
+    .table-header{
+        padding:18px 22px;
+        border-bottom:1px solid #e5e7eb;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        flex-wrap:wrap;
+        gap:10px;
+    }
+
+    .table-title{
+        font-size:18px;
+        font-weight:700;
+        color:#111827;
+    }
+
+    .result-badge{
+        background:#dbeafe;
+        color:#1d4ed8;
+        padding:7px 14px;
+        border-radius:999px;
+        font-size:13px;
+        font-weight:700;
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    th{
+        background:#f9fafb;
+        font-size:12px;
+        text-transform:uppercase;
+        letter-spacing:.05em;
+        color:#6b7280;
+    }
+
+    th,
+    td{
+        padding:15px 18px;
+        border-bottom:1px solid #f1f5f9;
+        text-align:left;
+    }
+
+    td{
+        font-size:14px;
+        color:#111827;
+    }
+
+    tbody tr:hover{
+        background:#fafafa;
+    }
+
+    /* STAFF INFO */
+
+    .staff-info{
+        display:flex;
+        align-items:center;
+        gap:12px;
+    }
+
+    .avatar{
+        width:40px;
+        height:40px;
+        border-radius:50%;
+        background:#dbeafe;
+        color:#1d4ed8;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:13px;
+        font-weight:700;
+        flex-shrink:0;
+    }
+
+    .staff-name{
+        font-weight:600;
+    }
+
+    /* STATUS */
+
+    .status-badge{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        padding:6px 12px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:700;
+        text-transform:capitalize;
+    }
+
+    .present{
+        background:#dcfce7;
+        color:#15803d;
+    }
+
+    .late{
+        background:#fef3c7;
+        color:#d97706;
+    }
+
+    .absent{
+        background:#fee2e2;
+        color:#dc2626;
+    }
+
+    /* FORM SECTION */
+
+    .form-section{
+        background:white;
+        border-radius:14px;
+        overflow:hidden;
+        box-shadow:0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .form-header{
+        padding:20px 22px;
+        border-bottom:1px solid #e5e7eb;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+    }
+
+    .form-title{
+        font-size:20px;
+        font-weight:700;
+        color:#111827;
+    }
+
+    .attendance-select,
+    .attendance-input{
+        width:100%;
+        height:40px;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+        padding:0 12px;
+        outline:none;
+        font-size:14px;
+        transition:0.2s;
+        background:white;
+    }
+
+    .attendance-select:focus,
+    .attendance-input:focus{
+        border-color:#2563eb;
+    }
+
+    .save-wrapper{
+        padding:20px;
+        display:flex;
+        justify-content:flex-end;
+    }
+
+    .save-btn{
+        padding:13px 24px;
+        border:none;
+        border-radius:10px;
+        background:#16a34a;
+        color:white;
+        font-weight:700;
+        cursor:pointer;
+        transition:0.2s;
+        font-size:14px;
+    }
+
+    .save-btn:hover{
+        background:#15803d;
+    }
+
+    .empty-row{
+        text-align:center;
+        padding:40px;
+        color:#6b7280;
+    }
+
+    .loading{
+        text-align:center;
+        padding:30px;
+        color:#6b7280;
+    }
+
+    @media(max-width:768px){
+
+        .filter-bar{
+            grid-template-columns:1fr;
+        }
+
+        .table-card,
+        .form-section{
+            overflow-x:auto;
+        }
+
+        table{
+            min-width:850px;
+        }
+
+        .save-wrapper{
+            justify-content:stretch;
+        }
+
+        .save-btn{
+            width:100%;
+        }
+    }
+
+</style>
+
+<div class="attendance-container">
+
+    <!-- HEADER -->
+
+    <div class="page-header">
+
+        <div>
+
+            <div class="page-title">
+                Staff Attendance
+            </div>
+
+            <div class="page-subtitle">
+                Manage daily attendance for teaching staff
+            </div>
+
+        </div>
+
+        <div class="today-badge" id="todayDate">
+            --
+        </div>
+
+    </div>
+
+    <!-- FILTERS -->
+
+    <div class="filter-bar">
+
+        <div class="filter-group">
+            <label>Select Date</label>
+
+            <input
+                type="date"
+                id="date">
+        </div>
+
+        <div class="filter-group">
+
+            <label>Status</label>
+
+            <select id="status">
+
+                <option value="">
+                    All Status
+                </option>
+
+                <option value="present">
+                    Present
+                </option>
+
+                <option value="late">
+                    Late
+                </option>
+
+                <option value="absent">
+                    Absent
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="filter-group">
+
+            <button
+                class="filter-btn"
+                onclick="filterAttendance()">
+
+                Apply Filter
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ATTENDANCE RECORDS -->
+
+    <div class="table-card">
+
+        <div class="table-header">
+
+            <div class="table-title">
+                Attendance Records
+            </div>
+
+            <div
+                class="result-badge"
+                id="resultCount">
+
+                0 Results
+
+            </div>
+
+        </div>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Staff</th>
+                    <th>Status</th>
+                    <th>Time In</th>
+                    <th>Date</th>
+                    <th>Notes</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="attendanceBody">
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty-row">
+
+                        No attendance records loaded
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <!-- MARK ATTENDANCE -->
+
+    <div class="form-section">
+
+        <div class="form-header">
+
+            <div class="form-title">
+                Mark Daily Attendance
+            </div>
+
+        </div>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Staff</th>
+                    <th>Status</th>
+                    <th>Time In</th>
+                    <th>Notes</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for staff in staff_members %}
+
+                <tr
+                    class="attendance-row"
+                    data-staff-id="{{ staff.id }}">
+
+                    <td>
+
+                        <div class="staff-info">
+
+                            <div class="avatar">
+
+                                {{ (staff.first_name[0] ~ staff.last_name[0]).upper() }}
+
+                            </div>
+
+                            <div class="staff-name">
+
+                                {{ staff.first_name }}
+                                {{ staff.last_name }}
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+
+                        <select
+                            class="attendance-select attendance-status">
+
+                            <option value="present">
+                                Present
+                            </option>
+
+                            <option value="late">
+                                Late
+                            </option>
+
+                            <option value="absent">
+                                Absent
+                            </option>
+
+                        </select>
+
+                    </td>
+
+                    <td>
+
+                        <input
+                            type="time"
+                            class="attendance-input attendance-time">
+
+                    </td>
+
+                    <td>
+
+                        <input
+                            type="text"
+                            class="attendance-input attendance-notes"
+                            placeholder="Optional notes">
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        <div class="save-wrapper">
+
+            <button
+                class="save-btn"
+                onclick="submitAttendance()">
+
+                Save Attendance
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    // DEFAULT DATE
+
+    const today = new Date().toISOString().split('T')[0];
+
+    document.getElementById('date').value = today;
+
+    document.getElementById('todayDate').innerText =
+        new Date().toLocaleDateString(
+            'en-US',
+            {
+                weekday:'short',
+                year:'numeric',
+                month:'short',
+                day:'numeric'
+            }
+        );
+
+    // LOAD INITIAL RECORDS
+
+    window.onload = () => {
+        filterAttendance();
+    };
+
+
+    // FILTER ATTENDANCE
+
+    async function filterAttendance(){
+
+        const date = document.getElementById('date').value;
+        const status = document.getElementById('status').value;
+
+        const tbody = document.getElementById('attendanceBody');
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="loading">
+                    Loading attendance...
+                </td>
+            </tr>
+        `;
+
+        try{
+
+            const response = await fetch(
+                `/api/academics/staff-attendance/filter?date=${date}&status=${status}`
+            );
+
+            const data = await response.json();
+
+            const resultCount =
+                document.getElementById('resultCount');
+
+            tbody.innerHTML = '';
+
+            resultCount.textContent =
+                `${data.length} Results`;
+
+            if(data.length === 0){
+
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-row">
+                            No attendance records found
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+            data.forEach(record => {
+
+                const initials =
+                    `${record.first_name[0]}${record.last_name[0]}`
+                    .toUpperCase();
+
+                tbody.innerHTML += `
+
+                    <tr>
+
+                        <td>
+
+                            <div class="staff-info">
+
+                                <div class="avatar">
+                                    ${initials}
+                                </div>
+
+                                <div class="staff-name">
+
+                                    ${record.first_name}
+                                    ${record.last_name}
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>
+
+                            <span class="status-badge ${record.status}">
+
+                                ${record.status}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            ${record.time_in || '-'}
+
+                        </td>
+
+                        <td>
+
+                            ${record.date}
+
+                        </td>
+
+                        <td>
+
+                            ${record.notes || '-'}
+
+                        </td>
+
+                    </tr>
+                `;
+            });
+
+        }catch(error){
+
+            console.error(error);
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty-row">
+                        Failed to load attendance
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+
+    // SAVE ATTENDANCE
+
+    async function submitAttendance(){
+
+        const rows =
+            document.querySelectorAll('.attendance-row');
+
+        const attendance = [];
+
+        rows.forEach(row => {
+
+            attendance.push({
+
+                staff_id:
+                    row.dataset.staffId,
+
+                status:
+                    row.querySelector('.attendance-status').value,
+
+                time_in:
+                    row.querySelector('.attendance-time').value,
+
+                notes:
+                    row.querySelector('.attendance-notes').value,
+
+                date:
+                    document.getElementById('date').value
+            });
+        });
+
+        try{
+
+            const saveBtn =
+                document.querySelector('.save-btn');
+
+            saveBtn.innerText = 'Saving...';
+            saveBtn.disabled = true;
+
+            const response = await fetch(
+                '/api/academics/staff-attendances',
+                {
+                    method:'POST',
+
+                    headers:{
+                        'Content-Type':'application/json'
+                    },
+
+                    body:JSON.stringify({
+                        attendance
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if(!response.ok){
+
+                throw new Error(
+                    data.message || 'Failed to save attendance'
+                );
+            }
+
+            alert(data.message);
+
+            filterAttendance();
+
+            saveBtn.innerText = 'Save Attendance';
+            saveBtn.disabled = false;
+
+        }catch(error){
+
+            console.error(error);
+
+            alert(error.message);
+
+            const saveBtn =
+                document.querySelector('.save-btn');
+
+            saveBtn.innerText = 'Save Attendance';
+            saveBtn.disabled = false;
+        }
+    }
+
+</script>
+
+{% endblock %}

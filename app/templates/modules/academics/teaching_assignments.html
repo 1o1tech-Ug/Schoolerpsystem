@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+{% block title %}Teaching Assignments{% endblock %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --ink:#0a0f1e; --ink-2:#3d4a63; --ink-3:#8492a6; --line:#e8ecf3;
+    --surface:#ffffff; --bg:#f4f6fb;
+    --blue:#2352ff; --blue-dim:#e8edff; --blue-dark:#1438cc;
+    --green:#00c07a; --green-dim:#e0faf0;
+    --rose:#f43f5e; --rose-dim:#ffe4e9;
+    --amber:#f59e0b; --amber-dim:#fef3c7;
+    --purple:#7c3aed; --purple-dim:#ede9fe;
+    --r-sm:8px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+    --shadow-sm:0 1px 4px rgba(10,15,30,.06);
+    --shadow-md:0 4px 20px rgba(10,15,30,.08);
+    --shadow-xl:0 24px 64px rgba(10,15,30,.18);
+    --font-display:'Syne',sans-serif;
+    --font-body:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
+
+/* ── Toast ── */
+#toast-rack{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:12px;color:#fff;padding:14px 20px;border-radius:var(--r-md);font-size:14px;font-weight:500;box-shadow:var(--shadow-xl);animation:toastIn .3s cubic-bezier(.16,1,.3,1) forwards;pointer-events:auto;max-width:340px}
+.toast.success{background:#0d1f0f;border-left:3px solid var(--green)}
+.toast.error  {background:#200a0e;border-left:3px solid var(--rose)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(8px)}}
+.toast.leaving{animation:toastOut .25s ease forwards}
+
+/* ── Page header ── */
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px;flex-wrap:wrap}
+.header-eyebrow{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.header-title{font-family:var(--font-display);font-size:30px;font-weight:800;line-height:1.1}
+.header-sub{margin-top:6px;font-size:14px;color:var(--ink-3)}
+.header-stats{display:flex;gap:12px;flex-wrap:wrap}
+.stat-chip{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 18px;text-align:center;box-shadow:var(--shadow-sm);min-width:80px}
+.stat-chip .val{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--blue);display:block}
+.stat-chip .lbl{font-size:11px;color:var(--ink-3);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+/* ── Two-col layout ── */
+.layout-grid{display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start}
+
+/* ── Form card ── */
+.form-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);overflow:hidden;position:sticky;top:20px}
+.form-card-header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.form-card-icon{width:38px;height:38px;border-radius:10px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;color:var(--blue);flex-shrink:0}
+.form-card-title{font-family:var(--font-display);font-size:15px;font-weight:800}
+.form-card-sub{font-size:12px;color:var(--ink-3);margin-top:1px}
+.form-card-body{padding:20px 22px}
+
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.field:last-of-type{margin-bottom:0}
+.field label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
+.field select,.field input{
+    height:46px;border:1.5px solid var(--line);border-radius:var(--r-sm);
+    padding:0 14px;font-size:14px;font-family:var(--font-body);
+    color:var(--ink);background:var(--bg);outline:none;
+    transition:border-color .18s,box-shadow .18s;width:100%;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238492a6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+    padding-right:36px;cursor:pointer;
+}
+.field input{background-image:none;padding-right:14px;cursor:text}
+.field select:focus,.field input:focus{
+    border-color:var(--blue);background-color:var(--surface);
+    box-shadow:0 0 0 3px rgba(35,82,255,.12)
+}
+.field select:disabled{opacity:.5;cursor:not-allowed}
+
+.preview-strip{
+    margin-top:16px;padding:12px 14px;
+    background:var(--blue-dim);border-radius:var(--r-sm);
+    font-size:13px;font-weight:600;color:var(--blue);
+    min-height:42px;display:flex;align-items:center;gap:8px;
+    transition:all .2s;
+}
+.preview-strip.empty{color:var(--ink-3);background:var(--bg);border:1.5px dashed var(--line)}
+.preview-arrow{opacity:.5}
+
+.form-actions{display:flex;gap:10px;margin-top:18px}
+.btn-primary{
+    flex:1;height:46px;border:none;border-radius:var(--r-sm);
+    background:var(--blue);color:#fff;font-family:var(--font-body);
+    font-size:14px;font-weight:700;cursor:pointer;
+    transition:background .18s,transform .1s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-primary:active{transform:scale(.97)}
+.btn-primary:disabled{opacity:.6;pointer-events:none}
+.btn-primary .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn-primary.loading .spinner{display:block}
+.btn-primary.loading .btn-label{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.btn-ghost{
+    height:46px;padding:0 16px;border:1.5px solid var(--line);border-radius:var(--r-sm);
+    background:none;font-family:var(--font-body);font-size:14px;font-weight:600;
+    color:var(--ink-2);cursor:pointer;transition:all .15s;
+}
+.btn-ghost:hover{border-color:var(--ink-2);color:var(--ink)}
+
+/* ── Table card ── */
+.table-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm)}
+.table-toolbar{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.toolbar-title{font-family:var(--font-display);font-size:15px;font-weight:700}
+.result-badge{background:var(--blue-dim);color:var(--blue);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+
+.search-wrap{position:relative;flex:1;min-width:180px;max-width:260px}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
+.search-input{height:38px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:0 12px 0 36px;font-size:13px;font-family:var(--font-body);color:var(--ink);background:var(--bg);outline:none;width:100%;transition:border-color .18s}
+.search-input:focus{border-color:var(--blue);background:var(--surface)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead{background:#f8fafd}
+th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;border-bottom:1px solid var(--line)}
+td{padding:14px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:#f8fafd}
+
+.teacher-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:8px;background:var(--blue-dim);color:var(--blue);font-family:var(--font-display);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.teacher-name{font-weight:600;font-size:13px}
+
+.subject-pill{display:inline-flex;background:var(--purple-dim);color:var(--purple);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px}
+.stream-pill{display:inline-flex;background:var(--amber-dim);color:#92400e;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px}
+
+.row-actions{display:flex;gap:6px}
+.act-btn{height:32px;padding:0 12px;border-radius:6px;border:1.5px solid var(--line);background:none;font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.act-btn.edit-act{color:var(--blue)}
+.act-btn.edit-act:hover{border-color:var(--blue);background:var(--blue-dim)}
+.act-btn.del-act{color:var(--rose)}
+.act-btn.del-act:hover{border-color:var(--rose);background:var(--rose-dim)}
+
+.empty-state{text-align:center;padding:56px 24px}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.empty-sub{font-size:13px;color:var(--ink-3)}
+
+/* ── Pagination ── */
+.pagination-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 20px;border-top:1px solid var(--line);
+    flex-wrap:wrap;gap:12px;
+}
+.pagination-info{font-size:13px;color:var(--ink-3);white-space:nowrap}
+.pagination-info strong{color:var(--ink);font-weight:700}
+.pagination-controls{display:flex;align-items:center;gap:4px}
+.pg-btn{
+    min-width:36px;height:36px;padding:0 10px;
+    border:1.5px solid var(--line);border-radius:var(--r-sm);
+    background:var(--surface);color:var(--ink-2);
+    font-family:var(--font-body);font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;
+}
+.pg-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.pg-btn:disabled{opacity:.38;cursor:not-allowed}
+.pg-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pg-ellipsis{min-width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:13px}
+
+/* ── Delete confirm modal ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:4000;padding:20px}
+.modal-backdrop.show{display:flex;animation:bdIn .2s ease}
+@keyframes bdIn{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:420px;background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--shadow-xl);animation:modalIn .25s cubic-bezier(.16,1,.3,1);overflow:hidden}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.modal-icon-wrap{width:40px;height:40px;border-radius:10px;background:var(--rose-dim);display:flex;align-items:center;justify-content:center;color:var(--rose);flex-shrink:0}
+.modal-title{font-family:var(--font-display);font-size:16px;font-weight:800}
+.modal-sub{font-size:12px;color:var(--ink-3);margin-top:2px}
+.modal-body{padding:20px 24px;font-size:14px;color:var(--ink-2);line-height:1.6}
+.modal-body strong{color:var(--ink)}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+.btn-cancel{height:40px;padding:0 18px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:none;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.btn-cancel:hover{border-color:var(--ink-2)}
+.btn-danger{height:40px;padding:0 18px;border:none;border-radius:var(--r-sm);background:var(--rose);color:#fff;font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-danger:hover{background:#e11d48}
+
+@media(max-width:900px){
+    .layout-grid{grid-template-columns:1fr}
+    .form-card{position:static}
+    .header-stats{display:none}
+}
+@media(max-width:600px){
+    .page-header{flex-direction:column}
+    .table-toolbar{flex-direction:column;align-items:flex-start}
+    .search-wrap{max-width:100%;width:100%}
+    .pagination-bar{justify-content:center}
+}
+</style>
+
+<div id="toast-rack"></div>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div>
+        <div class="header-eyebrow">Academics · Setup</div>
+        <h2 class="header-title">Teaching Assignments</h2>
+        <p class="header-sub">Assign teachers to subjects and streams</p>
+    </div>
+    <div class="header-stats">
+        <div class="stat-chip">
+            <span class="val" id="statTotal">{{ assignments | length }}</span>
+            <span class="lbl">Assignments</span>
+        </div>
+        <div class="stat-chip">
+            <span class="val">{{ staff | length }}</span>
+            <span class="lbl">Teachers</span>
+        </div>
+    </div>
+</div>
+
+<!-- TWO-COL GRID -->
+<div class="layout-grid">
+
+    <!-- ── FORM ── -->
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="form-card-icon">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="form-card-title" id="formTitle">New Assignment</div>
+                <div class="form-card-sub" id="formSub">Fill in the details below</div>
+            </div>
+        </div>
+
+        <div class="form-card-body">
+
+            <input type="hidden" id="editId">
+
+            <div class="field">
+                <label>Teacher</label>
+                <select id="selTeacher" onchange="onTeacherChange()">
+                    <option value="">Select teacher…</option>
+                    {% for s in staff %}
+                    <option value="{{ s.id }}">{{ s.first_name }} {{ s.last_name }}</option>
+                    {% endfor %}
+                </select>
+                <span id="teacherHint" style="font-size:11px;color:var(--ink-3);margin-top:2px;display:none"></span>
+            </div>
+
+            <div class="field">
+                <label>Class</label>
+                <select id="selClass" onchange="onClassChange()">
+                    <option value="">Select class…</option>
+                    {% for cls in classes %}
+                    <option value="{{ cls.id }}">{{ cls.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Stream <span style="color:var(--ink-3);font-weight:400;text-transform:none">(optional)</span></label>
+                <select id="selStream" onchange="updatePreview()" disabled>
+                    <option value="">— Select class first —</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Subject</label>
+                <select id="selSubject" onchange="onSubjectChange()">
+                    <option value="">Select subject…</option>
+                    {% if levels_with_subjects %}
+                        {% for level_name, level_subjects in levels_with_subjects %}
+                        {% if level_subjects %}
+                        <optgroup label="{{ level_name }}">
+                            {% for subj in level_subjects %}
+                            <option value="{{ subj.id }}">{{ subj.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {% for subj in subjects %}
+                        <option value="{{ subj.id }}">{{ subj.name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                <span id="subjectHint" style="font-size:11px;color:var(--ink-3);margin-top:2px;display:none"></span>
+            </div>
+
+            <!-- live preview -->
+            <div class="preview-strip empty" id="previewStrip">
+                Select teacher, subject and class to preview…
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-primary" id="submitBtn" onclick="submitForm()">
+                    <div class="spinner"></div>
+                    <span class="btn-label">Assign</span>
+                </button>
+                <button class="btn-ghost" id="cancelEditBtn" style="display:none" onclick="cancelEdit()">Cancel</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── TABLE ── -->
+    <div class="table-card">
+        <div class="table-toolbar">
+            <div>
+                <span class="toolbar-title">Current Assignments</span>
+                &nbsp;
+                <span class="result-badge" id="resultBadge">{{ assignments | length }}</span>
+            </div>
+            <div class="search-wrap">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input class="search-input" placeholder="Search…" oninput="searchTable(this.value)" id="searchInput">
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table id="assignTable">
+                <thead>
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Subject</th>
+                        <th>Stream</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="assignTbody">
+                    {% for a in assignments %}
+                    <tr data-id="{{ a.id }}" class="assign-row">
+                        <td>
+                            <div class="teacher-cell">
+                                <div class="avatar">{{ (a.teacher_first[0] ~ a.teacher_last[0]).upper() }}</div>
+                                <span class="teacher-name">{{ a.teacher_first }} {{ a.teacher_last }}</span>
+                            </div>
+                        </td>
+                        <td><span class="subject-pill">{{ a.subject_name }}</span></td>
+                        <td><span class="stream-pill">{{ a.stream_label or '—' }}</span></td>
+                        <td>
+                            <div class="row-actions">
+                                <button class="act-btn edit-act"
+                                    onclick="startEdit({{ a.id }}, {{ a.staff_id }}, {{ a.stream_id or 'null' }}, {{ a.subject_id }}, {{ a.class_id or 'null' }})">
+                                    ✏️ Edit
+                                </button>
+                                <button class="act-btn del-act"
+                                    onclick="confirmDelete({{ a.id }}, '{{ a.teacher_first }} {{ a.teacher_last }}', '{{ a.subject_name }}')">
+                                    🗑 Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr id="emptyRow">
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <div class="empty-icon">📋</div>
+                                <div class="empty-title">No assignments yet</div>
+                                <div class="empty-sub">Use the form to assign teachers</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION BAR -->
+        <div class="pagination-bar" id="paginationBar">
+            <div class="pagination-info" id="pageInfo"></div>
+            <div class="pagination-controls" id="pageControls"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-backdrop" id="delModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-icon-wrap">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+            </div>
+            <div>
+                <div class="modal-title">Delete Assignment</div>
+                <div class="modal-sub">This cannot be undone</div>
+            </div>
+        </div>
+        <div class="modal-body" id="delModalBody">
+            Are you sure you want to delete this assignment?
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeDelModal()">Cancel</button>
+            <button class="btn-danger" id="delConfirmBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const ALL_STREAMS = [
+    {% for s in streams %}
+    { id: {{ s.id }}, class_id: {{ s.class_id }}, name: {{ s.name | tojson }} }{% if not loop.last %},{% endif %}
+
+    {% endfor %}
+];
+
+const TEACHER_SUBJECT_MAP = {};
+const SUBJECT_TEACHER_MAP = {};
+
+{% for staff_id, subject_ids in teacher_subject_map.items() %}
+TEACHER_SUBJECT_MAP[{{ staff_id }}] = [{{ subject_ids | join(', ') }}];
+{% endfor %}
+
+{% for subject_id, staff_ids in subject_teacher_map.items() %}
+SUBJECT_TEACHER_MAP[{{ subject_id }}] = [{{ staff_ids | join(', ') }}];
+{% endfor %}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGINATION
+   ══════════════════════════════════════════════════════════════ */
+const PAGE_SIZE   = 20;
+let currentPage   = 1;
+let visibleRows   = [];   // rows currently visible (after search filter)
+let allRows       = [];   // all assignment rows (never changes after init)
+let searchActive  = false;
+
+function initPagination() {
+    allRows     = Array.from(document.querySelectorAll('.assign-row'));
+    visibleRows = [...allRows];
+
+    const bar = document.getElementById('paginationBar');
+    if (allRows.length <= PAGE_SIZE) {
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'flex';
+    renderPage(1);
+}
+
+function renderPage(page) {
+    const total      = visibleRows.length;
+    const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+
+    page = Math.max(1, Math.min(page, totalPages));
+    currentPage = page;
+
+    const start = (page - 1) * PAGE_SIZE;
+    const end   = start + PAGE_SIZE;
+
+    // Hide all rows first
+    allRows.forEach(row => { row.style.display = 'none'; });
+
+    // Show only the visible slice
+    visibleRows.forEach((row, idx) => {
+        row.style.display = (idx >= start && idx < end) ? '' : 'none';
+    });
+
+    const bar = document.getElementById('paginationBar');
+
+    if (total <= PAGE_SIZE) {
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'flex';
+
+    const from = total === 0 ? 0 : start + 1;
+    const to   = Math.min(end, total);
+    document.getElementById('pageInfo').innerHTML =
+        `Showing <strong>${from}–${to}</strong> of <strong>${total}</strong> assignments`;
+
+    renderPageButtons(page, totalPages);
+}
+
+function renderPageButtons(current, total) {
+    const ctrl = document.getElementById('pageControls');
+    ctrl.innerHTML = '';
+
+    const btn = (label, page, disabled = false, active = false) => {
+        const b = document.createElement('button');
+        b.className = 'pg-btn' + (active ? ' active' : '');
+        b.textContent = label;
+        b.disabled = disabled;
+        if (!disabled && !active) b.onclick = () => renderPage(page);
+        return b;
+    };
+
+    const ellipsis = () => {
+        const s = document.createElement('span');
+        s.className = 'pg-ellipsis';
+        s.textContent = '…';
+        return s;
+    };
+
+    ctrl.appendChild(btn('‹', current - 1, current === 1));
+
+    buildPageRange(current, total).forEach(p => {
+        if (p === '…') ctrl.appendChild(ellipsis());
+        else ctrl.appendChild(btn(p, p, false, p === current));
+    });
+
+    ctrl.appendChild(btn('›', current + 1, current === total));
+}
+
+function buildPageRange(current, total) {
+    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+    const pages = new Set([1, total, current]);
+    if (current > 1) pages.add(current - 1);
+    if (current < total) pages.add(current + 1);
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+    const result = [];
+    sorted.forEach((p, i) => {
+        if (i > 0 && p - sorted[i - 1] > 1) result.push('…');
+        result.push(p);
+    });
+    return result;
+}
+
+/* ── Token ── */
+function getToken() { return localStorage.getItem('access_token') || ''; }
+
+/* ── Toast ── */
+function toast(msg, type = 'success') {
+    const rack = document.getElementById('toast-rack');
+    const el   = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span style="font-size:16px">${type==='success'?'✅':'❌'}</span><span>${msg}</span>`;
+    rack.appendChild(el);
+    setTimeout(() => { el.classList.add('leaving'); el.addEventListener('animationend', ()=>el.remove()); }, 3400);
+}
+
+/* ── Class → Stream cascade ── */
+function onClassChange() {
+    const classId = parseInt(document.getElementById('selClass').value);
+    const sel     = document.getElementById('selStream');
+    sel.innerHTML = '<option value="">— No stream (whole class) —</option>';
+
+    if (!classId) { sel.disabled = true; updatePreview(); return; }
+
+    const matching = ALL_STREAMS.filter(s => s.class_id === classId);
+    if (matching.length === 0) {
+        sel.innerHTML = '<option value="" disabled>No streams in this class</option>';
+    } else {
+        matching.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s.id; o.textContent = s.name;
+            sel.appendChild(o);
+        });
+    }
+    sel.disabled = false;
+    updatePreview();
+}
+
+/* ── Teacher → grey-out subjects ── */
+function onTeacherChange() {
+    const teacherId  = parseInt(document.getElementById('selTeacher').value);
+    const subjectSel = document.getElementById('selSubject');
+    const hint       = document.getElementById('teacherHint');
+
+    if (!teacherId) {
+        Array.from(subjectSel.options).forEach(o => { o.disabled = false; o.style.color = ''; });
+        hint.style.display = 'none';
+        updatePreview();
+        return;
+    }
+
+    const allowed = TEACHER_SUBJECT_MAP[teacherId] || [];
+    if (allowed.length === 0) {
+        hint.textContent   = '⚠️ This teacher has no subjects assigned yet';
+        hint.style.color   = 'var(--rose)';
+        hint.style.display = 'block';
+    } else {
+        hint.textContent   = `✓ Can teach ${allowed.length} subject(s)`;
+        hint.style.color   = 'var(--green)';
+        hint.style.display = 'block';
+    }
+
+    Array.from(subjectSel.options).forEach(opt => {
+        if (!opt.value) return;
+        const ok = allowed.includes(parseInt(opt.value));
+        opt.disabled   = !ok;
+        opt.style.color = ok ? '' : '#ccc';
+    });
+
+    if (subjectSel.value && !allowed.includes(parseInt(subjectSel.value))) {
+        subjectSel.value = '';
+    }
+    updatePreview();
+}
+
+/* ── Subject → grey-out teachers ── */
+function onSubjectChange() {
+    const subjectId  = parseInt(document.getElementById('selSubject').value);
+    const teacherSel = document.getElementById('selTeacher');
+    const hint       = document.getElementById('subjectHint');
+
+    if (!subjectId) {
+        Array.from(teacherSel.options).forEach(o => { o.disabled = false; o.style.color = ''; });
+        hint.style.display = 'none';
+        updatePreview();
+        return;
+    }
+
+    const allowed = SUBJECT_TEACHER_MAP[subjectId] || [];
+    if (allowed.length === 0) {
+        hint.textContent   = '⚠️ No teachers assigned to this subject yet';
+        hint.style.color   = 'var(--rose)';
+        hint.style.display = 'block';
+    } else {
+        hint.textContent   = `✓ ${allowed.length} teacher(s) can teach this`;
+        hint.style.color   = 'var(--green)';
+        hint.style.display = 'block';
+    }
+
+    Array.from(teacherSel.options).forEach(opt => {
+        if (!opt.value) return;
+        const ok = allowed.includes(parseInt(opt.value));
+        opt.disabled    = !ok;
+        opt.style.color = ok ? '' : '#ccc';
+    });
+
+    if (teacherSel.value && !allowed.includes(parseInt(teacherSel.value))) {
+        teacherSel.value = '';
+    }
+    updatePreview();
+}
+
+/* ── Live preview ── */
+function updatePreview() {
+    const teacher = document.getElementById('selTeacher');
+    const subject = document.getElementById('selSubject');
+    const stream  = document.getElementById('selStream');
+    const strip   = document.getElementById('previewStrip');
+
+    const tName = teacher.options[teacher.selectedIndex]?.text;
+    const sName = subject.options[subject.selectedIndex]?.text;
+    const rName = stream.value ? stream.options[stream.selectedIndex]?.text : null;
+
+    if (teacher.value && subject.value) {
+        strip.className = 'preview-strip';
+        strip.innerHTML =
+            `<span>👤 ${tName}</span>
+             <span class="preview-arrow">→</span>
+             <span>📘 ${sName}</span>` +
+            (rName ? `<span class="preview-arrow">→</span><span>🏫 ${rName}</span>` : '');
+    } else {
+        strip.className = 'preview-strip empty';
+        strip.textContent = 'Select teacher and subject to preview…';
+    }
+}
+
+/* ── Submit (create or update) ── */
+async function submitForm() {
+    const editId    = document.getElementById('editId').value;
+    const staffId   = document.getElementById('selTeacher').value;
+    const classId   = document.getElementById('selClass').value;
+    const streamId  = document.getElementById('selStream').value;
+    const subjectId = document.getElementById('selSubject').value;
+
+    if (!staffId || !subjectId || !classId) {
+        toast('Please select a teacher, class and subject', 'error'); return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading'); btn.disabled = true;
+
+    const isEdit = !!editId;
+    const url    = isEdit ? `/api/academics/assignments/${editId}` : `/api/academics/assignments`;
+    const method = isEdit ? 'PUT' : 'POST';
+
+    try {
+        const resp = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+            body: JSON.stringify({
+                staff_id:   parseInt(staffId),
+                stream_id:  streamId ? parseInt(streamId) : null,
+                subject_id: parseInt(subjectId),
+            }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.message || 'Error');
+
+        if (isEdit) {
+            updateTableRow(data.assignment);
+            cancelEdit();
+            toast('Assignment updated');
+        } else {
+            addTableRow(data.assignment);
+            resetForm();
+            toast('Assignment created');
+        }
+        updateCount(isEdit ? 0 : 1);
+
+    } catch (e) { toast(e.message, 'error'); }
+    finally { btn.classList.remove('loading'); btn.disabled = false; }
+}
+
+/* ── Add row to table ── */
+function addTableRow(a) {
+    const empty = document.getElementById('emptyRow');
+    if (empty) empty.remove();
+
+    const tbody    = document.getElementById('assignTbody');
+    const initials = (a.teacher_first[0] + a.teacher_last[0]).toUpperCase();
+    tbody.insertAdjacentHTML('afterbegin', buildRow(a, initials));
+
+    // Re-snapshot allRows and visibleRows, then re-paginate
+    allRows     = Array.from(document.querySelectorAll('.assign-row'));
+    visibleRows = searchActive
+        ? allRows.filter(r => r.style.display !== 'none' || true) // re-apply search
+        : [...allRows];
+
+    // Re-apply current search filter if active
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    if (q) {
+        visibleRows = allRows.filter(r => r.textContent.toLowerCase().includes(q));
+    }
+
+    renderPage(1);
+}
+
+function updateTableRow(a) {
+    const row = document.querySelector(`tr[data-id="${a.id}"]`);
+    if (!row) return;
+    const initials = (a.teacher_first[0] + a.teacher_last[0]).toUpperCase();
+    row.outerHTML = buildRow(a, initials);
+
+    // Re-snapshot after DOM change
+    allRows = Array.from(document.querySelectorAll('.assign-row'));
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    visibleRows = q
+        ? allRows.filter(r => r.textContent.toLowerCase().includes(q))
+        : [...allRows];
+
+    renderPage(currentPage);
+}
+
+function buildRow(a, initials) {
+    const streamHtml = a.stream_label
+        ? `<span class="stream-pill">${a.stream_label}</span>` : '—';
+    return `
+    <tr data-id="${a.id}" class="assign-row">
+        <td>
+            <div class="teacher-cell">
+                <div class="avatar">${initials}</div>
+                <span class="teacher-name">${a.teacher_first} ${a.teacher_last}</span>
+            </div>
+        </td>
+        <td><span class="subject-pill">${a.subject_name}</span></td>
+        <td>${streamHtml}</td>
+        <td>
+            <div class="row-actions">
+                <button class="act-btn edit-act"
+                    onclick="startEdit(${a.id},${a.staff_id},${a.stream_id||'null'},${a.subject_id},${a.class_id||'null'})">
+                    ✏️ Edit
+                </button>
+                <button class="act-btn del-act"
+                    onclick="confirmDelete(${a.id},'${a.teacher_first} ${a.teacher_last}','${a.subject_name}')">
+                    🗑 Delete
+                </button>
+            </div>
+        </td>
+    </tr>`;
+}
+
+/* ── Start edit ── */
+function startEdit(id, staffId, streamId, subjectId, classId) {
+    document.getElementById('editId').value     = id;
+    document.getElementById('selTeacher').value = staffId;
+    document.getElementById('selSubject').value = subjectId;
+    document.getElementById('formTitle').textContent = 'Edit Assignment';
+    document.getElementById('formSub').textContent   = 'Update the details below';
+    document.getElementById('submitBtn').querySelector('.btn-label').textContent = 'Save Changes';
+    document.getElementById('cancelEditBtn').style.display = 'block';
+
+    if (classId) {
+        document.getElementById('selClass').value = classId;
+        onClassChange();
+        if (streamId) {
+            setTimeout(() => { document.getElementById('selStream').value = streamId; updatePreview(); }, 50);
+        }
+    }
+    updatePreview();
+    document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEdit() {
+    resetForm();
+    document.getElementById('formTitle').textContent = 'New Assignment';
+    document.getElementById('formSub').textContent   = 'Fill in the details below';
+    document.getElementById('submitBtn').querySelector('.btn-label').textContent = 'Assign';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+}
+
+function resetForm() {
+    ['editId','selTeacher','selClass','selSubject'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    ['selTeacher','selSubject'].forEach(selId => {
+        Array.from(document.getElementById(selId).options)
+            .forEach(o => { o.disabled = false; o.style.color = ''; });
+    });
+    ['teacherHint','subjectHint'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    const sel = document.getElementById('selStream');
+    sel.innerHTML = '<option value="">— Select class first —</option>';
+    sel.disabled  = true;
+    updatePreview();
+}
+
+/* ── Delete ── */
+let pendingDeleteId = null;
+
+function confirmDelete(id, teacher, subject) {
+    pendingDeleteId = id;
+    document.getElementById('delModalBody').innerHTML =
+        `Remove <strong>${teacher}</strong> from teaching <strong>${subject}</strong>?`;
+    document.getElementById('delModal').classList.add('show');
+    document.getElementById('delConfirmBtn').onclick = doDelete;
+}
+
+function closeDelModal() {
+    document.getElementById('delModal').classList.remove('show');
+    pendingDeleteId = null;
+}
+
+async function doDelete() {
+    if (!pendingDeleteId) return;
+    document.getElementById('delConfirmBtn').textContent = 'Deleting…';
+
+    try {
+        const resp = await fetch(`/api/academics/assignments/${pendingDeleteId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.message || 'Error');
+
+        const row = document.querySelector(`tr[data-id="${pendingDeleteId}"]`);
+        if (row) row.remove();
+
+        // Re-snapshot
+        allRows = Array.from(document.querySelectorAll('.assign-row'));
+        const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        visibleRows = q
+            ? allRows.filter(r => r.textContent.toLowerCase().includes(q))
+            : [...allRows];
+
+        if (allRows.length === 0) {
+            document.getElementById('assignTbody').innerHTML = `
+            <tr id="emptyRow"><td colspan="4">
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <div class="empty-title">No assignments yet</div>
+                    <div class="empty-sub">Use the form to assign teachers</div>
+                </div>
+            </td></tr>`;
+            document.getElementById('paginationBar').style.display = 'none';
+        } else {
+            // Stay on same page, but clamp if last item on page was deleted
+            const newTotalPages = Math.ceil(visibleRows.length / PAGE_SIZE);
+            renderPage(Math.min(currentPage, newTotalPages));
+        }
+
+        updateCount(-1);
+        closeDelModal();
+        toast('Assignment deleted');
+    } catch (e) {
+        toast(e.message, 'error');
+        closeDelModal();
+    }
+}
+
+document.getElementById('delModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeDelModal();
+});
+
+/* ── Count badges ── */
+function updateCount(delta) {
+    const el  = document.getElementById('statTotal');
+    const el2 = document.getElementById('resultBadge');
+    const n   = (parseInt(el.textContent) || 0) + delta;
+    el.textContent  = n;
+    el2.textContent = n;
+}
+
+/* ── Search — filters visibleRows and resets to page 1 ── */
+function searchTable(val) {
+    const q = val.toLowerCase().trim();
+    searchActive = !!q;
+
+    visibleRows = q
+        ? allRows.filter(r => r.textContent.toLowerCase().includes(q))
+        : [...allRows];
+
+    renderPage(1);
+}
+
+/* ── Boot ── */
+document.addEventListener('DOMContentLoaded', initPagination);
+</script>
+
+{% endblock %}

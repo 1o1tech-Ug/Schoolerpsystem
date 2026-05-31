@@ -1,0 +1,202 @@
+{% extends "admin.html" %}
+
+{% block title %}System Settings{% endblock %}
+{% block page_title %}System Settings{% endblock %}
+
+{% block content %}
+
+<style>
+/* REUSING YOUR EXISTING DESIGN SYSTEM */
+:root {
+  --navy: #0f2044;
+  --navy-mid: #1a3461;
+  --gray-100: #eef0f5;
+  --gray-200: #dde1eb;
+  --gray-400: #8c96b0;
+  --success: #1a6b3c;
+  --error: #8b1a1a;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-lg: 0 8px 32px rgba(15,32,68,0.13);
+}
+
+/* WRAPPER */
+.settings-wrapper {
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+/* CARD */
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* HEADER */
+.card-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--navy);
+}
+
+/* BODY */
+.card-body {
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a5470;
+  text-transform: uppercase;
+}
+
+input {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--navy-mid);
+}
+
+/* BUTTON */
+button {
+  background: var(--navy);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover {
+  background: var(--navy-mid);
+}
+
+/* MESSAGE */
+.msg {
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.success { color: var(--success); }
+.error { color: var(--error); }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 16px;
+  background: var(--success);
+  color: white;
+  border-radius: 10px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: 0.3s;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+
+<div class="settings-wrapper">
+
+  <div class="card">
+
+    <div class="card-header">
+      <h2>System Admin Password</h2>
+    </div>
+
+    <div class="card-body">
+
+      <label>Current Password</label>
+      <input type="password" id="current">
+
+      <label>New Password</label>
+      <input type="password" id="new">
+
+      <label>Confirm Password</label>
+      <input type="password" id="confirm">
+
+      <button onclick="updatePassword()">Update Password</button>
+
+      <div id="msg" class="msg"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+function showToast(text) {
+  const t = document.getElementById("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById("msg");
+  el.textContent = text;
+  el.className = "msg " + type;
+}
+
+async function updatePassword() {
+
+  const current = document.getElementById("current").value;
+  const newPw = document.getElementById("new").value;
+  const confirm = document.getElementById("confirm").value;
+
+  if (!current || !newPw || !confirm) {
+    showMsg("All fields are required", "error");
+    return;
+  }
+
+  if (newPw !== confirm) {
+    showMsg("Passwords do not match", "error");
+    return;
+  }
+
+  const res = await fetch("/api/students/settings/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      current_password: current,
+      new_password: newPw
+    })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    showMsg("Password updated successfully", "success");
+    showToast("Password changed");
+  } else {
+    showMsg(data.message || "Failed to update password", "error");
+  }
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "admin.html" %}
+
+{% block title %}Staff Profile{% endblock %}
+{% block page_title %}Staff Profile{% endblock %}
+
+{% block content %}
+
+<style>
+
+.profile-card{
+    display:flex;
+    gap:20px;
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+.profile-img{
+    width:120px;
+    height:120px;
+    border-radius:12px;
+    object-fit:cover;
+}
+
+.grid{
+    margin-top:20px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.box{
+    background:#f8fafc;
+    padding:12px;
+    border-radius:10px;
+}
+
+.badge{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.badge-teaching{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-non{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+</style>
+
+<div class="profile-card">
+
+    <img class="profile-img"
+         src="{{ staff.photo_url or 'default.png' }}">
+
+    <div>
+
+        <h2>{{ staff.first_name }} {{ staff.last_name }}</h2>
+
+        <p><strong>{{ staff.staff_code }}</strong></p>
+
+        <p>{{ staff.phone }}</p>
+
+        <span class="badge {% if staff.staff_type == 'teaching' %}badge-teaching{% else %}badge-non{% endif %}">
+            {{ staff.staff_type }}
+        </span>
+
+        <div class="grid">
+
+            <div class="box">
+                <strong>Gender</strong><br>
+                {{ staff.gender }}
+            </div>
+
+            <div class="box">
+                <strong>Contact</strong><br>
+                {{ staff.phone }}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

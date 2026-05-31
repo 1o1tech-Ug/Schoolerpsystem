@@ -1,0 +1,1584 @@
+{% extends "base.html" %}
+{% block title %}Report Card Generation{% endblock %}
+{% block content %}
+
+<style>
+/* ════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════ */
+:root {
+  --blue:         #2563eb;
+  --blue-dark:    #1d4ed8;
+  --blue-light:   #dbeafe;
+  --green:        #16a34a;
+  --green-dark:   #15803d;
+  --green-light:  #dcfce7;
+  --red:          #dc2626;
+  --red-light:    #fee2e2;
+  --amber:        #d97706;
+  --amber-light:  #fef3c7;
+  --teal:         #0284c7;
+  --teal-light:   #e0f2fe;
+  --slate-50:     #f8fafc;
+  --slate-100:    #f1f5f9;
+  --slate-200:    #e2e8f0;
+  --slate-300:    #cbd5e1;
+  --slate-400:    #94a3b8;
+  --slate-500:    #64748b;
+  --slate-600:    #475569;
+  --slate-700:    #334155;
+  --slate-800:    #1e293b;
+  --slate-900:    #0f172a;
+  --radius:       14px;
+  --radius-sm:    8px;
+  --shadow-sm:    0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow:       0 4px 20px rgba(0,0,0,.08);
+  --shadow-lg:    0 10px 40px rgba(0,0,0,.12);
+  --transition:   all .2s cubic-bezier(.4,0,.2,1);
+}
+
+/* ════════════════════════════════════════════
+   PAGE SHELL
+════════════════════════════════════════════ */
+.rc-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 48px;
+  max-width: 1300px;
+}
+
+/* ════════════════════════════════════════════
+   SECTION CARDS
+════════════════════════════════════════════ */
+.rc-card {
+  background: #fff;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition);
+}
+.rc-card:hover { box-shadow: var(--shadow); }
+
+.rc-card-header {
+  padding: 22px 26px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rc-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--slate-900);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rc-card-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.icon-blue  { background: var(--blue-light);  }
+.icon-green { background: var(--green-light); }
+.icon-teal  { background: var(--teal-light);  }
+
+.rc-card-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--slate-500);
+  padding-left: 44px;
+}
+
+.rc-divider {
+  height: 1px;
+  background: var(--slate-100);
+  margin-top: 18px;
+}
+
+.rc-card-body { padding: 24px 26px; }
+
+/* ════════════════════════════════════════════
+   SCHOOL TYPE NOTICE
+════════════════════════════════════════════ */
+.school-type-notice {
+  background: var(--teal-light);
+  border: 1px solid #7dd3fc;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #0369a1;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* ════════════════════════════════════════════
+   FILTER GRIDS
+════════════════════════════════════════════ */
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--slate-600);
+}
+
+.form-control {
+  width: 100%;
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  font-size: 13.5px;
+  background: #fff;
+  outline: none;
+  color: var(--slate-800);
+  transition: var(--transition);
+  appearance: none;
+}
+.form-control:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.form-control.is-error {
+  border-color: var(--red);
+  background: #fff7f7;
+}
+
+.field-error {
+  color: var(--red);
+  font-size: 11.5px;
+  font-weight: 600;
+  display: none;
+}
+.field-error.visible { display: block; }
+
+/* ════════════════════════════════════════════
+   FILTER BAR
+════════════════════════════════════════════ */
+.filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-note { font-size: 12px; color: var(--slate-400); }
+
+/* ════════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════════ */
+.btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: var(--transition);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.btn:disabled, .btn.is-loading {
+  opacity: .65;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-primary   { background: var(--blue);  color: #fff; }
+.btn-primary:hover { background: var(--blue-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.35); }
+
+.btn-secondary { background: var(--slate-100); color: var(--slate-700); border: 1px solid var(--slate-200); }
+.btn-secondary:hover { background: var(--slate-200); }
+
+.btn-config    { background: var(--slate-50); color: var(--slate-700); border: 1px solid var(--slate-200); }
+.btn-config:hover { background: var(--slate-100); }
+
+.btn-generate  { background: var(--green); color: #fff; }
+.btn-generate:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,.35); }
+
+.btn-view      { background: var(--blue-light);  color: var(--blue-dark); }
+.btn-view:hover { background: #bfdbfe; }
+
+.btn-download  { background: var(--green-light); color: var(--green-dark); }
+.btn-download:hover { background: #bbf7d0; }
+
+.btn-delete    { background: var(--red-light); color: var(--red); }
+.btn-delete:hover { background: #fecaca; }
+
+.btn-sm { padding: 7px 12px; font-size: 12px; }
+
+/* ════════════════════════════════════════════
+   TABLE HEADER BAR
+════════════════════════════════════════════ */
+.table-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.table-stat { font-size: 13px; color: var(--slate-600); }
+.table-stat strong { color: var(--slate-900); }
+
+/* ════════════════════════════════════════════
+   TABLE
+════════════════════════════════════════════ */
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  margin-top: 16px;
+}
+
+.rc-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.rc-table thead { position: sticky; top: 0; z-index: 1; }
+
+.rc-table th {
+  background: var(--slate-50);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  font-size: 10.5px;
+  letter-spacing: .5px;
+  font-weight: 700;
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--slate-200);
+  white-space: nowrap;
+}
+
+.rc-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--slate-100);
+  font-size: 13px;
+  color: var(--slate-700);
+  vertical-align: middle;
+}
+
+.rc-table tr:last-child td { border-bottom: none; }
+.rc-table tbody tr:hover { background: var(--slate-50); }
+
+.cell-name { font-weight: 600; color: var(--slate-900); }
+
+.cell-code {
+  font-family: 'SF Mono','Fira Code', monospace;
+  font-size: 12px;
+  color: var(--slate-500);
+  background: var(--slate-100);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ════════════════════════════════════════════
+   BADGES
+════════════════════════════════════════════ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+
+.badge-green  { background: var(--green-light);  color: #15803d; }
+.badge-blue   { background: var(--blue-light);   color: #1d4ed8; }
+.badge-amber  { background: var(--amber-light);  color: #b45309; }
+.badge-teal   { background: var(--teal-light);   color: #0369a1; }
+.badge-slate  { background: var(--slate-100);    color: var(--slate-500); }
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════
+   EMPTY STATE
+════════════════════════════════════════════ */
+.empty-state {
+  padding: 56px 20px;
+  text-align: center;
+  color: var(--slate-400);
+}
+.empty-state-icon  { font-size: 48px; margin-bottom: 12px; opacity: .5; }
+.empty-state-title { font-size: 15px; font-weight: 600; color: var(--slate-500); margin-bottom: 6px; }
+.empty-state-text  { font-size: 13px; }
+
+/* ════════════════════════════════════════════
+   SKELETON
+════════════════════════════════════════════ */
+.skeleton-row td { padding: 14px; }
+
+.skeleton-block {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--slate-100) 25%, var(--slate-200) 50%, var(--slate-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ════════════════════════════════════════════
+   PROGRESS BAR
+════════════════════════════════════════════ */
+.progress-wrap {
+  background: var(--slate-100);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 999px;
+  transition: width .3s ease;
+}
+
+/* ════════════════════════════════════════════
+   MODALS
+════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.5);
+  backdrop-filter: blur(3px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1500;
+}
+.modal-backdrop.open { display: flex; }
+
+.modal-box {
+  width: 100%;
+  max-width: 740px;
+  background: #fff;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.confirm-modal-box { max-width: 440px; }
+
+.modal-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--slate-100);
+  flex-shrink: 0;
+}
+.modal-title { font-size: 16px; font-weight: 700; color: var(--slate-900); }
+
+.modal-close {
+  border: none;
+  background: var(--slate-100);
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  color: var(--slate-600);
+}
+.modal-close:hover { background: var(--red-light); color: var(--red); }
+
+.modal-body    { padding: 24px; overflow-y: auto; }
+.modal-footer  { padding: 18px 24px; border-top: 1px solid var(--slate-100); display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+
+.config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 18px; }
+.logo-preview { margin-top: 10px; max-height: 90px; max-width: 100%; border-radius: 8px; border: 1px solid var(--slate-200); display: none; }
+.logo-preview.visible { display: block; }
+
+.confirm-icon { font-size: 40px; text-align: center; margin-bottom: 12px; }
+.confirm-message { font-size: 15px; color: var(--slate-700); text-align: center; margin-bottom: 8px; }
+
+/* ════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════ */
+#toast-container {
+  position: fixed; right: 20px; bottom: 24px;
+  z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 270px; max-width: 380px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+  animation: toastIn .25s ease;
+  pointer-events: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+}
+
+@keyframes toastIn  { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+.toast-exit         { animation: toastOut .2s ease forwards; }
+@keyframes toastOut { to { opacity:0; transform:translateX(20px); } }
+
+.toast-success { background: var(--green); }
+.toast-error   { background: var(--red); }
+.toast-info    { background: var(--blue); }
+.toast-warning { background: var(--amber); }
+.toast-icon    { font-size: 18px; flex-shrink: 0; }
+.toast-text    { flex: 1; }
+
+/* ════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .filters-grid, .config-grid { grid-template-columns: 1fr; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar .btn { width: 100%; justify-content: center; }
+  .rc-card-header { flex-direction: column; }
+  .table-header-bar { flex-direction: column; align-items: stretch; }
+}
+</style>
+
+<!-- ════════════════════════════════════════════
+     PAGE
+════════════════════════════════════════════ -->
+<div class="rc-page">
+
+  <!-- ── SCHOOL TYPE NOTICE ── -->
+  <div class="school-type-notice">
+    🏫 &nbsp;
+    <span>
+      <strong>{{ school.name }}</strong> &nbsp;·&nbsp;
+      School Type: <strong>{{ school.school_type }}</strong> &nbsp;·&nbsp;
+      Report cards supported: <strong>Nursery</strong> and <strong>Primary</strong>
+    </span>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SECTION 1: GENERATE
+  ══════════════════════════════════════════ -->
+  <div class="rc-card">
+    <div class="rc-card-header">
+      <div>
+        <div class="rc-card-title">
+          <span class="rc-card-title-icon icon-blue">📋</span>
+          Generate Report Cards
+        </div>
+        <div class="rc-card-subtitle">
+          Select a class &amp; stream, term and exam type — the system will automatically
+          choose the Nursery or Primary template.
+        </div>
+      </div>
+      <button class="btn btn-config" onclick="openConfigModal()">
+        ⚙️ &nbsp;Configure
+      </button>
+    </div>
+
+    <div class="rc-divider"></div>
+
+    <div class="rc-card-body">
+
+      <div class="filters-grid">
+
+        <div class="form-group">
+          <label class="form-label" for="gen-stream">
+            Class &amp; Stream <span style="color:var(--red)">*</span>
+          </label>
+          <select class="form-control" id="gen-stream">
+            <option value="">Select class &amp; stream</option>
+            {% for stream in streams %}
+            <option value="{{ stream.id }}">
+              {{ stream.class_.name }} — {{ stream.name }}
+            </option>
+            {% endfor %}
+          </select>
+          <span class="field-error" id="err-gen-stream">Please select a stream</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="gen-term">
+            Term <span style="color:var(--red)">*</span>
+          </label>
+          <select class="form-control" id="gen-term">
+            <option value="">Select term</option>
+            {% for term in terms %}
+            <option value="{{ term.id }}">{{ term.name }}</option>
+            {% endfor %}
+          </select>
+          <span class="field-error" id="err-gen-term">Please select a term</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="gen-exam-type">
+            Exam Type <span style="color:var(--red)">*</span>
+          </label>
+          <select class="form-control" id="gen-exam-type">
+            <option value="">Select exam type</option>
+            <option value="BOT">BOT — Beginning of Term</option>
+            <option value="MID">MID — Mid Term</option>
+            <option value="EOT">EOT — End of Term</option>
+          </select>
+          <span class="field-error" id="err-gen-exam-type">Please select an exam type</span>
+        </div>
+
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-note">All three filters are required to load students</span>
+        <button class="btn btn-primary" id="gen-load-btn" onclick="loadStudents()">
+          <span id="load-btn-icon">🔍</span>
+          <span id="load-btn-text">Load Students</span>
+        </button>
+      </div>
+
+      <!-- Progress bar (shown during generate-all) -->
+      <div id="gen-progress-wrap" style="display:none; margin-top:16px;">
+        <div style="font-size:12px; color:var(--slate-500); margin-bottom:4px;" id="gen-progress-label">
+          Generating…
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-fill" id="gen-progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Student table -->
+      <div id="gen-table-wrap" style="display:none; margin-top:24px;">
+        <div class="table-header-bar">
+          <div class="table-stat">
+            Showing <strong id="gen-count">0</strong> students —
+            <span id="gen-generated-count" style="color:var(--green); font-weight:600;">0 generated</span>
+          </div>
+
+        </div>
+
+        <div class="table-wrapper">
+          <table class="rc-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Student Name</th>
+                <th>Class / Stream</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="gen-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="gen-empty" style="display:none;">
+        <div class="empty-state">
+          <div class="empty-state-icon">🎓</div>
+          <div class="empty-state-title">No Students Found</div>
+          <div class="empty-state-text">
+            No students are enrolled in the selected stream, or no records match your filters.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- .rc-card -->
+
+
+  <!-- ══════════════════════════════════════════
+       SECTION 2: SAVED REPORTS
+  ══════════════════════════════════════════ -->
+  <div class="rc-card">
+    <div class="rc-card-header">
+      <div>
+        <div class="rc-card-title">
+          <span class="rc-card-title-icon icon-green">📁</span>
+          Saved Report Cards
+        </div>
+        <div class="rc-card-subtitle">
+          Browse and manage previously generated report cards
+        </div>
+      </div>
+    </div>
+
+    <div class="rc-divider"></div>
+
+    <div class="rc-card-body">
+
+      <div class="filters-grid">
+
+        <div class="form-group">
+          <label class="form-label" for="saved-year">
+            Academic Year <span style="color:var(--red)">*</span>
+          </label>
+          <select class="form-control" id="saved-year">
+            <option value="">Select year</option>
+            {% for year in academic_years %}
+            <option value="{{ year.id }}">{{ year.name }}</option>
+            {% endfor %}
+          </select>
+          <span class="field-error" id="err-saved-year">Please select a year</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="saved-stream">
+            Stream <span style="color:var(--red)">*</span>
+          </label>
+          <select class="form-control" id="saved-stream">
+            <option value="">Select stream</option>
+            {% for stream in streams %}
+            <option value="{{ stream.id }}">{{ stream.class_.name }} — {{ stream.name }}</option>
+            {% endfor %}
+          </select>
+          <span class="field-error" id="err-saved-stream">Please select a stream</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="saved-term">
+            Term <span style="color:var(--red)">*</span>
+          </label>
+          <select class="form-control" id="saved-term">
+            <option value="">Select term</option>
+            {% for term in terms %}
+            <option value="{{ term.id }}">{{ term.name }}</option>
+            {% endfor %}
+          </select>
+          <span class="field-error" id="err-saved-term">Please select a term</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="saved-exam-type">
+            Exam Type <span style="color:var(--red)">*</span>
+          </label>
+          <select class="form-control" id="saved-exam-type">
+            <option value="">Select exam type</option>
+            <option value="BOT">BOT</option>
+            <option value="MID">MID</option>
+            <option value="EOT">EOT</option>
+          </select>
+          <span class="field-error" id="err-saved-exam-type">Please select an exam type</span>
+        </div>
+
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-note">All filters are required</span>
+        <button class="btn btn-primary" id="saved-load-btn" onclick="loadSavedReports()">
+          <span>🔍</span> Apply Filters
+        </button>
+      </div>
+
+      <div id="saved-table-wrap" style="display:none; margin-top:24px;">
+        <div class="table-wrapper">
+          <table class="rc-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Student</th>
+                <th>Class / Stream</th>
+                <th>Exam</th>
+                <th>Year</th>
+                <th>Generated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="saved-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="saved-empty" style="display:none;">
+        <div class="empty-state">
+          <div class="empty-state-icon">📂</div>
+          <div class="empty-state-title">No Reports Found</div>
+          <div class="empty-state-text">
+            No report cards match the selected filters.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- .rc-card -->
+
+</div><!-- .rc-page -->
+
+
+<!-- ════════════════════════════════════════════
+     CONFIG MODAL
+════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="configModal">
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <div class="modal-title">⚙️ &nbsp;Report Card Configuration</div>
+      <button class="modal-close" onclick="closeConfigModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="config-grid">
+
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">School Logo</label>
+          <input type="file" id="cfg-logo" class="form-control"
+                 accept=".png,.jpg,.jpeg,.webp"
+                 onchange="validateLogoFile(this)">
+          <span class="field-error" id="logo-error"></span>
+          <small style="color:var(--slate-400); font-size:11.5px; margin-top:4px;">
+            PNG, JPG, JPEG or WEBP — max 5MB
+          </small>
+          <img id="logo-preview" class="logo-preview"
+            {% if school_detail and school_detail.school_logo_url %}
+            src="{{ school_detail.school_logo_url }}" style="display:block;"
+            {% endif %}
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">P.O Box</label>
+          <input type="text" id="cfg-po-box" class="form-control"
+                 value="{{ school_detail.po_box_number if school_detail else '' }}"
+                 placeholder="e.g. 1234">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">District</label>
+          <input type="text" id="cfg-district" class="form-control"
+                 value="{{ school_detail.district if school_detail else '' }}"
+                 placeholder="e.g. Kampala">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contact 1 <span style="color:var(--red)">*</span></label>
+          <input type="text" id="cfg-contact1" class="form-control"
+                 value="{{ school_detail.contact_1 if school_detail else '' }}"
+                 placeholder="+256 7XX XXX XXX">
+          <span class="field-error" id="err-contact1">Contact 1 is required</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contact 2</label>
+          <input type="text" id="cfg-contact2" class="form-control"
+                 value="{{ school_detail.contact_2 if school_detail else '' }}"
+                 placeholder="+256 7XX XXX XXX">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Website</label>
+          <input type="text" id="cfg-website" class="form-control"
+                 value="{{ school_detail.website_domain if school_detail else '' }}"
+                 placeholder="www.yourschool.ac.ug">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="cfg-email" class="form-control"
+                 value="{{ school_detail.email if school_detail else '' }}"
+                 placeholder="info@yourschool.ac.ug">
+        </div>
+
+        {% if school.school_type == "Secondary" %}
+        <div class="form-group">
+          <label class="form-label">GP Minimum Mark</label>
+          <input type="number" id="cfg-gp-min-mark" class="form-control"
+                 min="0" max="100" step="0.1"
+                 value="{{ school_detail.gp_min_mark if school_detail else '50' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ICT Minimum Mark</label>
+          <input type="number" id="cfg-ict-min-mark" class="form-control"
+                 min="0" max="100" step="0.1"
+                 value="{{ school_detail.ict_min_mark if school_detail else '50' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sub Math Minimum Mark</label>
+          <input type="number" id="cfg-sub-math-min-mark" class="form-control"
+                 min="0" max="100" step="0.1"
+                 value="{{ school_detail.sub_math_min_mark if school_detail else '50' }}">
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
+      <button class="btn btn-primary" id="cfg-save-btn" onclick="saveConfig()">
+        💾 &nbsp;Save Configuration
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     CONFIRM DELETE MODAL
+════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal-box confirm-modal-box">
+
+    <div class="modal-header">
+      <div class="modal-title">Confirm Delete</div>
+      <button class="modal-close" onclick="closeConfirmModal()">✕</button>
+    </div>
+
+    <div class="modal-body" style="padding:28px 24px;">
+      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-message" id="confirm-message">
+        Are you sure you want to delete this report card?
+      </div>
+      <div class="confirm-message" style="font-size:13px; color:var(--slate-400); margin-top:8px;">
+        This action cannot be undone. The file will be permanently removed.
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn btn-delete" id="confirm-delete-btn">🗑️ &nbsp;Delete Report</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+/* ─────────────────────────────────────
+   CONSTANTS
+───────────────────────────────────── */
+const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+const ALLOWED_EXTS   = new Set(["png", "jpg", "jpeg", "webp"]);
+
+/* ─────────────────────────────────────
+   STATE
+───────────────────────────────────── */
+let _loadedStudents   = {};   // id → student object
+let _pendingDeleteId  = null;
+let _pendingDeleteSrc = null; // "gen" | "saved"
+let _reqInFlight      = false;
+
+/* ─────────────────────────────────────
+   AUTH HEADERS
+───────────────────────────────────── */
+function _auth(json = true) {
+  const tok = localStorage.getItem("access_token")
+           || sessionStorage.getItem("access_token") || "";
+  const h   = { Authorization: `Bearer ${tok}` };
+  if (json) h["Content-Type"] = "application/json";
+  return h;
+}
+
+/* ─────────────────────────────────────
+   ESCAPE HTML
+───────────────────────────────────── */
+const _esc = str =>
+  str == null ? "" :
+  String(str).replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c]);
+
+/* ─────────────────────────────────────
+   TOAST
+───────────────────────────────────── */
+function toast(msg, type = "info", ms = 4000) {
+  const icons = { success: "✅", error: "❌", info: "ℹ️", warning: "⚠️" };
+  const el    = document.createElement("div");
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type] || "ℹ️"}</span>
+                  <span class="toast-text">${_esc(msg)}</span>`;
+  document.getElementById("toast-container").appendChild(el);
+  setTimeout(() => {
+    el.classList.add("toast-exit");
+    setTimeout(() => el.remove(), 250);
+  }, ms);
+}
+
+/* ─────────────────────────────────────
+   DOWNLOAD REPORT
+───────────────────────────────────── */
+async function downloadReport(reportId, label) {
+  if (!reportId) { toast("No file available to download", "warning"); return; }
+
+  toast("Preparing download…", "info", 2000);
+
+  try {
+    const res = await fetch(`/api/report-cards/${reportId}/download`, {
+      headers: _auth(false),
+    });
+
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.message || `Server returned ${res.status}`);
+    }
+
+    const blob     = await res.blob();
+    const blobUrl  = URL.createObjectURL(blob);
+    const filename = `report_${(label || "card").replace(/\s+/g, "_")}.pdf`;
+
+    const a    = document.createElement("a");
+    a.href     = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+  } catch (e) {
+    toast(e.message || "Download failed", "error");
+  }
+}
+
+/* ─────────────────────────────────────
+   VALIDATION
+───────────────────────────────────── */
+function _validateField(id, errId) {
+  const el  = document.getElementById(id);
+  const err = document.getElementById(errId);
+  if (!el.value) {
+    el.classList.add("is-error");
+    err && err.classList.add("visible");
+    return false;
+  }
+  el.classList.remove("is-error");
+  err && err.classList.remove("visible");
+  return true;
+}
+
+function _validateGenSection() {
+  const a = _validateField("gen-stream",    "err-gen-stream");
+  const b = _validateField("gen-term",      "err-gen-term");
+  const c = _validateField("gen-exam-type", "err-gen-exam-type");
+  return a && b && c;
+}
+
+function _validateSavedSection() {
+  const a = _validateField("saved-year",      "err-saved-year");
+  const b = _validateField("saved-stream",    "err-saved-stream");
+  const c = _validateField("saved-term",      "err-saved-term");
+  const d = _validateField("saved-exam-type", "err-saved-exam-type");
+  return a && b && c && d;
+}
+
+["gen-stream", "gen-term", "gen-exam-type"].forEach(id => {
+  document.getElementById(id)?.addEventListener("change", () => {
+    document.getElementById(id)?.classList.remove("is-error");
+    document.getElementById("err-" + id)?.classList.remove("visible");
+  });
+});
+["saved-year", "saved-stream", "saved-term", "saved-exam-type"].forEach(id => {
+  document.getElementById(id)?.addEventListener("change", () => {
+    document.getElementById(id)?.classList.remove("is-error");
+    document.getElementById("err-" + id)?.classList.remove("visible");
+  });
+});
+
+/* ─────────────────────────────────────
+   SKELETON ROWS
+───────────────────────────────────── */
+function _skeletons(n, cols) {
+  let h = "";
+  const widths = [60, 130, 100, 70, 80, 110];
+  for (let i = 0; i < n; i++) {
+    h += "<tr class='skeleton-row'>";
+    for (let j = 0; j < cols; j++)
+      h += `<td><div class="skeleton-block" style="width:${widths[j] || 80}px"></div></td>`;
+    h += "</tr>";
+  }
+  return h;
+}
+
+/* ─────────────────────────────────────
+   TYPE BADGE
+───────────────────────────────────── */
+function _typeBadge(reportType) {
+  if (reportType === "nursery")
+    return `<span class="badge badge-teal">🌱 Nursery</span>`;
+  return `<span class="badge badge-blue">📚 Primary/Secondary</span>`;
+}
+
+/* ─────────────────────────────────────
+   STATUS BADGE
+───────────────────────────────────── */
+function _buildStatusBadge(generated) {
+  return generated
+    ? `<span class="badge badge-green"><span class="badge-dot"></span>Generated</span>`
+    : `<span class="badge badge-slate"><span class="badge-dot"></span>Pending</span>`;
+}
+
+/* ─────────────────────────────────────
+   BUILD ACTIONS CELL (gen section)
+───────────────────────────────────── */
+function _buildGenActions(s) {
+  if (s.report_generated) {
+    const viewUrl = _esc(s.report_url || "");
+    const label   = _esc(s.student_code || s.name || "");
+    return `<div class="actions-cell">
+      <a href="${viewUrl}" target="_blank" rel="noopener" class="btn btn-view btn-sm">👁 View</a>
+      <button class="btn btn-download btn-sm"
+              onclick="downloadReport(${s.report_id}, '${label}')">⬇ Download</button>
+      <button class="btn btn-delete btn-sm"
+              onclick="confirmDeleteReport(${s.report_id}, 'gen')">🗑 Delete</button>
+    </div>`;
+  }
+  return `<button class="btn btn-generate btn-sm"
+            id="gen-btn-${s.id}"
+            onclick="generateOne(${s.id})">⚡ Generate</button>`;
+}
+
+/* ─────────────────────────────────────
+   LOAD STUDENTS
+───────────────────────────────────── */
+async function loadStudents() {
+  if (_reqInFlight) return;
+  if (!_validateGenSection()) { toast("Please fill all required filters", "warning"); return; }
+
+  const streamId = document.getElementById("gen-stream").value;
+  const termId   = document.getElementById("gen-term").value;
+  const examType = document.getElementById("gen-exam-type").value;
+
+  const btn  = document.getElementById("gen-load-btn");
+  const icon = document.getElementById("load-btn-icon");
+  const txt  = document.getElementById("load-btn-text");
+
+  _reqInFlight     = true;
+  btn.disabled     = true;
+  icon.textContent = "⏳";
+  txt.textContent  = "Loading…";
+
+  const tbody = document.getElementById("gen-tbody");
+  tbody.innerHTML = _skeletons(5, 6);
+  document.getElementById("gen-table-wrap").style.display = "block";
+  document.getElementById("gen-empty").style.display      = "none";
+
+  try {
+    const p   = new URLSearchParams({ stream_id: streamId, term_id: termId, exam_type: examType });
+    const res = await fetch(`/api/report-cards/students?${p}`, { headers: _auth() });
+    const d   = await res.json();
+    if (!res.ok) throw new Error(d.message || "Failed to load students");
+    _renderStudents(d.students || []);
+  } catch (e) {
+    toast(e.message, "error");
+    document.getElementById("gen-table-wrap").style.display = "none";
+    document.getElementById("gen-empty").style.display      = "none";
+  } finally {
+    _reqInFlight     = false;
+    btn.disabled     = false;
+    icon.textContent = "🔍";
+    txt.textContent  = "Load Students";
+  }
+}
+
+/* ─────────────────────────────────────
+   RENDER STUDENTS
+───────────────────────────────────── */
+function _renderStudents(students) {
+  const wrap  = document.getElementById("gen-table-wrap");
+  const empty = document.getElementById("gen-empty");
+  const tbody = document.getElementById("gen-tbody");
+
+  _loadedStudents = {};
+  students.forEach(s => { _loadedStudents[s.id] = s; });
+
+  if (!students.length) {
+    wrap.style.display  = "none";
+    empty.style.display = "block";
+    return;
+  }
+
+  wrap.style.display  = "block";
+  empty.style.display = "none";
+
+  _updateGenCounts();
+
+  tbody.innerHTML = students.map(s => `
+    <tr id="student-row-${s.id}">
+      <td><span class="cell-code">${_esc(s.student_code)}</span></td>
+      <td><div class="cell-name">${_esc(s.name)}</div></td>
+      <td>${_esc(s.class_name)} — ${_esc(s.stream_name)}</td>
+      <td>${_typeBadge(s.report_type)}</td>
+      <td id="status-cell-${s.id}">${_buildStatusBadge(s.report_generated)}</td>
+      <td id="action-cell-${s.id}">${_buildGenActions(s)}</td>
+    </tr>`
+  ).join("");
+}
+
+function _updateGenCounts() {
+  const all  = Object.values(_loadedStudents);
+  const done = all.filter(s => s.report_generated).length;
+  document.getElementById("gen-count").textContent           = all.length;
+  document.getElementById("gen-generated-count").textContent = `${done} generated`;
+}
+
+/* ─────────────────────────────────────
+   UPDATE ONE ROW IN-PLACE
+───────────────────────────────────── */
+function _patchStudentRow(studentId, updatedStudentObj) {
+  _loadedStudents[studentId] = updatedStudentObj;
+  _updateGenCounts();
+
+  const statusCell = document.getElementById(`status-cell-${studentId}`);
+  const actionCell = document.getElementById(`action-cell-${studentId}`);
+  if (statusCell) statusCell.innerHTML = _buildStatusBadge(updatedStudentObj.report_generated);
+  if (actionCell) actionCell.innerHTML = _buildGenActions(updatedStudentObj);
+}
+
+/* ─────────────────────────────────────
+   GENERATE ONE
+───────────────────────────────────── */
+async function generateOne(studentId) {
+  const btn = document.getElementById(`gen-btn-${studentId}`);
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Generating…"; }
+
+  try {
+    const res = await fetch("/api/report-cards/generate", {
+      method:  "POST",
+      headers: _auth(),
+      body: JSON.stringify({
+        student_id: studentId,
+        term_id:    document.getElementById("gen-term").value,
+        exam_type:  document.getElementById("gen-exam-type").value,
+        stream_id:  document.getElementById("gen-stream").value,
+      }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.message || "Generation failed");
+
+    const report     = d.report || {};
+    const reportType = report.report_type || _loadedStudents[studentId]?.report_type || "";
+    const updated    = {
+      ..._loadedStudents[studentId],
+      report_generated: true,
+      report_id:        report.id       || null,
+      report_url:       report.file_url || report.url || "",
+      report_type:      reportType,
+    };
+
+    _patchStudentRow(studentId, updated);
+
+    const label = reportType === "nursery" ? "nursery" : "primary";
+    toast(`Report generated (${label} template)`, "success");
+
+  } catch (e) {
+    toast(e.message, "error");
+    if (btn) { btn.disabled = false; btn.textContent = "⚡ Generate"; }
+  }
+}
+
+/* ─────────────────────────────────────
+   GENERATE ALL PENDING
+───────────────────────────────────── */
+async function generateAll() {
+  const pending = Object.values(_loadedStudents).filter(s => !s.report_generated);
+  if (!pending.length) { toast("All reports are already generated!", "info"); return; }
+
+  const btn    = document.getElementById("gen-all-btn");
+  const pwrap  = document.getElementById("gen-progress-wrap");
+  const pbar   = document.getElementById("gen-progress-bar");
+  const plabel = document.getElementById("gen-progress-label");
+
+  btn.disabled        = true;
+  pwrap.style.display = "block";
+
+  let done    = 0;
+  const total = pending.length;
+
+  for (const student of pending) {
+    plabel.textContent = `Generating ${done + 1} of ${total}: ${student.name}…`;
+    pbar.style.width   = `${Math.round((done / total) * 100)}%`;
+
+    try {
+      const res = await fetch("/api/report-cards/generate", {
+        method:  "POST",
+        headers: _auth(),
+        body: JSON.stringify({
+          student_id: student.id,
+          term_id:    document.getElementById("gen-term").value,
+          exam_type:  document.getElementById("gen-exam-type").value,
+          stream_id:  document.getElementById("gen-stream").value,
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.message);
+
+      const report  = d.report || {};
+      const updated = {
+        ..._loadedStudents[student.id],
+        report_generated: true,
+        report_id:        report.id       || null,
+        report_url:       report.file_url || report.url || "",
+        report_type:      report.report_type || _loadedStudents[student.id]?.report_type || "",
+      };
+      _patchStudentRow(student.id, updated);
+      done++;
+    } catch (e) {
+      toast(`Failed for ${student.name}: ${e.message}`, "error");
+    }
+  }
+
+  pbar.style.width   = "100%";
+  plabel.textContent = `Done — ${done} of ${total} generated.`;
+  toast(`${done} of ${total} reports generated`, "success");
+
+  setTimeout(() => {
+    pwrap.style.display = "none";
+    pbar.style.width    = "0%";
+  }, 3000);
+
+  btn.disabled = false;
+}
+
+/* ─────────────────────────────────────
+   LOAD SAVED REPORTS
+───────────────────────────────────── */
+async function loadSavedReports() {
+  if (!_validateSavedSection()) { toast("Please fill all required filters", "warning"); return; }
+
+  const btn = document.getElementById("saved-load-btn");
+  btn.disabled  = true;
+  btn.innerHTML = "⏳ Loading…";
+
+  const tbody = document.getElementById("saved-tbody");
+  tbody.innerHTML = _skeletons(4, 7);
+  document.getElementById("saved-table-wrap").style.display = "block";
+  document.getElementById("saved-empty").style.display      = "none";
+
+  try {
+    const p   = new URLSearchParams({
+      academic_year_id: document.getElementById("saved-year").value,
+      term_id:          document.getElementById("saved-term").value,
+      stream_id:        document.getElementById("saved-stream").value,
+      exam_type:        document.getElementById("saved-exam-type").value,
+    });
+    const res = await fetch(`/api/report_cards?${p}`, { headers: _auth() });
+    const d   = await res.json();
+    if (!res.ok) throw new Error(d.message || "Failed to load reports");
+    _renderSaved(d.report_cards || []);
+  } catch (e) {
+    toast(e.message, "error");
+    document.getElementById("saved-table-wrap").style.display = "none";
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = "🔍 &nbsp;Apply Filters";
+  }
+}
+
+/* ─────────────────────────────────────
+   RENDER SAVED REPORTS
+───────────────────────────────────── */
+function _renderSaved(reports) {
+  const wrap  = document.getElementById("saved-table-wrap");
+  const empty = document.getElementById("saved-empty");
+  const tbody = document.getElementById("saved-tbody");
+
+  if (!reports.length) {
+    wrap.style.display  = "none";
+    empty.style.display = "block";
+    return;
+  }
+
+  wrap.style.display  = "block";
+  empty.style.display = "none";
+
+  const examCls = { BOT: "badge-blue", MID: "badge-amber", EOT: "badge-green" };
+
+  tbody.innerHTML = reports.map(r => {
+    const cls     = examCls[r.exam_type] || "badge-slate";
+    const date    = r.generated_at
+      ? new Date(r.generated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      : "—";
+    const viewUrl = _esc(r.file_url || "");
+    const label   = _esc(r.student_code || r.student_name || "");
+
+    return `<tr id="saved-row-${r.id}">
+      <td><span class="cell-code">${_esc(r.student_code)}</span></td>
+      <td><div class="cell-name">${_esc(r.student_name)}</div></td>
+      <td>${_esc(r.class_name)} — ${_esc(r.stream_name)}</td>
+      <td><span class="badge ${cls}">${_esc(r.exam_type)}</span></td>
+      <td>${_esc(r.academic_year || "—")}</td>
+      <td>${date}</td>
+      <td>
+        <div class="actions-cell">
+          <a href="${viewUrl}" target="_blank" rel="noopener" class="btn btn-view btn-sm">👁 View</a>
+          <button class="btn btn-download btn-sm"
+                  onclick="downloadReport(${r.id}, '${label}')">⬇ Download</button>
+          <button class="btn btn-delete btn-sm"
+                  onclick="confirmDeleteReport(${r.id}, 'saved')">🗑 Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+/* ─────────────────────────────────────
+   DELETE FLOW
+───────────────────────────────────── */
+function confirmDeleteReport(id, src) {
+  _pendingDeleteId  = id;
+  _pendingDeleteSrc = src;
+  document.getElementById("confirm-message").textContent =
+    "Are you sure you want to delete this report card? The file will be permanently removed.";
+  document.getElementById("confirmModal").classList.add("open");
+}
+
+function closeConfirmModal() {
+  document.getElementById("confirmModal").classList.remove("open");
+}
+
+document.getElementById("confirm-delete-btn").addEventListener("click", async () => {
+  if (!_pendingDeleteId) return;
+
+  const deleteId  = _pendingDeleteId;
+  const deleteSrc = _pendingDeleteSrc;
+
+  const btn       = document.getElementById("confirm-delete-btn");
+  btn.disabled    = true;
+  btn.textContent = "⏳ Deleting…";
+
+  document.getElementById("confirmModal").classList.remove("open");
+  _pendingDeleteId  = null;
+  _pendingDeleteSrc = null;
+
+  try {
+    const res = await fetch(`/api/report-cards/${deleteId}`, {
+      method:  "DELETE",
+      headers: _auth(false),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.message || "Delete failed");
+
+    toast("Report deleted successfully", "success");
+
+    if (deleteSrc === "gen") {
+      const student = Object.values(_loadedStudents).find(s => s.report_id === deleteId);
+      if (student) {
+        const updated = {
+          ...student,
+          report_generated: false,
+          report_id:        null,
+          report_url:       "",
+        };
+        _patchStudentRow(student.id, updated);
+      }
+    } else {
+      const row = document.getElementById(`saved-row-${deleteId}`);
+      if (row) {
+        row.style.transition = "opacity .2s";
+        row.style.opacity    = "0";
+        setTimeout(() => {
+          row.remove();
+          const tbody = document.getElementById("saved-tbody");
+          if (!tbody || tbody.children.length === 0) {
+            document.getElementById("saved-table-wrap").style.display = "none";
+            document.getElementById("saved-empty").style.display      = "block";
+          }
+        }, 200);
+      }
+    }
+
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "🗑️ Delete Report";
+  }
+});
+
+/* ─────────────────────────────────────
+   CONFIG MODAL
+───────────────────────────────────── */
+function openConfigModal()  { document.getElementById("configModal").classList.add("open"); }
+function closeConfigModal() { document.getElementById("configModal").classList.remove("open"); }
+
+function validateLogoFile(input) {
+  const file    = input.files[0];
+  const preview = document.getElementById("logo-preview");
+  const errEl   = document.getElementById("logo-error");
+
+  errEl.classList.remove("visible");
+  errEl.textContent = "";
+  input.classList.remove("is-error");
+
+  if (!file) return true;
+
+  const ext = file.name.split(".").pop().toLowerCase();
+  if (!ALLOWED_EXTS.has(ext)) {
+    errEl.textContent = `Invalid type ".${ext}". Allowed: PNG, JPG, JPEG, WEBP`;
+    errEl.classList.add("visible");
+    input.classList.add("is-error");
+    input.value           = "";
+    preview.style.display = "none";
+    return false;
+  }
+  if (file.size > MAX_LOGO_BYTES) {
+    errEl.textContent = "File exceeds 5MB limit";
+    errEl.classList.add("visible");
+    input.classList.add("is-error");
+    input.value           = "";
+    preview.style.display = "none";
+    return false;
+  }
+
+  const r  = new FileReader();
+  r.onload = e => {
+    preview.src           = e.target.result;
+    preview.style.display = "block";
+    preview.classList.add("visible");
+  };
+  r.readAsDataURL(file);
+  return true;
+}
+
+async function saveConfig() {
+  const c1  = document.getElementById("cfg-contact1");
+  const ec1 = document.getElementById("err-contact1");
+
+  if (!c1.value.trim()) {
+    c1.classList.add("is-error");
+    ec1.classList.add("visible");
+    toast("Contact 1 is required", "warning");
+    return;
+  }
+  c1.classList.remove("is-error");
+  ec1.classList.remove("visible");
+
+  const logoInput = document.getElementById("cfg-logo");
+  if (logoInput.files[0] && !validateLogoFile(logoInput)) return;
+
+  const btn       = document.getElementById("cfg-save-btn");
+  btn.disabled    = true;
+  btn.textContent = "⏳ Saving…";
+
+  try {
+    const fd = new FormData();
+    if (logoInput.files[0]) fd.append("school_logo", logoInput.files[0]);
+
+    // Standard text fields
+    const fields = {
+      po_box_number:  "cfg-po-box",
+      district:       "cfg-district",
+      contact_1:      "cfg-contact1",
+      contact_2:      "cfg-contact2",
+      website_domain: "cfg-website",
+      email:          "cfg-email",
+    };
+    for (const [k, id] of Object.entries(fields)) {
+      const el = document.getElementById(id);
+      if (el) fd.append(k, el.value.trim());
+    }
+
+    // Secondary-only numeric fields — only appended when inputs exist in the DOM
+    const numericFields = {
+      gp_min_mark:       "cfg-gp-min-mark",
+      ict_min_mark:      "cfg-ict-min-mark",
+      sub_math_min_mark: "cfg-sub-math-min-mark",
+    };
+    for (const [k, id] of Object.entries(numericFields)) {
+      const el = document.getElementById(id);
+      if (el) fd.append(k, el.value);
+    }
+
+    const tok = localStorage.getItem("access_token")
+             || sessionStorage.getItem("access_token") || "";
+    const res = await fetch("/api/school/details", {
+      method:  "POST",
+      headers: { Authorization: `Bearer ${tok}` },
+      body:    fd,
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.message || "Save failed");
+
+    toast("Configuration saved successfully", "success");
+    closeConfigModal();
+
+    if (d.logo_url) {
+      const logoEl = document.getElementById("logo-preview");
+      if (logoEl) { logoEl.src = d.logo_url; logoEl.style.display = "block"; }
+    }
+
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = "💾 &nbsp;Save Configuration";
+  }
+}
+
+/* ─────────────────────────────────────
+   MODAL CLOSE: outside click + ESC
+───────────────────────────────────── */
+document.querySelectorAll(".modal-backdrop").forEach(m =>
+  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); })
+);
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape")
+    document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,1046 @@
+"""
+app/apis/reportcardgeneration.py
+=================================
+Report Card Generation API.
+
+CHANGES vs original:
+  - Rate limits applied per endpoint sensitivity.
+    Single generation: REPORT_GEN_LIMIT (10/min, 60/hr)
+    Bulk generation:   REPORT_ALL_LIMIT (3/min, 20/hr)
+    All reads:         READ_LIMIT
+  - All except blocks log internally and return safe client messages.
+    No str(e) / str(exc) ever reaches the client.
+"""
+
+import requests as http_requests
+from flask import Response, stream_with_context
+import os
+import logging
+from datetime import datetime
+from flask import (
+    Blueprint, request, jsonify,
+    render_template, current_app, send_from_directory,
+)
+from flask_jwt_extended import jwt_required, get_jwt
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from werkzeug.utils import secure_filename
+
+from app.extensions import db, limiter
+from app.models.user import User
+from app.models.core import School, UserModule
+from app.models.reportcards import SchoolDetail, ReportCard, PrimaryReportSummary
+from app.models.people import Student
+from app.models.academic_structure import (
+    AcademicYear, Term, Stream, Class,
+    StudentStream, Subject, Papers,
+    TeachAssignment, Assessment, AssessmentType,
+    StudentMark, GradeScale,
+)
+from app.services.report_card_service import (
+    ReportCardService,
+    classify_class,
+    fetch_grade_scales,
+    fetch_student_marks,
+    build_subject_rows,
+    build_secondary_subject_rows,
+    compute_primary_aggregates,
+    compute_olevel_aggregates,
+    compute_alevel_points,
+    calculate_stream_positions,
+    compute_attendance,
+    html_to_pdf_bytes,
+    ensure_report_dir,
+)
+from app.utils.bunny import bunny_upload, bunny_delete, bunny_remote_path_from_url
+from app.core.rate_limit import READ_LIMIT, WRITE_LIMIT, REPORT_GEN_LIMIT, REPORT_ALL_LIMIT
+
+logger = logging.getLogger(__name__)
+
+report_cards_api = Blueprint("report_cards_api", __name__)
+
+ALLOWED_LOGO_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+MAX_LOGO_SIZE_BYTES     = 5 * 1024 * 1024
+VALID_EXAM_TYPES        = {"BOT", "MID", "EOT"}
+
+_SECTION_LABELS = {
+    "nursery": "Nursery",
+    "primary": "Primary",
+    "olevel":  "O-Level",
+    "alevel":  "A-Level",
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+#  GUARDS & SHARED HELPERS
+# ═══════════════════════════════════════════════════════════════
+
+def _teacher_required(claims):
+    if claims.get("role") not in {"staff", "teacher"}:
+        logger.warning(
+            "_teacher_required: role '%s' not allowed", claims.get("role")
+        )
+        return None, (jsonify({"message": "Unauthorised — staff access required"}), 403)
+
+    school_id = claims.get("school_id")
+    user_id   = claims.get("sub")
+
+    user = User.query.filter_by(
+        id=user_id, school_id=school_id, role="staff"
+    ).first()
+
+    if not user:
+        return None, (jsonify({"message": "User not found"}), 403)
+
+    if not user.staff_id:
+        return None, (jsonify({"message": "staff_id missing from user profile"}), 403)
+
+    return user.staff_id, None
+
+
+def _get_context(claims):
+    school_id = claims.get("school_id")
+    user_id   = claims.get("sub")
+    modules   = [
+        m.module_name
+        for m in UserModule.query.filter_by(user_id=user_id).all()
+    ]
+    return school_id, user_id, modules
+
+
+def _school_or_404(school_id):
+    school = School.query.get(school_id)
+    if not school:
+        return None, (jsonify({"message": "School not found"}), 404)
+    return school, None
+
+
+def _validate_logo_extension(filename: str) -> bool:
+    if "." not in filename:
+        return False
+    return filename.rsplit(".", 1)[1].lower() in ALLOWED_LOGO_EXTENSIONS
+
+
+def _bust(url: str, generated_at: datetime) -> str:
+    if not url:
+        return url
+    ts = int(generated_at.timestamp()) if generated_at else int(datetime.utcnow().timestamp())
+    return f"{url}?v={ts}"
+
+
+def _delete_cdn_file(url):
+    if url:
+        try:
+            bunny_delete(bunny_remote_path_from_url(url))
+        except Exception:
+            logger.warning("CDN delete failed for URL: %s", url)
+
+
+def _stream_report_type(stream) -> str:
+    class_name = stream.class_.name if (stream and stream.class_) else ""
+    return classify_class(class_name)
+
+
+def _upload_report_pdf(local_path: str, academic_year, term, stream) -> str | None:
+    try:
+        with open(local_path, "rb") as fh:
+            pdf_bytes = fh.read()
+
+        filename    = os.path.basename(local_path)
+        ay_slug     = (academic_year.name if academic_year else "unknown").replace(" ", "_")
+        term_slug   = (term.name          if term          else "unknown").replace(" ", "_")
+        stream_slug = (stream.name        if stream        else "unknown").replace(" ", "_")
+
+        remote_path = (
+            f"uploads/report_cards/{ay_slug}/{term_slug}/{stream_slug}/{filename}"
+        )
+
+        cdn_url = bunny_upload(data=pdf_bytes, remote_path=remote_path)
+        logger.info("_upload_report_pdf: uploaded %s → %s", filename, cdn_url)
+        return cdn_url
+
+    except Exception:
+        logger.warning(
+            "_upload_report_pdf: upload failed for %s — falling back to local URL",
+            local_path,
+        )
+        return None
+
+
+# ═══════════════════════════════════════════════════════════════
+#  REPORT CARD GENERATION PAGE  —  GET /report-cards
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards", methods=["GET"])
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def report_cards_page():
+    try:
+        claims   = get_jwt()
+        staff_id, err = _teacher_required(claims)
+        if err:
+            return err
+
+        school_id, user_id, modules = _get_context(claims)
+        school, err = _school_or_404(school_id)
+        if err:
+            return err
+
+        school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
+
+        classes   = Class.query.filter_by(school_id=school_id).all()
+        class_ids = [c.id for c in classes]
+
+        streams = (
+            Stream.query.filter(Stream.class_id.in_(class_ids)).all()
+            if class_ids else []
+        )
+
+        terms = Term.query.filter_by(school_id=school_id).order_by(Term.name).all()
+
+        ay_ids = list({t.academic_year_id for t in terms if t.academic_year_id})
+        academic_years = (
+            AcademicYear.query.filter(AcademicYear.id.in_(ay_ids)).all()
+            if ay_ids else []
+        )
+
+        return render_template(
+            "modules/academics/report_card_generation.html",
+            school=school,
+            school_detail=school_detail,
+            streams=streams,
+            classes=classes,
+            terms=terms,
+            academic_years=academic_years,
+            modules=modules,
+        )
+
+    except Exception:
+        logger.exception("report_cards_page failed")
+        return jsonify({"success": False, "message": "Failed to load page. Please try again."}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
+#  GET STUDENTS FOR GENERATION  —  GET /api/report-cards/students
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards/students", methods=["GET"])
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def get_students_for_generation():
+    claims = get_jwt()
+    staff_id, err = _teacher_required(claims)
+    if err:
+        return err
+
+    school_id, _, _ = _get_context(claims)
+    school, err     = _school_or_404(school_id)
+    if err:
+        return err
+
+    stream_id = request.args.get("stream_id", type=int)
+    term_id   = request.args.get("term_id",   type=int)
+    exam_type = request.args.get("exam_type", "").strip().upper()
+
+    if not stream_id:
+        return jsonify({"message": "stream_id is required"}), 400
+    if not term_id:
+        return jsonify({"message": "term_id is required"}), 400
+    if not exam_type:
+        return jsonify({"message": "exam_type is required"}), 400
+    if exam_type not in VALID_EXAM_TYPES:
+        return jsonify({"message": f"exam_type must be one of {sorted(VALID_EXAM_TYPES)}"}), 400
+
+    stream = Stream.query.get(stream_id)
+    if not stream:
+        return jsonify({"message": "Stream not found"}), 404
+
+    try:
+        ss_rows     = StudentStream.query.filter_by(school_id=school_id, stream_id=stream_id).all()
+        student_ids = [ss.student_id for ss in ss_rows]
+
+        if not student_ids:
+            return jsonify({"success": True, "students": []}), 200
+
+        students = (
+            Student.query
+            .filter(Student.school_id == school_id, Student.id.in_(student_ids))
+            .order_by(Student.first_name.asc(), Student.last_name.asc())
+            .all()
+        )
+
+        existing = ReportCard.query.filter(
+            ReportCard.school_id  == school_id,
+            ReportCard.term_id    == term_id,
+            ReportCard.exam_type  == exam_type,
+            ReportCard.student_id.in_(student_ids),
+        ).all()
+        report_map = {rc.student_id: rc for rc in existing}
+
+        class_name  = stream.class_.name if stream.class_ else ""
+        stream_name = stream.name or ""
+        report_type = classify_class(class_name)
+
+        results = []
+        for student in students:
+            report = report_map.get(student.id)
+            results.append({
+                "id":               student.id,
+                "student_code":     student.student_code     or "",
+                "admission_number": student.admission_number or "",
+                "name":             f"{student.first_name} {student.last_name}".strip(),
+                "class_name":       class_name,
+                "stream_name":      stream_name,
+                "report_type":      report_type,
+                "section_label":    _SECTION_LABELS.get(report_type, report_type.title()),
+                "report_generated": report is not None,
+                "report_id":        report.id if report else None,
+                "report_url": (
+                    _bust(report.firebase_url, report.generated_at)
+                    if report and report.firebase_url else None
+                ),
+            })
+
+        return jsonify({"success": True, "students": results}), 200
+
+    except Exception:
+        logger.exception("get_students_for_generation failed | school_id=%s stream_id=%s", school_id, stream_id)
+        return jsonify({"success": False, "message": "Failed to load students."}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
+#  GENERATE ONE REPORT  —  POST /api/report-cards/generate
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards/generate", methods=["POST"])
+@jwt_required()
+@limiter.limit(REPORT_GEN_LIMIT)
+def generate_report_card():
+    claims = get_jwt()
+    staff_id, err = _teacher_required(claims)
+    if err:
+        return err
+
+    school_id, user_id, _ = _get_context(claims)
+    school, err = _school_or_404(school_id)
+    if err:
+        return err
+
+    data       = request.get_json(force=True) or {}
+    student_id = data.get("student_id")
+    term_id    = data.get("term_id")
+    stream_id  = data.get("stream_id")
+    exam_type  = str(data.get("exam_type", "")).strip().upper()
+
+    if not student_id:
+        return jsonify({"message": "student_id is required"}), 400
+    if not term_id:
+        return jsonify({"message": "term_id is required"}), 400
+    if not exam_type:
+        return jsonify({"message": "exam_type is required"}), 400
+    if exam_type not in VALID_EXAM_TYPES:
+        return jsonify({"message": f"exam_type must be one of {sorted(VALID_EXAM_TYPES)}"}), 400
+
+    student = Student.query.filter_by(id=student_id, school_id=school_id).first()
+    if not student:
+        return jsonify({"message": "Student not found"}), 404
+
+    term = Term.query.filter_by(id=term_id, school_id=school_id).first()
+    if not term:
+        return jsonify({"message": "Term not found"}), 404
+
+    if not stream_id:
+        ss_row    = StudentStream.query.filter_by(student_id=student_id, school_id=school_id).first()
+        stream_id = ss_row.stream_id if ss_row else None
+
+    stream = Stream.query.get(stream_id) if stream_id else None
+    if not stream:
+        return jsonify({"message": "Stream not found for this student"}), 404
+
+    school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
+    academic_year = _get_academic_year_for_term(term)
+
+    report_type_label = _SECTION_LABELS.get(
+        classify_class(stream.class_.name if stream.class_ else ""), "Unknown"
+    )
+    logger.info(
+        "generate_report_card: student=%s section=%s exam=%s",
+        student_id, report_type_label, exam_type,
+    )
+
+    try:
+        service       = ReportCardService(school, school_detail)
+        static_folder = current_app.static_folder
+
+        if not static_folder:
+            return jsonify({"message": "Server misconfiguration: static folder not set"}), 500
+
+        try:
+            result = service.generate(
+                student=student,
+                stream=stream,
+                term=term,
+                academic_year=academic_year,
+                exam_type=exam_type,
+                static_folder=static_folder,
+            )
+        except (ValueError, RuntimeError) as gen_err:
+            return jsonify({"message": str(gen_err)}), 422
+
+        local_path  = result["local_path"]
+        file_url    = result["file_url"]
+        report_type = result["report_type"]
+
+        now = datetime.utcnow()
+
+        existing_report = ReportCard.query.filter_by(
+            school_id=school_id,
+            student_id=student_id,
+            term_id=term_id,
+            exam_type=exam_type,
+        ).first()
+
+        if existing_report and existing_report.firebase_url:
+            _delete_cdn_file(existing_report.firebase_url)
+
+        cdn_url    = _upload_report_pdf(local_path, academic_year, term, stream)
+        public_url = cdn_url or file_url
+
+        if existing_report:
+            old_path = existing_report.local_path
+            if old_path and old_path != local_path and os.path.exists(old_path):
+                try:
+                    os.remove(old_path)
+                except OSError as rm_err:
+                    logger.warning("generate_report_card: could not remove old file %s — %s", old_path, rm_err)
+
+            existing_report.firebase_url  = public_url
+            existing_report.firebase_path = local_path
+            existing_report.local_path    = local_path
+            existing_report.generated_at  = now
+            existing_report.generated_by  = int(user_id) if user_id else None
+            existing_report.status        = "generated"
+            existing_report.academic_year = academic_year.name if academic_year else None
+            report = existing_report
+        else:
+            report = ReportCard(
+                school_id=school_id,
+                student_id=student_id,
+                term_id=term_id,
+                exam_type=exam_type,
+                academic_year=academic_year.name if academic_year else None,
+                generated_at=now,
+                generated_by=int(user_id) if user_id else None,
+                firebase_url=public_url,
+                firebase_path=local_path,
+                local_path=local_path,
+                status="generated",
+            )
+            db.session.add(report)
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Report card generated successfully",
+            "report": {
+                "id":            report.id,
+                "student_name":  f"{student.first_name} {student.last_name}",
+                "report_type":   report_type,
+                "section_label": _SECTION_LABELS.get(report_type, report_type.title()),
+                "file_url":      _bust(public_url, now),
+                "report_id":     report.id,
+            },
+        }), 200
+
+    except SQLAlchemyError:
+        db.session.rollback()
+        logger.exception("generate_report_card DB error | student_id=%s", student_id)
+        return jsonify({"success": False, "message": "Database error. Please try again."}), 500
+    except Exception:
+        db.session.rollback()
+        logger.exception("generate_report_card failed | student_id=%s", student_id)
+        return jsonify({"success": False, "message": "Failed to generate report card. Please try again."}), 500
+
+
+def _get_academic_year_for_term(term: Term):
+    if term and term.academic_year_id:
+        return AcademicYear.query.get(term.academic_year_id)
+    return None
+
+
+# ═══════════════════════════════════════════════════════════════
+#  GENERATE ALL PENDING  —  POST /api/report-cards/generate-all
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards/generate-all", methods=["POST"])
+@jwt_required()
+@limiter.limit(REPORT_ALL_LIMIT)
+def generate_all_report_cards():
+    claims = get_jwt()
+    staff_id, err = _teacher_required(claims)
+    if err:
+        return err
+
+    school_id, user_id, _ = _get_context(claims)
+    school, err = _school_or_404(school_id)
+    if err:
+        return err
+
+    data      = request.get_json(force=True) or {}
+    stream_id = data.get("stream_id")
+    term_id   = data.get("term_id")
+    exam_type = str(data.get("exam_type", "")).strip().upper()
+
+    if not stream_id or not term_id or not exam_type:
+        return jsonify({"message": "stream_id, term_id and exam_type are required"}), 400
+    if exam_type not in VALID_EXAM_TYPES:
+        return jsonify({"message": f"exam_type must be one of {sorted(VALID_EXAM_TYPES)}"}), 400
+
+    stream = Stream.query.get(stream_id)
+    if not stream:
+        return jsonify({"message": "Stream not found"}), 404
+
+    term = Term.query.filter_by(id=term_id, school_id=school_id).first()
+    if not term:
+        return jsonify({"message": "Term not found"}), 404
+
+    report_type_label = _SECTION_LABELS.get(
+        classify_class(stream.class_.name if stream.class_ else ""), "Unknown"
+    )
+    logger.info(
+        "generate_all: section=%s stream=%s term=%s exam=%s",
+        report_type_label, stream_id, term_id, exam_type,
+    )
+
+    try:
+        ss_rows     = StudentStream.query.filter_by(school_id=school_id, stream_id=stream_id).all()
+        student_ids = [ss.student_id for ss in ss_rows]
+
+        if not student_ids:
+            return jsonify({
+                "success": True, "message": "No students in this stream",
+                "generated": 0, "failed": 0,
+            }), 200
+
+        done_ids = {
+            rc.student_id
+            for rc in ReportCard.query.filter(
+                ReportCard.school_id  == school_id,
+                ReportCard.term_id    == term_id,
+                ReportCard.exam_type  == exam_type,
+                ReportCard.student_id.in_(student_ids),
+            ).all()
+        }
+        pending_ids = [sid for sid in student_ids if sid not in done_ids]
+
+        if not pending_ids:
+            return jsonify({
+                "success": True,
+                "message": "All reports are already generated",
+                "generated": 0, "failed": 0,
+            }), 200
+
+        school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
+        academic_year = _get_academic_year_for_term(term)
+        static_folder = current_app.static_folder
+        service       = ReportCardService(school, school_detail)
+
+        generated, failed, errors = 0, 0, []
+
+        for sid in pending_ids:
+            try:
+                student = Student.query.filter_by(id=sid, school_id=school_id).first()
+                if not student:
+                    failed += 1
+                    errors.append(f"Student {sid} not found")
+                    continue
+
+                result     = service.generate(
+                    student=student,
+                    stream=stream,
+                    term=term,
+                    academic_year=academic_year,
+                    exam_type=exam_type,
+                    static_folder=static_folder,
+                )
+                local_path = result["local_path"]
+                file_url   = result["file_url"]
+                now        = datetime.utcnow()
+
+                existing = ReportCard.query.filter_by(
+                    school_id=school_id, student_id=sid, term_id=term_id, exam_type=exam_type,
+                ).first()
+
+                if existing and existing.firebase_url:
+                    _delete_cdn_file(existing.firebase_url)
+
+                cdn_url    = _upload_report_pdf(local_path, academic_year, term, stream)
+                public_url = cdn_url or file_url
+
+                if existing:
+                    existing.firebase_url  = public_url
+                    existing.firebase_path = local_path
+                    existing.local_path    = local_path
+                    existing.generated_at  = now
+                    existing.generated_by  = int(user_id) if user_id else None
+                    existing.status        = "generated"
+                    existing.academic_year = academic_year.name if academic_year else None
+                else:
+                    db.session.add(ReportCard(
+                        school_id=school_id,
+                        student_id=sid,
+                        term_id=term_id,
+                        exam_type=exam_type,
+                        academic_year=academic_year.name if academic_year else None,
+                        generated_at=now,
+                        generated_by=int(user_id) if user_id else None,
+                        firebase_url=public_url,
+                        firebase_path=local_path,
+                        local_path=local_path,
+                        status="generated",
+                    ))
+
+                db.session.flush()
+                generated += 1
+
+            except Exception as inner_exc:
+                logger.error("generate_all: failed for student=%s — %s", sid, inner_exc)
+                failed += 1
+                errors.append(f"Student {sid}: generation failed")
+
+        try:
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            logger.exception("generate_all: commit failed | school_id=%s", school_id)
+            return jsonify({"success": False, "message": "Database commit failed. Please try again."}), 500
+
+        return jsonify({
+            "success":   True,
+            "message":   f"{generated} report(s) generated, {failed} failed.",
+            "generated": generated,
+            "failed":    failed,
+            "errors":    errors[:5],
+        }), 200
+
+    except Exception:
+        db.session.rollback()
+        logger.exception("generate_all failed | school_id=%s stream_id=%s", school_id, stream_id)
+        return jsonify({"success": False, "message": "Bulk generation failed. Please try again."}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
+#  GET SAVED REPORT CARDS  —  GET /api/report_cards
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report_cards", methods=["GET"])
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def get_report_cards():
+    claims = get_jwt()
+    staff_id, err = _teacher_required(claims)
+    if err:
+        return err
+
+    school_id, _, _ = _get_context(claims)
+    school, err = _school_or_404(school_id)
+    if err:
+        return err
+
+    academic_year_id = request.args.get("academic_year_id", type=int)
+    term_id          = request.args.get("term_id",          type=int)
+    stream_id        = request.args.get("stream_id",        type=int)
+    exam_type        = request.args.get("exam_type", "").strip().upper()
+
+    if not all([academic_year_id, term_id, stream_id, exam_type]):
+        return jsonify({
+            "message": "academic_year_id, term_id, stream_id and exam_type are required"
+        }), 400
+    if exam_type not in VALID_EXAM_TYPES:
+        return jsonify({"message": f"exam_type must be one of {sorted(VALID_EXAM_TYPES)}"}), 400
+
+    try:
+        ss_rows     = StudentStream.query.filter_by(school_id=school_id, stream_id=stream_id).all()
+        student_ids = [ss.student_id for ss in ss_rows]
+
+        if not student_ids:
+            return jsonify({"success": True, "report_cards": []}), 200
+
+        students    = Student.query.filter(Student.id.in_(student_ids)).all()
+        student_map = {s.id: s for s in students}
+
+        stream      = Stream.query.get(stream_id)
+        class_name  = stream.class_.name if stream and stream.class_ else ""
+        stream_name = stream.name        if stream else ""
+        report_type = classify_class(class_name)
+
+        ay      = AcademicYear.query.get(academic_year_id)
+        ay_name = ay.name if ay else ""
+
+        reports = ReportCard.query.filter(
+            ReportCard.school_id  == school_id,
+            ReportCard.term_id    == term_id,
+            ReportCard.exam_type  == exam_type,
+            ReportCard.student_id.in_(student_ids),
+        ).all()
+
+        results = []
+        for rc in reports:
+            student = student_map.get(rc.student_id)
+            if not student:
+                continue
+            results.append({
+                "id":            rc.id,
+                "student_code":  student.student_code or "",
+                "student_name":  f"{student.first_name} {student.last_name}",
+                "class_name":    class_name,
+                "stream_name":   stream_name,
+                "exam_type":     rc.exam_type or exam_type,
+                "academic_year": rc.academic_year or ay_name,
+                "report_type":   report_type,
+                "section_label": _SECTION_LABELS.get(report_type, report_type.title()),
+                "generated_at":  rc.generated_at.isoformat() if rc.generated_at else None,
+                "file_url": (
+                    _bust(rc.firebase_url, rc.generated_at) if rc.firebase_url else ""
+                ),
+            })
+
+        return jsonify({"success": True, "report_cards": results}), 200
+
+    except Exception:
+        logger.exception("get_report_cards failed | school_id=%s stream_id=%s", school_id, stream_id)
+        return jsonify({"success": False, "message": "Failed to load report cards."}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
+#  DELETE REPORT CARD  —  DELETE /api/report-cards/<id>
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards/<int:report_id>", methods=["DELETE"])
+@jwt_required()
+@limiter.limit(WRITE_LIMIT)
+def delete_report_card(report_id: int):
+    claims = get_jwt()
+    staff_id, err = _teacher_required(claims)
+    if err:
+        return err
+
+    school_id, _, _ = _get_context(claims)
+
+    try:
+        report = ReportCard.query.filter_by(id=report_id, school_id=school_id).first()
+        if not report:
+            return jsonify({"message": "Report card not found"}), 404
+
+        _delete_cdn_file(report.firebase_url)
+
+        local_path = report.local_path or report.firebase_path
+        if local_path and os.path.exists(local_path):
+            try:
+                os.remove(local_path)
+            except OSError as rm_err:
+                logger.warning("delete_report_card: could not remove file %s — %s", local_path, rm_err)
+
+        db.session.delete(report)
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Report card deleted successfully"}), 200
+
+    except SQLAlchemyError:
+        db.session.rollback()
+        logger.exception("delete_report_card DB error | report_id=%s", report_id)
+        return jsonify({"success": False, "message": "Database error. Please try again."}), 500
+    except Exception:
+        db.session.rollback()
+        logger.exception("delete_report_card failed | report_id=%s", report_id)
+        return jsonify({"success": False, "message": "Failed to delete report card. Please try again."}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
+#  SERVE LOCAL REPORT FILES
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/static/report_cards/<path:filename>", methods=["GET"])
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def serve_report_file(filename: str):
+    static_folder = current_app.static_folder
+    report_dir    = os.path.join(static_folder, "report_cards")
+
+    safe_path = os.path.realpath(os.path.join(report_dir, filename))
+    if not safe_path.startswith(os.path.realpath(report_dir)):
+        return jsonify({"message": "Forbidden"}), 403
+
+    if not os.path.exists(safe_path):
+        return jsonify({"message": "Report file not found"}), 404
+
+    directory, fname = os.path.split(safe_path)
+    return send_from_directory(directory, fname)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  SAVE SCHOOL CONFIGURATION  —  POST /api/school/details
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/school/details", methods=["POST"])
+@jwt_required()
+@limiter.limit(WRITE_LIMIT)
+def save_school_details():
+    claims = get_jwt()
+    staff_id, err = _teacher_required(claims)
+    if err:
+        return err
+
+    school_id, _, _ = _get_context(claims)
+    school, err = _school_or_404(school_id)
+    if err:
+        return err
+
+    try:
+        logo_url = None
+
+        logo_file = request.files.get("school_logo")
+        if logo_file and logo_file.filename:
+            filename = secure_filename(logo_file.filename)
+
+            if not _validate_logo_extension(filename):
+                return jsonify({
+                    "success": False,
+                    "message": (
+                        f"Invalid file type. "
+                        f"Allowed: {', '.join(sorted(ALLOWED_LOGO_EXTENSIONS))}"
+                    ),
+                }), 400
+
+            logo_bytes = logo_file.read()
+            if len(logo_bytes) > MAX_LOGO_SIZE_BYTES:
+                return jsonify({
+                    "success": False,
+                    "message": "Logo file must not exceed 5MB",
+                }), 400
+
+            ext = filename.rsplit(".", 1)[1].lower()
+            remote_path = f"uploads/logos/school_{school_id}_logo.{ext}"
+
+            detail_check = SchoolDetail.query.filter_by(
+                school_id=school_id
+            ).first()
+
+            if detail_check and detail_check.school_logo_url:
+                _delete_cdn_file(detail_check.school_logo_url)
+
+            logo_url = bunny_upload(
+                data=logo_bytes,
+                remote_path=remote_path
+            )
+
+            logger.info(
+                "save_school_details: logo uploaded to CDN → %s",
+                logo_url
+            )
+
+        po_box_number = (
+            request.form.get("po_box_number", "") or ""
+        ).strip() or None
+
+        district = (
+            request.form.get("district", "") or ""
+        ).strip() or None
+
+        contact_1 = (
+            request.form.get("contact_1", "") or ""
+        ).strip()
+
+        contact_2 = (
+            request.form.get("contact_2", "") or ""
+        ).strip() or None
+
+        website_domain = (
+            request.form.get("website_domain", "") or ""
+        ).strip() or None
+
+        email = (
+            request.form.get("email", "") or ""
+        ).strip() or None
+
+        if not contact_1:
+            return jsonify({
+                "success": False,
+                "message": "Contact 1 is required",
+            }), 400
+
+        gp_min_mark = None
+        ict_min_mark = None
+        sub_math_min_mark = None
+
+        gp_raw = (
+            request.form.get("gp_min_mark", "") or ""
+        ).strip()
+
+        ict_raw = (
+            request.form.get("ict_min_mark", "") or ""
+        ).strip()
+
+        sub_math_raw = (
+            request.form.get("sub_math_min_mark", "") or ""
+        ).strip()
+
+        if sub_math_raw:
+            try:
+                sub_math_min_mark = float(sub_math_raw)
+
+                if not (0 <= sub_math_min_mark <= 100):
+                    raise ValueError
+
+            except ValueError:
+                return jsonify({
+                    "success": False,
+                    "message": (
+                        "Sub Math min mark must be a number between 0 and 100"
+                    ),
+                }), 400
+
+        if gp_raw:
+            try:
+                gp_min_mark = float(gp_raw)
+
+                if not (0 <= gp_min_mark <= 100):
+                    raise ValueError
+
+            except ValueError:
+                return jsonify({
+                    "success": False,
+                    "message": (
+                        "GP min mark must be a number between 0 and 100"
+                    ),
+                }), 400
+
+        if ict_raw:
+            try:
+                ict_min_mark = float(ict_raw)
+
+                if not (0 <= ict_min_mark <= 100):
+                    raise ValueError
+
+            except ValueError:
+                return jsonify({
+                    "success": False,
+                    "message": (
+                        "ICT min mark must be a number between 0 and 100"
+                    ),
+                }), 400
+
+        detail = SchoolDetail.query.filter_by(
+            school_id=school_id
+        ).first()
+
+        if not detail:
+            detail = SchoolDetail(
+                school_id=school_id,
+                contact_1=contact_1,
+            )
+            db.session.add(detail)
+
+        detail.contact_1 = contact_1
+        detail.po_box_number = po_box_number
+        detail.district = district
+        detail.contact_2 = contact_2
+        detail.website_domain = website_domain
+        detail.email = email
+
+        if logo_url:
+            detail.school_logo_url = logo_url
+
+        if gp_min_mark is not None:
+            detail.gp_min_mark = gp_min_mark
+
+        if sub_math_min_mark is not None:
+            detail.sub_math_min_mark = sub_math_min_mark
+
+        if ict_min_mark is not None:
+            detail.ict_min_mark = ict_min_mark
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "School configuration saved successfully",
+            "logo_url": logo_url or detail.school_logo_url,
+        }), 200
+
+    except SQLAlchemyError:
+        db.session.rollback()
+        logger.exception(
+            "save_school_details DB error | school_id=%s",
+            school_id,
+        )
+        return jsonify({
+            "success": False,
+            "message": "Database error. Please try again.",
+        }), 500
+
+    except Exception:
+        db.session.rollback()
+        logger.exception(
+            "save_school_details failed | school_id=%s",
+            school_id,
+        )
+        return jsonify({
+            "success": False,
+            "message": (
+                "Failed to save school configuration. Please try again."
+            ),
+        }), 500
+
+# ═══════════════════════════════════════════════════════════════
+#  DOWNLOAD REPORT CARD  —  GET /api/report-cards/<id>/download
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards/<int:report_id>/download", methods=["GET"])
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def download_report_card(report_id: int):
+    claims    = get_jwt()
+    school_id = claims.get("school_id")
+
+    report = ReportCard.query.filter_by(id=report_id, school_id=school_id).first()
+    if not report:
+        return jsonify({"message": "Report card not found"}), 404
+
+    try:
+        local_path = report.local_path or report.firebase_path
+        if local_path and os.path.exists(local_path):
+            directory, fname = os.path.split(local_path)
+            return send_from_directory(
+                directory, fname,
+                as_attachment=True,
+                download_name=fname,
+                mimetype="application/pdf",
+            )
+
+        cdn_url = report.firebase_url
+        if not cdn_url:
+            return jsonify({"message": "No file available for this report"}), 404
+
+        cdn_url = cdn_url.split("?")[0]
+
+        upstream = http_requests.get(cdn_url, stream=True, timeout=30)
+        upstream.raise_for_status()
+
+        student = Student.query.get(report.student_id)
+        name    = f"{student.first_name}_{student.last_name}" if student else "report"
+        fname   = f"report_{name}_{report.exam_type or ''}.pdf"
+
+        return Response(
+            stream_with_context(upstream.iter_content(chunk_size=8192)),
+            status=200,
+            content_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{fname}"',
+                "Cache-Control": "no-store",
+            },
+        )
+
+    except Exception:
+        logger.exception("download_report_card failed | report_id=%s", report_id)
+        return jsonify({"message": "Could not retrieve the report file. Please try again."}), 500

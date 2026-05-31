@@ -1,0 +1,1187 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --navy: #0f2044;
+  --navy-mid: #1a3461;
+  --navy-light: #2a4a7f;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --cream: #faf8f4;
+  --white: #ffffff;
+  --gray-50: #f8f9fb;
+  --gray-100: #eef0f5;
+  --gray-200: #dde1eb;
+  --gray-400: #8c96b0;
+  --gray-600: #4a5470;
+  --gray-800: #1e2540;
+  --success: #1a6b3c;
+  --error: #8b1a1a;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 4px rgba(15,32,68,0.07);
+  --shadow-md: 0 4px 16px rgba(15,32,68,0.10);
+  --shadow-lg: 0 8px 32px rgba(15,32,68,0.13);
+  --transition: 0.18s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { background: var(--cream); font-family: 'DM Sans', sans-serif; color: var(--gray-800); }
+
+.reg-wrapper { max-width: 960px; margin: auto; padding: 36px 20px 60px; }
+
+.page-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 32px; flex-wrap: wrap; gap: 16px;
+  border-bottom: 2px solid var(--gold); padding-bottom: 20px;
+}
+
+.page-header h1 { font-family: 'Lora', serif; font-size: clamp(1.5rem,4vw,2.1rem); font-weight: 600; color: var(--navy); }
+
+.page-header h1 span {
+  display: block; font-size: .75rem; font-weight: 500; color: var(--gold);
+  letter-spacing: .15em; text-transform: uppercase; margin-bottom: 4px;
+}
+
+.header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.bulk-btn {
+  background: var(--navy-light); color: white; border: none;
+  padding: 10px 20px; border-radius: var(--radius-sm); cursor: pointer;
+  font-weight: 600; font-size: .85rem; display: flex; align-items: center; gap: 8px;
+  transition: var(--transition);
+}
+.bulk-btn:hover { background: var(--navy); }
+
+.form-container { background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); }
+
+.section { padding: 32px 36px; border-bottom: 1px solid var(--gray-100); }
+
+.section h2 {
+  font-family: 'Lora', serif; font-size: 1.05rem; color: var(--navy);
+  display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+}
+
+.section-number {
+  width: 22px; height: 22px; border-radius: 50%; background: var(--navy);
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; flex-shrink: 0;
+}
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 24px; }
+
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+
+.input-group label {
+  font-size: .72rem; font-weight: 600; color: var(--gray-600);
+  letter-spacing: .08em; text-transform: uppercase;
+}
+
+.input-group label.required::after { content: " *"; color: #c0392b; }
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  padding: 10px 14px; border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm); outline: none;
+  font-size: .9rem; font-family: 'DM Sans', sans-serif; transition: var(--transition);
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(42,74,127,.1);
+}
+
+textarea { resize: vertical; min-height: 90px; }
+
+/* ── PARENT CARD ── */
+.parent-card {
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+  padding: 22px; background: var(--gray-50);
+}
+.parent-card h3 { margin-bottom: 16px; color: var(--navy-light); font-size: .82rem; text-transform: uppercase; font-weight: 700; }
+
+/* ── DISEASE CHECKBOXES ── */
+.disease-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.disease-chip {
+  display: flex; align-items: center; gap: 10px;
+  border: 1.5px solid var(--gray-200); padding: 10px 14px;
+  border-radius: var(--radius-sm); cursor: pointer; background: white;
+  transition: var(--transition); user-select: none;
+}
+
+.disease-chip:has(input:checked) {
+  border-color: var(--navy-light); background: rgba(42,74,127,.06);
+}
+
+.disease-chip input[type="checkbox"] {
+  width: 16px; height: 16px; accent-color: var(--navy-light);
+  cursor: pointer; flex-shrink: 0;
+  padding: 0 !important; border: none !important; border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.disease-chip span { font-size: .88rem; color: var(--gray-800); font-weight: 500; }
+
+/* ── DOCUMENTS ── */
+.document-row {
+  display: grid; grid-template-columns: 1fr 1fr auto;
+  gap: 12px; margin-bottom: 12px; align-items: center;
+}
+
+.doc-remove {
+  background: var(--error); color: white; border: none;
+  border-radius: 6px; padding: 10px 12px; cursor: pointer;
+}
+
+.add-doc-btn {
+  background: transparent; border: 1.5px dashed var(--navy-light);
+  color: var(--navy-light); padding: 9px 18px;
+  border-radius: var(--radius-sm); cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: var(--transition);
+}
+.add-doc-btn:hover { background: rgba(42,74,127,.06); }
+
+.existing-documents { margin-top: 24px; border-top: 1px solid var(--gray-100); padding-top: 20px; }
+.existing-documents h4 { margin-bottom: 14px; color: var(--navy); }
+
+.existing-doc {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; background: var(--gray-50); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 10px;
+}
+.existing-doc a { color: var(--navy-light); text-decoration: none; font-size: .88rem; }
+
+.delete-doc-btn {
+  background: var(--error); color: white; border: none;
+  border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: .75rem;
+}
+
+/* ── SUBMIT ── */
+.submit-bar {
+  background: var(--gray-50); padding: 24px 36px;
+  display: flex; justify-content: flex-end; align-items: center;
+  gap: 14px; flex-wrap: wrap;
+}
+
+.submit-btn {
+  background: var(--navy); color: white; border: none;
+  padding: 12px 32px; border-radius: var(--radius-sm);
+  cursor: pointer; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; gap: 10px; transition: var(--transition);
+}
+.submit-btn:hover:not(:disabled) { background: var(--navy-mid); }
+.submit-btn:disabled { opacity: .7; cursor: not-allowed; }
+
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.3); border-top-color: white;
+  border-radius: 50%; animation: spin .8s linear infinite; display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 14px 20px; border-radius: var(--radius-md); color: white;
+  transform: translateY(80px); opacity: 0; transition: .3s ease; z-index: 9999;
+  max-width: 320px; word-break: break-word;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--error); }
+
+/* ════════════════════════════════════
+   BULK UPLOAD MODAL
+════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,32,68,.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9000; opacity: 0; visibility: hidden; transition: .25s ease;
+}
+.modal-overlay.open { opacity: 1; visibility: visible; }
+
+.modal {
+  background: white; border-radius: var(--radius-lg); width: 90%; max-width: 700px;
+  max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+  transform: translateY(24px); transition: .25s ease;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-header {
+  padding: 24px 28px 20px; border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-family: 'Lora', serif; color: var(--navy); font-size: 1.1rem; }
+
+.modal-close {
+  width: 32px; height: 32px; border: none; background: var(--gray-100);
+  border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex;
+  align-items: center; justify-content: center; transition: var(--transition);
+}
+.modal-close:hover { background: var(--gray-200); }
+
+.modal-body { padding: 24px 28px; }
+
+/* ── REQUIRED COLUMNS PANEL ── */
+.required-cols-panel {
+  margin-bottom: 20px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.required-cols-header {
+  background: var(--navy); color: white;
+  padding: 10px 16px; font-size: .75rem;
+  font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.rch-left { display: flex; align-items: center; gap: 8px; }
+.required-cols-legend {
+  display: flex; gap: 14px; font-size: .7rem;
+  font-weight: 500; letter-spacing: 0; text-transform: none;
+}
+.legend-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; margin-right: 4px; vertical-align: middle;
+}
+.legend-dot.req { background: #f97316; }
+.legend-dot.opt { background: var(--gray-400); }
+
+.required-cols-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+  background: var(--gray-50);
+}
+.col-chip {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px;
+  border-right: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--gray-100);
+  background: white;
+  transition: background .2s, border-color .2s;
+}
+.col-icon { font-size: .95rem; flex-shrink: 0; margin-top: 2px; }
+.col-chip-name {
+  font-weight: 700; color: var(--navy); font-family: monospace;
+  font-size: .75rem; display: flex; align-items: center; gap: 4px;
+}
+.req-star { color: #f97316; font-size: .85rem; line-height: 1; }
+.col-chip-desc { font-size: .7rem; color: var(--gray-600); margin-top: 2px; line-height: 1.4; }
+
+.col-status-icon {
+  font-size: .8rem; margin-left: auto; flex-shrink: 0;
+  align-self: flex-start; margin-top: 2px; display: none;
+}
+
+/* states applied after file parse */
+.col-chip.col-status-ok      { background: #f0fdf4; border-color: #bbf7d0; }
+.col-chip.col-status-missing { background: #fff7ed; border-color: #fed7aa; }
+.col-chip.col-status-empty   { background: #fffbeb; border-color: #fde68a; }
+
+.col-chip.col-status-ok .col-status-icon,
+.col-chip.col-status-missing .col-status-icon,
+.col-chip.col-status-empty .col-status-icon { display: block; }
+
+/* ── COLUMN WARNING BANNER ── */
+.col-warning-banner {
+  margin-bottom: 16px; border-radius: var(--radius-sm);
+  padding: 12px 16px; font-size: .82rem; display: none;
+}
+.col-warning-banner.has-issues {
+  display: block;
+  background: #fff7ed; border: 1.5px solid #f97316; color: #7c2d12;
+}
+.col-warning-banner.all-ok {
+  display: block;
+  background: #f0fdf4; border: 1.5px solid #22c55e; color: #14532d;
+}
+.col-warning-banner strong { display: block; margin-bottom: 4px; font-size: .83rem; }
+.warning-issue-list { margin: 5px 0 0 0; padding-left: 16px; }
+.warning-issue-list li { margin-bottom: 3px; font-family: monospace; font-size: .76rem; }
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--gray-200); border-radius: var(--radius-md);
+  padding: 36px 24px; text-align: center; cursor: pointer;
+  transition: var(--transition); background: var(--gray-50);
+}
+.drop-zone.drag-over { border-color: var(--navy-light); background: rgba(42,74,127,.05); }
+.drop-zone .dz-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.drop-zone p { color: var(--gray-600); font-size: .9rem; margin-bottom: 6px; }
+.drop-zone small { color: var(--gray-400); font-size: .78rem; }
+.drop-zone input[type="file"] { display: none; }
+
+.dz-chosen { margin-top: 10px; font-size: .82rem; color: var(--navy-light); font-weight: 600; }
+
+/* Template download */
+.template-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--navy-light); font-size: .82rem; text-decoration: none;
+  margin-top: 12px; font-weight: 600;
+}
+.template-link:hover { text-decoration: underline; }
+
+/* Validation table */
+.validation-wrap { margin-top: 24px; }
+.validation-wrap h4 { font-family: 'Lora', serif; color: var(--navy); margin-bottom: 12px; font-size: .95rem; }
+
+.val-summary { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.val-badge { padding: 4px 12px; border-radius: 20px; font-size: .78rem; font-weight: 700; }
+.val-badge.ok  { background: #d1fae5; color: #065f46; }
+.val-badge.err { background: #fee2e2; color: #991b1b; }
+.val-badge.warn { background: #fef3c7; color: #92400e; }
+
+.val-table-wrap { max-height: 260px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); }
+.val-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.val-table th { background: var(--navy); color: white; padding: 8px 12px; text-align: left; position: sticky; top: 0; }
+.val-table td { padding: 8px 12px; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+.val-table tr:last-child td { border-bottom: none; }
+.val-table tr.row-ok  { background: #f0fdf4; }
+.val-table tr.row-err { background: #fff5f5; }
+.row-errors { color: var(--error); font-size: .76rem; margin-top: 3px; }
+
+.modal-footer {
+  padding: 18px 28px; border-top: 1px solid var(--gray-100);
+  display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;
+}
+
+.btn-secondary {
+  background: var(--gray-100); color: var(--gray-800); border: none;
+  padding: 10px 22px; border-radius: var(--radius-sm); cursor: pointer;
+  font-weight: 600; font-family: 'DM Sans', sans-serif; transition: var(--transition);
+}
+.btn-secondary:hover { background: var(--gray-200); }
+
+.btn-primary {
+  background: var(--navy); color: white; border: none;
+  padding: 10px 22px; border-radius: var(--radius-sm); cursor: pointer;
+  font-weight: 600; font-family: 'DM Sans', sans-serif; transition: var(--transition);
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover:not(:disabled) { background: var(--navy-mid); }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.progress-bar-wrap {
+  margin-top: 14px; background: var(--gray-100); border-radius: 20px;
+  overflow: hidden; height: 8px; display: none;
+}
+.progress-bar { height: 100%; background: var(--navy-light); width: 0; transition: width .3s; }
+
+@media (max-width: 768px) {
+  .section { padding: 24px 18px; }
+  .grid { grid-template-columns: 1fr; }
+  .document-row { grid-template-columns: 1fr; }
+  .submit-bar { padding: 18px; }
+  .disease-grid { grid-template-columns: 1fr 1fr; }
+  .required-cols-grid { grid-template-columns: 1fr 1fr; }
+  .required-cols-legend { display: none; }
+}
+</style>
+
+<div class="toast" id="toast"></div>
+
+<!-- ════════ BULK UPLOAD MODAL ════════ -->
+<div class="modal-overlay" id="bulkModal">
+  <div class="modal">
+
+    <div class="modal-header">
+      <h3>📤 Bulk Student Upload</h3>
+      <button class="modal-close" onclick="closeBulkModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- REQUIRED COLUMNS PANEL -->
+      <div class="required-cols-panel">
+        <div class="required-cols-header">
+          <span class="rch-left">📋 Required File Columns</span>
+          <span class="required-cols-legend">
+            <span><span class="legend-dot req"></span>Required</span>
+            <span><span class="legend-dot opt"></span>Optional</span>
+          </span>
+        </div>
+        <div class="required-cols-grid" id="colChipsGrid">
+          <!-- chips injected by JS -->
+        </div>
+      </div>
+
+      <!-- COLUMN WARNING BANNER (shown after file parse) -->
+      <div class="col-warning-banner" id="colWarningBanner"></div>
+
+      <div
+        class="drop-zone"
+        id="dropZone"
+        onclick="document.getElementById('bulkFile').click()"
+      >
+        <div class="dz-icon">📂</div>
+        <p>Drop your file here or <strong>click to browse</strong></p>
+        <small>CSV, XLSX or XLS · Max 5 MB</small>
+        <div class="dz-chosen" id="dzChosen"></div>
+        <input type="file" id="bulkFile" accept=".csv,.xlsx,.xls">
+      </div>
+
+      <a href="#" class="template-link" id="downloadTemplate">
+        ⬇ Download CSV Template
+      </a>
+
+      <div class="validation-wrap" id="validationWrap" style="display:none">
+        <h4>Validation Results</h4>
+        <div class="val-summary" id="valSummary"></div>
+        <div class="val-table-wrap">
+          <table class="val-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Gender</th>
+                <th>DOB</th>
+                <th>Admission No.</th>
+                <th>Guardian Name</th>
+                <th>Guardian Contact</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="valTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeBulkModal()">Cancel</button>
+      <button class="btn-primary" id="importBtn" disabled onclick="importStudents()">
+        <span id="importSpinner" class="spinner"></span>
+        Import Valid Rows
+      </button>
+    </div>
+
+  </div>
+</div>
+<!-- ════════ END MODAL ════════ -->
+
+<div class="reg-wrapper">
+
+  <div class="page-header">
+    <h1>
+      <span>Academic Records</span>
+      {{ "Edit Student" if edit_mode else "Student Registration" }}
+    </h1>
+
+    <div class="header-actions">
+      {% if school %}
+      <span style="font-size:.82rem;color:var(--gray-400);">{{ school.name }}</span>
+      {% endif %}
+
+      {% if not edit_mode %}
+      <button class="bulk-btn" onclick="openBulkModal()">
+        📤 Bulk Upload
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <form id="studentForm" enctype="multipart/form-data">
+
+    <div class="form-container">
+
+      <!-- 1 · STUDENT INFO -->
+      <div class="section">
+        <h2><span class="section-number">1</span>Student Info</h2>
+        <div class="grid">
+
+          <div class="input-group">
+            <label class="required">First Name</label>
+            <input type="text" name="first_name" required value="{{ student.first_name if edit_mode else '' }}">
+          </div>
+
+          <div class="input-group">
+            <label class="required">Last Name</label>
+            <input type="text" name="last_name" required value="{{ student.last_name if edit_mode else '' }}">
+          </div>
+
+          <div class="input-group">
+            <label class="required">Gender</label>
+            <select name="gender" required>
+              <option value="">Select Gender</option>
+              <option value="Male"   {% if edit_mode and student.gender == "Male"   %}selected{% endif %}>Male</option>
+              <option value="Female" {% if edit_mode and student.gender == "Female" %}selected{% endif %}>Female</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Date of Birth</label>
+            <input type="date" name="dob" value="{{ student.date_of_birth if edit_mode else '' }}">
+          </div>
+
+          <div class="input-group">
+            <label>Nationality</label>
+            <input type="text" name="nationality" value="{{ student.nationality if edit_mode else '' }}">
+          </div>
+
+          <div class="input-group">
+            <label>NIN</label>
+            <input type="text" name="nin" value="{{ student.nin if edit_mode else '' }}">
+          </div>
+
+          <div class="input-group">
+            <label>Student Photo</label>
+            <input type="file" name="student_photo" accept="image/*">
+            {% if edit_mode and student.photo_url %}
+            <div style="margin-top:10px;">
+              <img
+                src="{{ url_for('static', filename=student.photo_url.replace('app/static/', '')) }}"
+                style="width:90px;height:90px;object-fit:cover;border-radius:12px;border:2px solid var(--gray-200);"
+              >
+            </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 2 · ACADEMIC INFO -->
+      <div class="section">
+        <h2><span class="section-number">2</span>Academic Info</h2>
+        <div class="grid">
+
+          <div class="input-group">
+            <label class="required">Class</label>
+            <select name="class_id" required>
+              {% for c in classes %}
+              <option value="{{ c.name }}" {% if edit_mode and student.class_id == c.id %}selected{% endif %}>
+                {{ c.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label>Admission Number</label>
+            <input type="text" name="admission_number" value="{{ student.admission_number if edit_mode else '' }}">
+          </div>
+
+          <div class="input-group" style="grid-column: 1 / -1;">
+            <label class="required">Student Type</label>
+            <div style="display:flex; gap:12px; margin-top:4px;">
+
+              <label class="disease-chip" style="flex:1; justify-content:center;">
+                <input
+                  type="radio"
+                  name="student_type"
+                  value="day"
+                  {% if not edit_mode or student.student_type != 'boarding' %}checked{% endif %}
+                  style="width:16px;height:16px;accent-color:var(--navy-light);padding:0!important;border:none!important;border-radius:0!important;box-shadow:none!important;"
+                >
+                <span>🏠 Day Scholar</span>
+              </label>
+
+              <label class="disease-chip" style="flex:1; justify-content:center;">
+                <input
+                  type="radio"
+                  name="student_type"
+                  value="boarding"
+                  {% if edit_mode and student.student_type == 'boarding' %}checked{% endif %}
+                  style="width:16px;height:16px;accent-color:var(--navy-light);padding:0!important;border:none!important;border-radius:0!important;box-shadow:none!important;"
+                >
+                <span>🏫 Boarder</span>
+              </label>
+
+            </div>
+          </div>
+
+          {% if school.school_type == "secondary" %}
+          <div class="input-group">
+            <label>Level</label>
+            <select name="level">
+              <option value="O" {% if edit_mode and student.level == "O" %}selected{% endif %}>O</option>
+              <option value="A" {% if edit_mode and student.level == "A" %}selected{% endif %}>A</option>
+            </select>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+      <!-- 3 · PARENT / GUARDIAN -->
+      <div class="section">
+        <h2><span class="section-number">3</span>Parent / Guardian</h2>
+
+        <div class="parent-card">
+          <h3>Guardian Information</h3>
+          <div class="grid">
+
+            <div class="input-group">
+              <label>Name</label>
+              <input type="text" name="guardian_name" value="{{ guardian.name if guardian else '' }}">
+            </div>
+
+            <div class="input-group">
+              <label>Relationship to Student</label>
+              <select name="guardian_relationship">
+                {% set rel = guardian.relationship if guardian else '' %}
+                <option value="">Select Relationship</option>
+                <option value="Father"        {% if rel == "Father"        %}selected{% endif %}>Father</option>
+                <option value="Mother"        {% if rel == "Mother"        %}selected{% endif %}>Mother</option>
+                <option value="Uncle"         {% if rel == "Uncle"         %}selected{% endif %}>Uncle</option>
+                <option value="Aunt"          {% if rel == "Aunt"          %}selected{% endif %}>Aunt</option>
+                <option value="Grandparent"   {% if rel == "Grandparent"   %}selected{% endif %}>Grandparent</option>
+                <option value="Sibling"       {% if rel == "Sibling"       %}selected{% endif %}>Sibling</option>
+                <option value="Legal Guardian"{% if rel == "Legal Guardian" %}selected{% endif %}>Legal Guardian</option>
+                <option value="Other"         {% if rel == "Other"         %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label>Contact</label>
+              <input type="text" name="guardian_contact" value="{{ guardian.contact if guardian else '' }}">
+            </div>
+
+            <div class="input-group">
+              <label>Occupation</label>
+              <input type="text" name="guardian_occupation" value="{{ guardian.occupation if guardian else '' }}">
+            </div>
+
+            <div class="input-group" style="grid-column: 1 / -1;">
+              <label>Address</label>
+              <input type="text" name="guardian_address" value="{{ guardian.address if guardian else '' }}">
+            </div>
+
+            <div class="input-group">
+              <label>Guardian Photo</label>
+              <input type="file" name="guardian_photo">
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 · MEDICAL REPORT -->
+      <div class="section">
+        <h2><span class="section-number">4</span>Medical Report</h2>
+
+        <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:14px;">
+          Select all conditions that apply to this student.
+        </p>
+
+        <div class="disease-grid">
+
+          <label class="disease-chip">
+            <input type="checkbox" name="has_asthma" value="1"
+              {% if edit_mode and medical and medical.has_asthma %}checked{% endif %}>
+            <span>🫁 Asthma</span>
+          </label>
+
+          <label class="disease-chip">
+            <input type="checkbox" name="has_heart_problem" value="1"
+              {% if edit_mode and medical and medical.has_heart_problem %}checked{% endif %}>
+            <span>❤️ Heart Problem</span>
+          </label>
+
+          <label class="disease-chip">
+            <input type="checkbox" name="has_sickle_cell" value="1"
+              {% if edit_mode and medical and medical.has_sickle_cell %}checked{% endif %}>
+            <span>🩸 Sickle Cell</span>
+          </label>
+
+          <label class="disease-chip">
+            <input type="checkbox" name="has_hiv" value="1"
+              {% if edit_mode and medical and medical.has_hiv %}checked{% endif %}>
+            <span>🔬 HIV</span>
+          </label>
+
+        </div>
+
+        <div class="input-group">
+          <label>Other Conditions</label>
+          <textarea name="other_diseases">{{ medical.other_conditions if medical else '' }}</textarea>
+        </div>
+      </div>
+
+      <!-- 5 · DOCUMENTS -->
+      <div class="section">
+        <h2><span class="section-number">5</span>Documents</h2>
+
+        <div id="documentsContainer">
+          <div class="document-row">
+            <input type="text" name="document_title[]" placeholder="Document Title">
+            <input type="file" name="document_file[]">
+            <button type="button" class="doc-remove" onclick="removeRow(this)">✕</button>
+          </div>
+        </div>
+
+        <button type="button" class="add-doc-btn" id="addDocumentBtn">+ Add Document</button>
+
+        {% if edit_mode and documents %}
+        <div class="existing-documents">
+          <h4>Existing Documents</h4>
+          {% for doc in documents %}
+          <div class="existing-doc">
+            <a href="{{ url_for('static', filename=doc.file_url.replace('app/static/', '')) }}" target="_blank">
+              {{ doc.document_type }}
+            </a>
+            <button type="button" class="delete-doc-btn" onclick="deleteDocument('{{ doc.id }}', this)">Delete</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- SUBMIT -->
+      <div class="submit-bar">
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span class="spinner" id="spinner"></span>
+          {{ "Update Student" if edit_mode else "Register Student" }}
+        </button>
+      </div>
+
+    </div>
+  </form>
+
+</div><!-- /.reg-wrapper -->
+
+<script>
+
+const editMode  = {{ "true" if edit_mode else "false" }};
+const studentId = "{{ student.id if edit_mode else '' }}";
+
+/* ── TOAST ── */
+function showToast(message, type = "success") {
+  const t = document.getElementById("toast");
+  t.textContent = message;
+  t.className   = `toast ${type}`;
+  void t.offsetWidth;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+/* ── ADD / REMOVE DOCUMENT ROW ── */
+document.getElementById("addDocumentBtn").addEventListener("click", () => {
+  const row = document.createElement("div");
+  row.className = "document-row";
+  row.innerHTML = `
+    <input type="text" name="document_title[]" placeholder="Document Title">
+    <input type="file" name="document_file[]">
+    <button type="button" class="doc-remove" onclick="removeRow(this)">✕</button>
+  `;
+  document.getElementById("documentsContainer").appendChild(row);
+});
+
+function removeRow(btn) { btn.parentElement.remove(); }
+
+/* ── LOADING ── */
+function setLoading(loading = true) {
+  document.getElementById("submitBtn").disabled = loading;
+  document.getElementById("spinner").style.display = loading ? "inline-block" : "none";
+}
+
+/* ── DELETE DOCUMENT ── */
+async function deleteDocument(docId, btn) {
+  if (!confirm("Delete this document?")) return;
+  try {
+    const res = await fetch(`/api/students/document/${docId}`, { method: "DELETE" });
+    if (res.ok) { btn.parentElement.remove(); showToast("Document deleted"); }
+    else         showToast("Failed to delete document", "error");
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+/* ── SUBMIT ── */
+document.getElementById("studentForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const formData = new FormData(this);
+    const url    = editMode ? `/api/students/${studentId}` : "/api/students/register";
+    const method = editMode ? "PUT" : "POST";
+    const response = await fetch(url, { method, body: formData });
+    const data = await response.json();
+    if (response.ok) {
+      showToast(data.message || (editMode ? "Student updated" : "Student registered"));
+      if (editMode) {
+        setTimeout(() => { window.location.href = "{{ url_for('student_Management.student_profiles_page') }}"; }, 1200);
+      } else {
+        this.reset();
+      }
+    } else {
+      showToast(data.message || "Operation failed", "error");
+    }
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+  setLoading(false);
+});
+
+/* ════════════════════════════════════
+   BULK UPLOAD
+════════════════════════════════════ */
+
+/* Column definitions — single source of truth for panel + validation */
+const COLUMN_DEFS = [
+  { key: "first_name",       icon: "👤", desc: "Student's first name",        required: true  },
+  { key: "last_name",        icon: "👤", desc: "Student's last/family name",   required: true  },
+  { key: "gender",           icon: "⚥",  desc: "Male or Female",               required: true  },
+  { key: "date_of_birth",    icon: "📅", desc: "Format: YYYY-MM-DD",           required: true  },
+  { key: "admission_number", icon: "🔢", desc: "Unique admission ID",          required: true  },
+  { key: "guardian_name",    icon: "👨‍👧", desc: "Parent / guardian full name", required: true  },
+  { key: "guardian_contact", icon: "📞", desc: "Phone number or email",        required: true  },
+  { key: "nationality",      icon: "🌍", desc: "e.g. Ugandan",                 required: false },
+  { key: "class_name",       icon: "🏫", desc: "e.g. S1, P3",                  required: false },
+];
+
+const REQUIRED_COLS = COLUMN_DEFS.filter(c => c.required).map(c => c.key);
+
+/* Build chip panel on page load */
+(function buildColChips() {
+  const grid = document.getElementById("colChipsGrid");
+  grid.innerHTML = COLUMN_DEFS.map(col => `
+    <div class="col-chip" id="chip-${col.key}">
+      <span class="col-icon">${col.icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div class="col-chip-name">
+          ${col.key}${col.required ? '<span class="req-star">*</span>' : ''}
+        </div>
+        <div class="col-chip-desc">${col.desc}</div>
+      </div>
+      <span class="col-status-icon" id="chip-icon-${col.key}"></span>
+    </div>
+  `).join("");
+})();
+
+function resetChipStates() {
+  COLUMN_DEFS.forEach(col => {
+    const chip = document.getElementById(`chip-${col.key}`);
+    chip.classList.remove("col-status-ok", "col-status-missing", "col-status-empty");
+    document.getElementById(`chip-icon-${col.key}`).textContent = "";
+  });
+}
+
+/* Update chip colours + warning banner after a file is parsed */
+function updateColFeedback(headers, rows) {
+  const banner = document.getElementById("colWarningBanner");
+  const missingIssues = [];
+  const emptyIssues   = [];
+
+  COLUMN_DEFS.forEach(col => {
+    const chip = document.getElementById(`chip-${col.key}`);
+    const icon = document.getElementById(`chip-icon-${col.key}`);
+    chip.classList.remove("col-status-ok", "col-status-missing", "col-status-empty");
+
+    if (!headers.includes(col.key)) {
+      if (col.required) {
+        chip.classList.add("col-status-missing");
+        icon.textContent = "⛔";
+        missingIssues.push(col.key);
+      }
+      return; // optional absent columns stay neutral
+    }
+
+    const emptyCount = rows.filter(r => !r[col.key] || r[col.key].trim() === "").length;
+    if (emptyCount > 0 && col.required) {
+      chip.classList.add("col-status-empty");
+      icon.textContent = "⚠️";
+      emptyIssues.push({ key: col.key, count: emptyCount });
+    } else {
+      chip.classList.add("col-status-ok");
+      icon.textContent = "✓";
+    }
+  });
+
+  if (!missingIssues.length && !emptyIssues.length) {
+    banner.className = "col-warning-banner all-ok";
+    banner.innerHTML = "<strong>✓ All required columns found and populated.</strong> Review the table below before importing.";
+    return;
+  }
+
+  let html = "";
+  if (missingIssues.length) {
+    const s = missingIssues.length > 1 ? "s are" : " is";
+    html += `<strong>⛔ ${missingIssues.length} required column${s} missing from your file:</strong>
+             <ul class="warning-issue-list">${missingIssues.map(k => `<li>${k}</li>`).join("")}</ul>`;
+  }
+  if (emptyIssues.length) {
+    const s = emptyIssues.length > 1 ? "s have" : " has";
+    html += `<strong style="margin-top:${missingIssues.length ? "10px" : "0"};display:block;">
+             ⚠️ ${emptyIssues.length} column${s} empty values in some rows:</strong>
+             <ul class="warning-issue-list">
+               ${emptyIssues.map(i => `<li>${i.key} — empty in ${i.count} row${i.count > 1 ? "s" : ""}</li>`).join("")}
+             </ul>`;
+  }
+  banner.className = "col-warning-banner has-issues";
+  banner.innerHTML = html;
+}
+
+let parsedRows = [];
+let validRows  = [];
+
+/* Load SheetJS lazily */
+let XLSX_LIB = null;
+async function loadXLSX() {
+  if (XLSX_LIB) return XLSX_LIB;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  XLSX_LIB = window.XLSX;
+  return XLSX_LIB;
+}
+
+/* Modal open/close */
+function openBulkModal()  { document.getElementById("bulkModal").classList.add("open"); }
+function closeBulkModal() {
+  document.getElementById("bulkModal").classList.remove("open");
+  resetBulkUI();
+}
+
+function resetBulkUI() {
+  parsedRows = []; validRows = [];
+  document.getElementById("dzChosen").textContent         = "";
+  document.getElementById("bulkFile").value               = "";
+  document.getElementById("validationWrap").style.display = "none";
+  document.getElementById("importBtn").disabled           = true;
+  document.getElementById("progressWrap").style.display   = "none";
+  document.getElementById("progressBar").style.width      = "0";
+  const banner = document.getElementById("colWarningBanner");
+  banner.className = "col-warning-banner";
+  banner.innerHTML = "";
+  resetChipStates();
+}
+
+/* CSV template download — includes all defined columns */
+document.getElementById("downloadTemplate").addEventListener("click", e => {
+  e.preventDefault();
+  const header  = COLUMN_DEFS.map(c => c.key).join(",");
+  const example = "John,Doe,Male,2010-05-14,ADM-001,Jane Doe,+256700000000,Ugandan,S1";
+  const blob = new Blob([header + "\n" + example], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "student_upload_template.csv";
+  a.click();
+});
+
+/* Drag-and-drop */
+const dropZone = document.getElementById("dropZone");
+dropZone.addEventListener("dragover",  e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault(); dropZone.classList.remove("drag-over");
+  const f = e.dataTransfer.files[0]; if (f) handleFile(f);
+});
+document.getElementById("bulkFile").addEventListener("change", e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  const name = file.name.toLowerCase();
+  if (!name.endsWith(".csv") && !name.endsWith(".xlsx") && !name.endsWith(".xls")) {
+    showToast("Only CSV, XLSX or XLS files are accepted", "error"); return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast("File exceeds 5 MB limit", "error"); return;
+  }
+  document.getElementById("dzChosen").textContent = `✓ ${file.name}`;
+  if (name.endsWith(".csv")) {
+    const reader = new FileReader();
+    reader.onload = ev => parseAndValidate(ev.target.result);
+    reader.readAsText(file);
+  } else {
+    handleExcelFile(file);
+  }
+}
+
+async function handleExcelFile(file) {
+  try {
+    const XLSX = await loadXLSX();
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const wb = XLSX.read(ev.target.result, { type: "array", cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+        if (rows.length < 2) { showToast("Spreadsheet has no data rows", "error"); return; }
+        const headers = rows[0].map(h => String(h).trim().toLowerCase().replace(/\s+/g, "_"));
+        const csvLines = rows.slice(1).map(cols =>
+          headers.map((_, i) => {
+            let val = cols[i];
+            if (val instanceof Date) val = val.toISOString().slice(0, 10);
+            val = String(val ?? "").trim();
+            return val.includes(",") ? `"${val}"` : val;
+          }).join(",")
+        );
+        parseAndValidate([headers.join(","), ...csvLines].join("\n"));
+      } catch (err) { showToast("Could not read spreadsheet: " + err.message, "error"); }
+    };
+    reader.readAsArrayBuffer(file);
+  } catch (err) { showToast("Failed to load Excel parser: " + err.message, "error"); }
+}
+
+/* ── PARSE & VALIDATE ── */
+function parseAndValidate(csvText) {
+  const lines = csvText.replace(/\r/g, "").split("\n").filter(l => l.trim());
+  if (lines.length < 2) { showToast("CSV has no data rows", "error"); return; }
+
+  const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/\s+/g, "_"));
+  const missingRequired = REQUIRED_COLS.filter(c => !headers.includes(c));
+
+  parsedRows = []; validRows = [];
+  const admissionsSeen = new Set();
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCSVLine(lines[i]);
+    const row  = {};
+    headers.forEach((h, idx) => { row[h] = (cols[idx] || "").trim(); });
+
+    const errors = [];
+
+    // Columns absent from the file
+    missingRequired.forEach(col => errors.push(`Column "${col}" missing from file`));
+
+    // Columns present but empty
+    REQUIRED_COLS.filter(c => headers.includes(c)).forEach(col => {
+      if (!row[col]) errors.push(`${col} is empty`);
+    });
+
+    // Gender value
+    if (row.gender && !["male","female"].includes(row.gender.toLowerCase()))
+      errors.push("gender must be Male or Female");
+    else if (row.gender)
+      row.gender = row.gender.charAt(0).toUpperCase() + row.gender.slice(1).toLowerCase();
+
+    // Date format
+    if (row.date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(row.date_of_birth))
+      errors.push("date_of_birth must be YYYY-MM-DD");
+
+    // Duplicate admission number within the file
+    if (row.admission_number) {
+      if (admissionsSeen.has(row.admission_number.toLowerCase()))
+        errors.push(`admission_number "${row.admission_number}" duplicated in file`);
+      else
+        admissionsSeen.add(row.admission_number.toLowerCase());
+    }
+
+    const rowObj = { ...row, _line: i, _errors: errors };
+    parsedRows.push(rowObj);
+    if (!errors.length) validRows.push(rowObj);
+  }
+
+  updateColFeedback(headers, parsedRows);
+  renderValidationTable();
+}
+
+function splitCSVLine(line) {
+  const result = []; let cur = ""; let inQ = false;
+  for (const ch of line) {
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { result.push(cur); cur = ""; }
+    else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function renderValidationTable() {
+  const wrap = document.getElementById("validationWrap");
+  const body = document.getElementById("valTableBody");
+  const sum  = document.getElementById("valSummary");
+  const errCount  = parsedRows.filter(r => r._errors.length > 0).length;
+  const goodCount = validRows.length;
+
+  sum.innerHTML = `
+    <span class="val-badge ok">✓ ${goodCount} valid</span>
+    ${errCount ? `<span class="val-badge err">✗ ${errCount} invalid</span>` : ""}
+    <span class="val-badge warn">${parsedRows.length} total rows</span>
+  `;
+
+  body.innerHTML = parsedRows.map(r => `
+    <tr class="${r._errors.length ? "row-err" : "row-ok"}">
+      <td>${r._line}</td>
+      <td>${esc(r.first_name)}</td>
+      <td>${esc(r.last_name)}</td>
+      <td>${esc(r.gender)}</td>
+      <td>${esc(r.date_of_birth)}</td>
+      <td>${esc(r.admission_number)}</td>
+      <td>${esc(r.guardian_name)}</td>
+      <td>${esc(r.guardian_contact)}</td>
+      <td>
+        ${r._errors.length
+          ? `<span style="color:var(--error);font-weight:700;">✗</span>
+             <div class="row-errors">${r._errors.join("<br>")}</div>`
+          : `<span style="color:var(--success);font-weight:700;">✓</span>`}
+      </td>
+    </tr>
+  `).join("");
+
+  wrap.style.display = "block";
+  document.getElementById("importBtn").disabled = validRows.length === 0;
+}
+
+function esc(str) {
+  return (str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ── IMPORT ── */
+async function importStudents() {
+  if (!validRows.length) return;
+  const btn     = document.getElementById("importBtn");
+  const spinner = document.getElementById("importSpinner");
+  const pWrap   = document.getElementById("progressWrap");
+  const pBar    = document.getElementById("progressBar");
+
+  btn.disabled = true;
+  spinner.style.display = "inline-block";
+  pWrap.style.display   = "block";
+
+  let success = 0; let failed = 0;
+
+  for (let i = 0; i < validRows.length; i++) {
+    const row = validRows[i];
+    try {
+      const res = await fetch("/api/students/bulk-import-row", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(row)
+      });
+      const data = await res.json();
+      if (res.ok) success++;
+      else { failed++; row._importError = data.message; }
+    } catch (err) {
+      failed++; row._importError = err.message;
+    }
+    pBar.style.width = `${Math.round(((i + 1) / validRows.length) * 100)}%`;
+  }
+
+  spinner.style.display = "none";
+
+  if (failed === 0) {
+    showToast(`${success} student(s) imported successfully!`);
+    setTimeout(closeBulkModal, 1000);
+  } else {
+    showToast(`${success} imported, ${failed} failed (duplicate admission numbers?)`, "error");
+    renderValidationTable();
+    btn.disabled = false;
+  }
+}
+
+</script>
+
+{% endblock %}

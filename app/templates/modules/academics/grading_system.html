@@ -1,0 +1,643 @@
+{% extends "base.html" %}
+{% block title %}Grading System{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Tokens ──────────────────────────────────────────────── */
+  :root {
+    --gs-radius: 12px;
+    --gs-radius-sm: 8px;
+    --gs-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --gs-shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    --gs-transition: 150ms ease;
+  }
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  .gs-wrap        { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+  .gs-header      { display: flex; justify-content: space-between;
+                    align-items: flex-start; gap: 16px; margin-bottom: 28px;
+                    flex-wrap: wrap; }
+  .gs-title       { font-size: 22px; font-weight: 600; letter-spacing: -.3px;
+                    color: var(--color-text-primary, #111); }
+  .gs-subtitle    { font-size: 13px; color: var(--color-text-secondary, #666);
+                    margin-top: 3px; }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn            { display: inline-flex; align-items: center; gap: 6px;
+                    padding: 9px 16px; border: none; border-radius: var(--gs-radius-sm);
+                    font-size: 13px; font-weight: 500; cursor: pointer;
+                    transition: opacity var(--gs-transition), background var(--gs-transition);
+                    white-space: nowrap; }
+  .btn:disabled   { opacity: .5; cursor: not-allowed; }
+  .btn-primary    { background: #2563eb; color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+  .btn-success    { background: #16a34a; color: #fff; }
+  .btn-success:hover:not(:disabled) { background: #15803d; }
+  .btn-ghost      { background: transparent; color: var(--color-text-secondary, #666);
+                    border: 1px solid var(--color-border-tertiary, #e2e8f0); }
+  .btn-ghost:hover { background: var(--color-background-secondary, #f8fafc); }
+  .btn-danger-sm  { background: transparent; color: #dc2626; border: none;
+                    padding: 5px 10px; border-radius: 6px; font-size: 12px;
+                    font-weight: 500; cursor: pointer;
+                    transition: background var(--gs-transition); }
+  .btn-danger-sm:hover { background: #fee2e2; }
+
+  /* ── Card ────────────────────────────────────────────────── */
+  .card           { background: #fff; border: 1px solid #e5e7eb;
+                    border-radius: var(--gs-radius); box-shadow: var(--gs-shadow);
+                    overflow: hidden; margin-bottom: 20px; }
+  @media (prefers-color-scheme: dark) {
+    .card         { background: #1e1e22; border-color: #333; }
+  }
+
+  /* ── Add-form card ───────────────────────────────────────── */
+  .form-card      { padding: 20px 24px 24px; }
+  .form-card-head { font-size: 14px; font-weight: 600;
+                    color: var(--color-text-primary, #111); margin-bottom: 16px; }
+  .form-grid      { display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                    gap: 14px; margin-bottom: 18px; }
+  .field          { display: flex; flex-direction: column; gap: 5px; }
+  .field label    { font-size: 12px; font-weight: 500;
+                    color: var(--color-text-secondary, #555); letter-spacing: .2px; }
+  .field select,
+  .field input    { height: 40px; padding: 0 12px; font-size: 13px;
+                    border: 1px solid #dbeafe; border-radius: var(--gs-radius-sm);
+                    background: #f8fafc; outline: none; width: 100%; box-sizing: border-box;
+                    transition: border-color var(--gs-transition), box-shadow var(--gs-transition);
+                    color: var(--color-text-primary, #111); }
+  .field select:focus,
+  .field input:focus  { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+  .field.error select,
+  .field.error input  { border-color: #dc2626; }
+  .field-err      { font-size: 11px; color: #dc2626; display: none; }
+  .field.error .field-err { display: block; }
+  .form-actions   { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .save-status    { font-size: 13px; }
+  .save-status.ok   { color: #16a34a; }
+  .save-status.err  { color: #dc2626; }
+
+  /* ── Info bar (shows school level context) ───────────────── */
+  .info-bar       { display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+                    background: #eff6ff; border: 1px solid #bfdbfe;
+                    border-radius: var(--gs-radius-sm); margin-bottom: 20px;
+                    font-size: 13px; color: #1e40af; }
+  .info-bar svg   { flex-shrink: 0; }
+
+  /* ── Score range bar ─────────────────────────────────────── */
+  .range-bar-wrap { width: 140px; min-width: 100px; }
+  .range-label    { font-size: 11px; color: var(--color-text-secondary, #888);
+                    margin-bottom: 4px; }
+  .range-bar      { height: 7px; background: #e5e7eb; border-radius: 99px;
+                    overflow: hidden; position: relative; }
+  .range-fill     { height: 100%; border-radius: 99px; position: absolute;
+                    transition: width .3s ease, left .3s ease; }
+
+  /* ── Table ───────────────────────────────────────────────── */
+  .gs-table-wrap  { overflow-x: auto; }
+  table           { width: 100%; border-collapse: collapse; min-width: 520px; }
+  thead tr        { background: #f8fafc; }
+  @media (prefers-color-scheme: dark) {
+    thead tr      { background: #26262c; }
+  }
+  th              { padding: 11px 16px; font-size: 11px; font-weight: 600;
+                    text-transform: uppercase; letter-spacing: .6px;
+                    color: var(--color-text-secondary, #64748b);
+                    text-align: left; border-bottom: 1px solid #e5e7eb; }
+  td              { padding: 13px 16px; font-size: 13px;
+                    border-bottom: 1px solid #f1f5f9;
+                    color: var(--color-text-primary, #111); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td     { background: #fafbfc; }
+  @media (prefers-color-scheme: dark) {
+    td            { border-bottom-color: #2a2a30; }
+    tr:hover td   { background: #25252b; }
+    th            { border-bottom-color: #333; }
+  }
+
+  /* ── Level + grade badges ────────────────────────────────── */
+  .level-badge    { display: inline-block; padding: 3px 10px; border-radius: 99px;
+                    font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .grade-badge    { display: inline-block; padding: 3px 10px; border-radius: 6px;
+                    font-size: 13px; font-weight: 700; }
+
+  .lc-0 { background: #dbeafe; color: #1d4ed8; }
+  .lc-1 { background: #dcfce7; color: #15803d; }
+  .lc-2 { background: #fef3c7; color: #92400e; }
+  .lc-3 { background: #fce7f3; color: #9d174d; }
+  .lc-4 { background: #ede9fe; color: #5b21b6; }
+
+  .gc-d1 { background: #dcfce7; color: #14532d; }
+  .gc-d2 { background: #d1fae5; color: #065f46; }
+  .gc-c3 { background: #dbeafe; color: #1e3a8a; }
+  .gc-c4 { background: #e0f2fe; color: #0c4a6e; }
+  .gc-c5 { background: #f0f9ff; color: #075985; }
+  .gc-c6 { background: #fef9c3; color: #713f12; }
+  .gc-p7 { background: #ffedd5; color: #9a3412; }
+  .gc-p8 { background: #fee2e2; color: #991b1b; }
+  .gc-f9 { background: #fecaca; color: #7f1d1d; }
+
+  /* ── Grade ordering indicator ────────────────────────────── */
+  .grade-order    { font-size: 11px; color: #94a3b8; margin-left: 4px; }
+
+  /* ── Empty / loading states ──────────────────────────────── */
+  .empty-state    { padding: 52px 24px; text-align: center;
+                    color: var(--color-text-secondary, #94a3b8); }
+  .empty-state svg { margin: 0 auto 14px; display: block; opacity: .35; }
+  .empty-state p  { font-size: 14px; margin: 0 0 4px; }
+  .empty-state small { font-size: 12px; opacity: .7; }
+  .loading-row td { text-align: center; color: #94a3b8; font-size: 13px; padding: 36px; }
+  .skeleton       { background: linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: shimmer 1.4s infinite;
+                    border-radius: 4px; display: inline-block; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* ── Stats strip ─────────────────────────────────────────── */
+  .stats-strip    { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat-pill      { display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+                    background: #f8fafc; border: 1px solid #e5e7eb;
+                    border-radius: 99px; font-size: 12px; color: #475569; }
+  .stat-pill b    { color: #111; font-weight: 600; }
+
+  /* ── Tabs ────────────────────────────────────────────────── */
+  .tabs-wrap      { padding-top: 8px; }
+  .tabs           { display: flex; gap: 4px; overflow-x: auto; padding: 0 16px;
+                    margin-bottom: -1px; flex-wrap: nowrap; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab            { padding: 10px 15px; font-size: 13px; font-weight: 500;
+                    border-radius: 8px 8px 0 0; border: 1px solid transparent;
+                    cursor: pointer; white-space: nowrap;
+                    transition: all var(--gs-transition);
+                    color: var(--color-text-secondary, #666); background: none; }
+  .tab.active     { background: #fff; border-color: #e5e7eb; border-bottom-color: #fff;
+                    color: #2563eb; }
+  .tab .tab-count { display: inline-flex; align-items: center; justify-content: center;
+                    width: 18px; height: 18px; border-radius: 99px;
+                    background: #e0e7ff; color: #3730a3;
+                    font-size: 11px; font-weight: 700; margin-left: 5px; }
+  .tab.active .tab-count { background: #dbeafe; color: #1d4ed8; }
+  @media (prefers-color-scheme: dark) {
+    .tab.active   { background: #1e1e22; border-color: #333; border-bottom-color: #1e1e22; }
+  }
+
+  /* ── Conflict warning ────────────────────────────────────── */
+  .conflict-badge { display: inline-flex; align-items: center; gap: 4px;
+                    padding: 2px 8px; border-radius: 99px;
+                    background: #fef3c7; color: #92400e;
+                    font-size: 11px; font-weight: 600; }
+</style>
+
+<div class="gs-wrap">
+
+  <!-- ── Header ── -->
+  <div class="gs-header">
+    <div>
+      <div class="gs-title">Grading System</div>
+      <div class="gs-subtitle">Define score ranges and grade letters per level.</div>
+    </div>
+    <button class="btn btn-primary" onclick="toggleForm()" id="toggleBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      Add Grading Rule
+    </button>
+  </div>
+
+  <!-- ── Info bar ── -->
+  {% if levels %}
+  <div class="info-bar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+    </svg>
+    Grading rules are configured for:
+    {% for l in levels %}
+      <strong>{{ l }}</strong>{% if not loop.last %},{% endif %}
+    {% endfor %}
+    &nbsp;— grades run D1 (best) → F9 (fail).
+  </div>
+  {% endif %}
+
+  <!-- ── Form card ── -->
+  <div class="card" id="formCard" style="display:none;">
+    <div class="form-card">
+      <div class="form-card-head">New grading rule</div>
+      <div class="form-grid">
+
+        <div class="field" id="f-level">
+          <label for="inp-level">Level</label>
+          <select id="inp-level">
+            <option value="">Select level…</option>
+            {% for l in levels %}
+            <option value="{{ l }}">{{ l }}</option>
+            {% endfor %}
+          </select>
+          <span class="field-err" id="err-level">Please select a level.</span>
+        </div>
+
+        <div class="field" id="f-grade">
+          <label for="inp-grade">Grade letter</label>
+          <select id="inp-grade">
+            <option value="">Select grade…</option>
+            <option value="D1">D1 — Distinction 1</option>
+            <option value="D2">D2 — Distinction 2</option>
+            <option value="C3">C3 — Credit 3</option>
+            <option value="C4">C4 — Credit 4</option>
+            <option value="C5">C5 — Credit 5</option>
+            <option value="C6">C6 — Credit 6</option>
+            <option value="P7">P7 — Pass 7</option>
+            <option value="P8">P8 — Pass 8</option>
+            <option value="F9">F9 — Fail 9</option>
+          </select>
+          <span class="field-err" id="err-grade">Please select a grade.</span>
+        </div>
+
+        <div class="field" id="f-min">
+          <label for="inp-min">From — min score (%)</label>
+          <input type="number" id="inp-min" placeholder="e.g. 80" min="0" max="100" step="0.5">
+          <span class="field-err" id="err-min">Enter a valid min score (0–100).</span>
+        </div>
+
+        <div class="field" id="f-max">
+          <label for="inp-max">To — max score (%)</label>
+          <input type="number" id="inp-max" placeholder="e.g. 100" min="0" max="100" step="0.5">
+          <span class="field-err" id="err-max">Max must be greater than min.</span>
+        </div>
+
+        <div class="field" id="f-remark">
+          <label for="inp-remark">Remark <span style="opacity:.5;">(optional)</span></label>
+          <input type="text" id="inp-remark" placeholder="e.g. Excellent">
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-success" id="saveBtn" onclick="saveGrade()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save rule
+        </button>
+        <button class="btn btn-ghost" onclick="toggleForm()">Cancel</button>
+        <span class="save-status" id="saveStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stats strip ── -->
+  <div class="stats-strip" id="statsStrip" style="display:none;">
+    <div class="stat-pill">Total rules: <b id="statTotal">0</b></div>
+    <div class="stat-pill">Levels configured: <b id="statLevels">0</b></div>
+    <div class="stat-pill" id="statCoverageWrap">
+      Coverage gaps: <b id="statGaps">0</b>
+    </div>
+  </div>
+
+  <!-- ── Tabs + Table card ── -->
+  <div class="tabs-wrap" id="tabsWrap" style="display:none;">
+    <div class="tabs" id="tabsRow"></div>
+  </div>
+
+  <div class="card">
+    <div class="gs-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Grade</th>
+            <th>Remark</th>
+            <th>Score range</th>
+            <th>Range bar</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="gradingBody">
+          <tr class="loading-row">
+            <td colspan="6">
+              <span class="skeleton" style="width:200px;height:14px;">&nbsp;</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /gs-wrap -->
+
+<script>
+/* ── state ─────────────────────────────────────────────────── */
+let allRules  = [];
+let activeTab = "all";
+
+/* ── level → color class (cycles) ──────────────────────────── */
+const LEVEL_CLASSES = ["lc-0","lc-1","lc-2","lc-3","lc-4"];
+const levelColorMap = {};
+let   levelColorIdx = 0;
+
+function levelClass(lvl) {
+  if (!levelColorMap[lvl]) {
+    levelColorMap[lvl] = LEVEL_CLASSES[levelColorIdx++ % LEVEL_CLASSES.length];
+  }
+  return levelColorMap[lvl];
+}
+
+/* ── grade → css class ──────────────────────────────────────── */
+function gradeClass(g) {
+  const key = (g || "").trim().toLowerCase();
+  return { d1:"gc-d1", d2:"gc-d2", c3:"gc-c3", c4:"gc-c4",
+           c5:"gc-c5", c6:"gc-c6", p7:"gc-p7", p8:"gc-p8", f9:"gc-f9" }[key] || "gc-f9";
+}
+
+/* ── grade order for sort hint ──────────────────────────────── */
+const GRADE_ORDER = ["D1","D2","C3","C4","C5","C6","P7","P8","F9"];
+function gradeOrderIdx(g) {
+  const i = GRADE_ORDER.indexOf((g||"").toUpperCase());
+  return i === -1 ? 99 : i;
+}
+
+/* ── fill color for range bar ───────────────────────────────── */
+function rangeColor(min_score) {
+  if (min_score >= 75) return "#16a34a";
+  if (min_score >= 55) return "#2563eb";
+  if (min_score >= 40) return "#d97706";
+  if (min_score >= 25) return "#ea580c";
+  return "#dc2626";
+}
+
+/* ── detect overlapping ranges within a level ──────────────── */
+function detectConflicts(rules) {
+  const conflictIds = new Set();
+  const byLevel = {};
+  rules.forEach(r => (byLevel[r.level] = byLevel[r.level] || []).push(r));
+  Object.values(byLevel).forEach(group => {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const a = group[i], b = group[j];
+        if (a.min_score < b.max_score && b.min_score < a.max_score) {
+          conflictIds.add(a.id);
+          conflictIds.add(b.id);
+        }
+      }
+    }
+  });
+  return conflictIds;
+}
+
+/* ── update stats strip ─────────────────────────────────────── */
+function updateStats(rules) {
+  const strip = document.getElementById("statsStrip");
+  if (!rules.length) { strip.style.display = "none"; return; }
+  strip.style.display = "flex";
+  document.getElementById("statTotal").textContent  = rules.length;
+  const levels = new Set(rules.map(r => r.level));
+  document.getElementById("statLevels").textContent = levels.size;
+  const conflicts = detectConflicts(rules);
+  document.getElementById("statGaps").textContent   = conflicts.size;
+  const pill = document.getElementById("statCoverageWrap");
+  pill.style.borderColor = conflicts.size ? "#fcd34d" : "";
+  pill.style.background  = conflicts.size ? "#fffbeb" : "";
+}
+
+/* ── render ─────────────────────────────────────────────────── */
+function renderTable(rules) {
+  const tbody     = document.getElementById("gradingBody");
+  const conflicts = detectConflicts(allRules);
+
+  if (!rules.length) {
+    tbody.innerHTML = `
+      <tr><td colspan="6">
+        <div class="empty-state">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.4">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <line x1="9" y1="12" x2="15" y2="12"/>
+            <line x1="9" y1="16" x2="12" y2="16"/>
+          </svg>
+          <p>No grading rules yet.</p>
+          <small>Click "Add Grading Rule" to get started.</small>
+        </div>
+      </td></tr>`;
+    return;
+  }
+
+  /* Sort: by level name then by grade order */
+  const sorted = [...rules].sort((a, b) =>
+    a.level.localeCompare(b.level) || gradeOrderIdx(a.grade) - gradeOrderIdx(b.grade)
+  );
+
+  tbody.innerHTML = sorted.map(r => {
+    const pctMin = Math.min(100, Math.max(0, r.min_score));
+    const pctMax = Math.min(100, Math.max(0, r.max_score));
+    const fillW  = pctMax - pctMin;
+    const hasConflict = conflicts.has(r.id);
+
+    return `
+      <tr>
+        <td>
+          <span class="level-badge ${levelClass(r.level)}">${esc(r.level)}</span>
+        </td>
+        <td>
+          <span class="grade-badge ${gradeClass(r.grade)}">${esc(r.grade)}</span>
+        </td>
+        <td style="color:#64748b;">
+          ${r.remark ? esc(r.remark) : '<span style="opacity:.35;">—</span>'}
+        </td>
+        <td style="font-variant-numeric:tabular-nums; font-weight:500;">
+          ${r.min_score}% &ndash; ${r.max_score}%
+          ${hasConflict
+            ? `<span class="conflict-badge" title="This range overlaps with another rule in the same level">
+                ⚠ overlap
+               </span>`
+            : ""}
+        </td>
+        <td>
+          <div class="range-bar-wrap">
+            <div class="range-label">${r.min_score} – ${r.max_score}</div>
+            <div class="range-bar" title="${r.min_score}–${r.max_score}">
+              <div class="range-fill"
+                style="left:${pctMin}%;width:${fillW}%;background:${rangeColor(r.min_score)};">
+              </div>
+            </div>
+          </div>
+        </td>
+        <td style="text-align:right;">
+          <button class="btn-danger-sm" onclick="deleteRule(${r.id})"
+                  title="Remove this rule">Remove</button>
+        </td>
+      </tr>`;
+  }).join("");
+}
+
+/* ── tabs ───────────────────────────────────────────────────── */
+function buildTabs(rules) {
+  const levels   = [...new Set(rules.map(r => r.level))].sort();
+  const tabsWrap = document.getElementById("tabsWrap");
+  const tabsRow  = document.getElementById("tabsRow");
+
+  if (levels.length <= 1) { tabsWrap.style.display = "none"; return; }
+
+  tabsWrap.style.display = "block";
+  const countByLevel = {};
+  rules.forEach(r => countByLevel[r.level] = (countByLevel[r.level] || 0) + 1);
+
+  tabsRow.innerHTML = [
+    `<button class="tab ${activeTab==="all"?"active":""}" onclick="setTab('all')">
+       All <span class="tab-count">${rules.length}</span>
+     </button>`,
+    ...levels.map(l =>
+      `<button class="tab ${activeTab===l?"active":""}" onclick="setTab(${JSON.stringify(l)})">
+         ${esc(l)} <span class="tab-count">${countByLevel[l]||0}</span>
+       </button>`)
+  ].join("");
+}
+
+function setTab(level) {
+  activeTab = level;
+  buildTabs(allRules);
+  renderTable(level === "all" ? allRules : allRules.filter(r => r.level === level));
+}
+
+/* ── load ───────────────────────────────────────────────────── */
+async function loadGrades() {
+  try {
+    const res  = await fetch("/api/academics2/grading-system");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to load");
+
+    allRules = data.map(r => ({ ...r, level: r.section_category }));
+
+    updateStats(allRules);
+    buildTabs(allRules);
+    const visible = activeTab === "all"
+      ? allRules
+      : allRules.filter(r => r.level === activeTab);
+    renderTable(visible);
+  } catch (err) {
+    document.getElementById("gradingBody").innerHTML = `
+      <tr><td colspan="6">
+        <div class="empty-state" style="color:#dc2626;">
+          <p>Error loading rules: ${esc(err.message)}</p>
+          <small>Check your connection and try refreshing the page.</small>
+        </div>
+      </td></tr>`;
+  }
+}
+
+/* ── save ───────────────────────────────────────────────────── */
+async function saveGrade() {
+  clearErrors();
+  const level     = document.getElementById("inp-level").value.trim();
+  const grade     = document.getElementById("inp-grade").value.trim();
+  const minRaw    = document.getElementById("inp-min").value;
+  const maxRaw    = document.getElementById("inp-max").value;
+  const remark    = document.getElementById("inp-remark").value.trim();
+  const min_score = parseFloat(minRaw);
+  const max_score = parseFloat(maxRaw);
+
+  let valid = true;
+  if (!level)                          { setError("f-level","err-level"); valid = false; }
+  if (!grade)                          { setError("f-grade","err-grade"); valid = false; }
+  if (isNaN(min_score) || min_score < 0 || min_score > 100) {
+    setError("f-min","err-min"); valid = false;
+  }
+  if (isNaN(max_score) || max_score < 0 || max_score > 100) {
+    document.getElementById("err-max").textContent = "Enter a valid max score (0–100).";
+    setError("f-max","err-max"); valid = false;
+  } else if (valid && max_score <= min_score) {
+    document.getElementById("err-max").textContent = "Max score must be greater than min score.";
+    setError("f-max","err-max"); valid = false;
+  }
+  if (!valid) return;
+
+  const btn    = document.getElementById("saveBtn");
+  const status = document.getElementById("saveStatus");
+  btn.disabled = true;
+  status.textContent = "Saving…";
+  status.className   = "save-status";
+
+  try {
+    const res = await fetch("/api/academics2/grading-system/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ section_category: level, grade, min_score, max_score, remark }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      status.textContent = data.message || "Failed to save.";
+      status.className   = "save-status err";
+    } else {
+      status.textContent = "✓ " + (data.message || "Saved!");
+      status.className   = "save-status ok";
+      resetForm();
+      await loadGrades();
+      setTimeout(() => { status.textContent = ""; }, 3000);
+    }
+  } catch (err) {
+    status.textContent = "Network error: " + err.message;
+    status.className   = "save-status err";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ── delete ─────────────────────────────────────────────────── */
+async function deleteRule(id) {
+  if (!confirm("Remove this grading rule? This action cannot be undone.")) return;
+  try {
+    const res  = await fetch(`/api/academics2/grading-system/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) { alert(data.message || "Delete failed."); return; }
+    await loadGrades();
+  } catch (err) {
+    alert("Network error: " + err.message);
+  }
+}
+
+/* ── toggle form ────────────────────────────────────────────── */
+function toggleForm() {
+  const card = document.getElementById("formCard");
+  const open = card.style.display !== "none";
+  card.style.display = open ? "none" : "block";
+  document.getElementById("toggleBtn").innerHTML = open
+    ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Add Grading Rule`
+    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg> Close`;
+  if (open) { clearErrors(); resetForm(); }
+}
+
+/* ── helpers ────────────────────────────────────────────────── */
+function setError(fieldId, errId) {
+  document.getElementById(fieldId).classList.add("error");
+  document.getElementById(errId).style.display = "block";
+}
+function clearErrors() {
+  document.querySelectorAll(".field.error").forEach(f => f.classList.remove("error"));
+  document.querySelectorAll(".field-err").forEach(e => e.style.display = "none");
+  const s = document.getElementById("saveStatus");
+  s.textContent = ""; s.className = "save-status";
+}
+function resetForm() {
+  ["inp-level","inp-grade"].forEach(id => {
+    document.getElementById(id).selectedIndex = 0;
+  });
+  ["inp-min","inp-max","inp-remark"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+function esc(s) {
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ── init ───────────────────────────────────────────────────── */
+loadGrades();
+</script>
+{% endblock %}

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1O1 School Management System — Login</title>
+
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 60%, #1e5fa8 100%);
+    }
+
+    /* ── Brand header ─────────────────────────────────────────── */
+    .brand {
+      text-align: center;
+      margin-bottom: 28px;
+      color: #fff;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #2d6cdf, #1e9af3);
+      margin-bottom: 12px;
+      box-shadow: 0 4px 18px rgba(29,106,223,.45);
+    }
+
+    .brand-logo svg {
+      width: 36px;
+      height: 36px;
+      fill: #fff;
+    }
+
+    .brand-name {
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      color: #fff;
+    }
+
+    .brand-name span {
+      color: #4fa3f7;
+    }
+
+    .brand-tagline {
+      font-size: .82rem;
+      color: #a0b8d8;
+      margin-top: 4px;
+      letter-spacing: .3px;
+    }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .card {
+      width: 420px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      overflow: hidden;
+    }
+
+    /* ── Tabs ─────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: .93rem;
+      background: #eef2f9;
+      color: #5a6a85;
+      border-bottom: 3px solid transparent;
+      transition: background .2s, color .2s, border-color .2s;
+      user-select: none;
+    }
+
+    .tab:hover { background: #dde7f5; color: #2d6cdf; }
+
+    .tab.active {
+      background: #fff;
+      color: #2d6cdf;
+      border-bottom-color: #2d6cdf;
+    }
+
+    /* ── Form panels ──────────────────────────────────────────── */
+    .panel {
+      display: none;
+      padding: 32px 36px 28px;
+    }
+
+    .panel.active { display: block; }
+
+    .panel h3 {
+      font-size: 1.15rem;
+      color: #1a2740;
+      margin-bottom: 22px;
+      font-weight: 700;
+    }
+
+    /* ── Inputs ───────────────────────────────────────────────── */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      color: #5a6a85;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #d0d9ea;
+      border-radius: 9px;
+      font-size: .95rem;
+      color: #1a2740;
+      background: #f7f9fc;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: #2d6cdf;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(45,108,223,.12);
+    }
+
+    /* ── Button ───────────────────────────────────────────────── */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(90deg, #2d6cdf, #1e9af3);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .2s, transform .1s;
+      letter-spacing: .3px;
+    }
+
+    .btn:hover  { opacity: .92; }
+    .btn:active { transform: scale(.98); }
+
+    .btn:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    /* ── Messages ─────────────────────────────────────────────── */
+    .msg {
+      min-height: 22px;
+      font-size: .86rem;
+      margin-bottom: 10px;
+      border-radius: 7px;
+      padding: 0;
+      transition: all .2s;
+    }
+
+    .msg.error {
+      color: #c0392b;
+      background: #fdf0ee;
+      padding: 9px 12px;
+      border-left: 3px solid #e74c3c;
+    }
+
+    .msg.success {
+      color: #1e7e34;
+      background: #edfbf1;
+      padding: 9px 12px;
+      border-left: 3px solid #28a745;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .footer {
+      margin-top: 22px;
+      text-align: center;
+      font-size: .78rem;
+      color: #7090b8;
+    }
+
+    .footer a {
+      color: #4fa3f7;
+      text-decoration: none;
+    }
+
+    /* ── Spinner inside button ────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Brand ─────────────────────────────────────────────── -->
+  <div class="brand">
+    <div class="brand-logo">
+      <!-- simple graduation-cap icon -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
+      </svg>
+    </div>
+    <div class="brand-name"><span>1O1</span> School Management System</div>
+    <div class="brand-tagline">Powered by 1O1 Technologies</div>
+  </div>
+
+  <!-- ── Login card ─────────────────────────────────────────── -->
+  <div class="card">
+
+    <div class="tabs">
+      <div class="tab active" id="tab-staff"   onclick="switchTab('staff')">Staff</div>
+      <div class="tab"        id="tab-student" onclick="switchTab('student')">Student</div>
+    </div>
+
+    <!-- STAFF PANEL -->
+    <div class="panel active" id="panel-staff">
+      <h3>Staff Login</h3>
+
+      <div class="msg" id="staff_msg"></div>
+
+      <div class="field">
+        <label>School ID</label>
+        <input id="staff_school" type="text" placeholder="Enter your school ID" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Username</label>
+        <input id="staff_username" type="text" placeholder="Enter your username" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="staff_password" type="password" placeholder="Enter your password" autocomplete="current-password" />
+      </div>
+
+      <button class="btn" id="staff_btn" onclick="loginStaff()">Login</button>
+    </div>
+
+    <!-- STUDENT PANEL -->
+    <div class="panel" id="panel-student">
+      <h3>Student Login</h3>
+
+      <div class="msg" id="student_msg"></div>
+
+      <div class="field">
+        <label>School ID</label>
+        <input id="student_school" type="text" placeholder="Enter your school ID" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Student Code</label>
+        <input id="student_code" type="text" placeholder="Enter your student code" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="student_password" type="password" placeholder="Enter your password" autocomplete="current-password" />
+      </div>
+
+      <button class="btn" id="student_btn" onclick="loginStudent()">Login</button>
+    </div>
+
+  </div>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <div class="footer">
+    &copy; 2026 <a href="#">1O1 Technologies</a>. All rights reserved.
+  </div>
+
+<script>
+  /* ── Tab switching ──────────────────────────────────────── */
+  function switchTab(tab) {
+    ['staff', 'student'].forEach(t => {
+      document.getElementById('tab-'   + t).classList.toggle('active', t === tab);
+      document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+    });
+  }
+
+  /* ── Message helper ─────────────────────────────────────── */
+  function showMessage(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent  = msg;
+    el.className    = 'msg ' + type;
+  }
+
+  function clearMessage(id) {
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.className   = 'msg';
+  }
+
+  /* ── Button loading state ───────────────────────────────── */
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn.disabled   = true;
+      btn.innerHTML  = '<span class="spinner"></span>Signing in…';
+    } else {
+      btn.disabled   = false;
+      btn.textContent = 'Login';
+    }
+  }
+
+  /* ── Staff login ────────────────────────────────────────── */
+  async function loginStaff() {
+    clearMessage('staff_msg');
+
+    const school   = document.getElementById('staff_school').value.trim();
+    const username = document.getElementById('staff_username').value.trim();
+    const password = document.getElementById('staff_password').value;
+
+    if (!school || !username || !password) {
+      showMessage('staff_msg', 'All fields are required.', 'error');
+      return;
+    }
+
+    setLoading('staff_btn', true);
+
+    try {
+      const res = await fetch('/auth/staff/login', {
+        method:      'POST',
+        headers:     { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body:        JSON.stringify({ school_id: school, username, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMessage('staff_msg', data.message || 'Login failed.', 'error');
+        return;
+      }
+
+      showMessage('staff_msg', 'Login successful — redirecting…', 'success');
+      setTimeout(() => { window.location.href = data.redirect; }, 600);
+
+    } catch (err) {
+      showMessage('staff_msg', 'Network error. Please try again.', 'error');
+    } finally {
+      setLoading('staff_btn', false);
+    }
+  }
+
+  /* ── Student login ──────────────────────────────────────── */
+  async function loginStudent() {
+    clearMessage('student_msg');
+
+    const school      = document.getElementById('student_school').value.trim();
+    const studentCode = document.getElementById('student_code').value.trim();
+    const password    = document.getElementById('student_password').value;
+
+    if (!school || !studentCode || !password) {
+      showMessage('student_msg', 'All fields are required.', 'error');
+      return;
+    }
+
+    setLoading('student_btn', true);
+
+    try {
+      const res = await fetch('/auth/student/login', {
+        method:      'POST',
+        headers:     { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body:        JSON.stringify({
+          school_id:    school,
+          student_code: studentCode,   // ← matches the backend field name
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMessage('student_msg', data.message || 'Login failed.', 'error');
+        return;
+      }
+
+      showMessage('student_msg', 'Login successful — redirecting…', 'success');
+      setTimeout(() => { window.location.href = data.redirect || '/protected'; }, 600);
+
+    } catch (err) {
+      showMessage('student_msg', 'Network error. Please try again.', 'error');
+    } finally {
+      setLoading('student_btn', false);
+    }
+  }
+
+  /* ── Enter-key support ──────────────────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('panel-staff').classList.contains('active')) {
+      loginStaff();
+    } else {
+      loginStudent();
+    }
+  });
+</script>
+
+</body>
+</html>

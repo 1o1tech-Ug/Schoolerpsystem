@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}1O1 School ERP{% endblock %}</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --navy:#0f172a;
+    --gold:#d4a017;
+    --bg:#f5f7fb;
+    --white:#ffffff;
+    --border:#e2e8f0;
+    --shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+}
+
+/* ================= SIDEBAR ================= */
+
+.sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    width:260px;
+    background:var(--navy);
+    color:white;
+    padding:20px;
+    transition:0.3s ease;
+    overflow-y:auto;
+}
+
+.sidebar.collapsed{
+    transform:translateX(-100%);
+}
+
+.logo{
+    font-size:22px;
+    font-weight:800;
+    color:var(--gold);
+    margin-bottom:20px;
+}
+
+/* CLOSE BUTTON */
+.close-btn{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:10px;
+}
+
+.close-btn button{
+    background:none;
+    border:none;
+    color:white;
+    font-size:20px;
+    cursor:pointer;
+}
+
+/* NAV */
+.nav-title{
+    font-size:11px;
+    opacity:0.6;
+    margin:18px 0 10px;
+}
+
+.nav-item a{
+    display:block;
+    padding:12px;
+    border-radius:10px;
+    text-decoration:none;
+    color:white;
+    transition:0.2s;
+    font-weight:500;
+}
+
+.nav-item a:hover{
+    background:rgba(255,255,255,0.08);
+}
+
+.logout a{
+    color:#fca5a5;
+}
+
+/* DROPDOWN */
+.dropdown-header{
+    padding:12px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    background:rgba(255,255,255,0.05);
+    transition:0.2s;
+}
+
+.dropdown-header:hover{
+    background:rgba(255,255,255,0.1);
+}
+
+.dropdown-menu{
+    display:none;
+    flex-direction:column;
+    margin-left:10px;
+    margin-top:6px;
+}
+
+.dropdown-menu a{
+    display:block;
+    padding:10px;
+    margin:4px 0;
+    border-radius:8px;
+    text-decoration:none;
+    color:white;
+    font-size:14px;
+    background:rgba(255,255,255,0.04);
+}
+
+.dropdown-menu a:hover{
+    background:rgba(255,255,255,0.12);
+}
+
+.dropdown.open .dropdown-menu{
+    display:flex;
+}
+
+/* ================= MAIN ================= */
+
+.main{
+    margin-left:260px;
+    padding:20px;
+    transition:0.3s ease;
+}
+
+.main.full{
+    margin-left:0;
+}
+
+/* TOP BAR */
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.menu-btn{
+    background:var(--navy);
+    color:white;
+    border:none;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+/* CONTENT */
+.content{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    box-shadow:var(--shadow);
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+    .main{
+        margin-left:0;
+    }
+
+    .sidebar{
+        transform:translateX(-100%);
+    }
+
+    .sidebar.open{
+        transform:translateX(0);
+    }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+
+    <!-- CLOSE -->
+    <div class="close-btn">
+        <button onclick="toggleSidebar()">✕</button>
+    </div>
+
+    <div class="logo"> 1O1 School ERP</div>
+
+    <div class="nav-title">MAIN</div>
+
+    <div class="nav-item">
+        <a href="{{ url_for('admin.dashboard_page') }}">Dashboard</a>
+        
+    </div>
+
+    <div class="nav-title">ACADEMIC</div>
+
+    <div class="nav-item">
+        <a href="{{ url_for('admin.terms_page') }}">Terms</a>
+        
+    </div>
+
+    <div class="nav-item">
+        
+        <a href="{{ url_for('admin.fee_structures_page') }}">fees structure</a>
+        
+    </div>
+
+    <!-- USERS & ROLES -->
+    <div class="nav-title">MANAGEMENT</div>
+
+    <div class="dropdown" id="dropdown">
+
+        <div class="dropdown-header" onclick="toggleDropdown()">
+            Users & Roles ▾
+        </div>
+
+        <div class="dropdown-menu">
+
+            <a href="{{ url_for('admin.add_staff_page') }}">add staff</a>
+        
+            <a href="{{ url_for('admin.staff_profiles_page') }}">staff profiles</a>
+        
+            <a href="{{ url_for('admin.roles_permissions_page') }}">roles & permissions</a>
+        
+        </div>
+
+    </div>
+
+    <div class="nav-title">SYSTEM</div>
+
+    <div class="nav-item">
+        <a href="{{ url_for('admin.system_settings_page') }}">system settings</a>
+        
+    </div>
+
+    <div class="nav-item">
+      <a href="{{ url_for('admin.data_control_page') }}">Data Control</a>
+    </div>
+
+    <div class="nav-title">ACCOUNT</div>
+
+    <div class="nav-item logout">
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
+    </div>
+
+</aside>
+
+<!-- MAIN -->
+<div class="main" id="main">
+
+    <div class="topbar">
+
+        <button class="menu-btn" onclick="toggleSidebar()">☰ Menu</button>
+
+        <h3>{% block page_title %}Dashboard{% endblock %}</h3>
+
+    </div>
+
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+</div>
+
+<script>
+
+function toggleSidebar(){
+
+    const sidebar = document.getElementById("sidebar");
+    const main = document.getElementById("main");
+
+    if(window.innerWidth <= 768){
+        sidebar.classList.toggle("open");
+    }else{
+        sidebar.classList.toggle("collapsed");
+        main.classList.toggle("full");
+    }
+}
+
+/* DROPDOWN */
+function toggleDropdown(){
+    document.getElementById("dropdown").classList.toggle("open");
+}
+
+</script>
+
+</body>
+</html>
