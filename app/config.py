@@ -26,7 +26,7 @@ class Config:
 
     # CORS — Render domain pattern + local dev
     CORS_ORIGINS = [
-        "https://1o1tech.onrender.com",   # your exact Render domain
+        "https://oneo1schoolerpsystem.onrender.com",   #  Render domain
         "http://localhost:5000",           # Flask dev server
         "http://127.0.0.1:5000",
     ]
