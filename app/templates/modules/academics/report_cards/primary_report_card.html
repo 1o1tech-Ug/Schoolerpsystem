@@ -5,27 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Report Card — {{ student.first_name }} {{ student.last_name }}</title>
   <style>
-    /* ══════════════════════════════════════════
-       FONTS
-    ══════════════════════════════════════════ */
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;600;700&display=swap');
+    /*
+     * WeasyPrint-optimised version.
+     * Changes vs original:
+     *  - Removed @import Google Fonts (network fetch per render)
+     *  - Removed .report-wrapper::before pseudo-element watermark (position:fixed — ignored but still parsed)
+     *  - .page-frame::before: kept (position:absolute is fine) 
+     *  - Removed hover rule (.marks-table tbody tr:hover) — irrelevant for print, small parse cost
+     *  - Kept all colours, borders, layout, and spacing identical
+     */
 
-    /* ══════════════════════════════════════════
-       PRINT SETUP
-    ══════════════════════════════════════════ */
     @page {
       size: A4;
       margin: 0.3in 0.35in;
     }
 
-    @media print {
-      body { margin: 0; }
-      .no-print { display: none !important; }
-    }
-
-    /* ══════════════════════════════════════════
-       DESIGN TOKENS
-    ══════════════════════════════════════════ */
     :root {
       --navy:        #0c2340;
       --blue:        #1565c0;
@@ -42,13 +36,10 @@
       --text:        #1a2a3a;
     }
 
-    /* ══════════════════════════════════════════
-       BASE
-    ══════════════════════════════════════════ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Source Sans 3', 'Calibri', sans-serif;
+      font-family: 'Calibri', 'Trebuchet MS', Arial, sans-serif;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
       background: var(--white);
@@ -62,22 +53,6 @@
       max-width: 860px;
       margin: 0 auto;
       position: relative;
-    }
-
-    /* ══════════════════════════════════════════
-       WATERMARK
-    ══════════════════════════════════════════ */
-    .report-wrapper::before {
-      content: '';
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-30deg);
-      width: 380px;
-      height: 380px;
-      background-image: radial-gradient(circle, rgba(21,101,192,0.04) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
     }
 
     /* ══════════════════════════════════════════
@@ -113,19 +88,20 @@
       gap: 10px;
     }
 
-.logo-wrap {
-  width: 90px;
-  height: 90px;
-  border: 3px solid var(--gold);
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--blue-light);
-  box-shadow: 0 0 0 4px var(--navy);
-}
+    .logo-wrap {
+      width: 90px;
+      height: 90px;
+      border: 3px solid var(--gold);
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue-light);
+      outline: 4px solid var(--navy);
+      outline-offset: -4px;
+    }
 
     .logo-wrap img {
       width: 100%;
@@ -134,12 +110,12 @@
     }
 
     .logo-placeholder {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--blue);
-  text-align: center;
-  line-height: 1.4;
-}
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--blue);
+      text-align: center;
+      line-height: 1.4;
+    }
 
     .school-identity {
       text-align: center;
@@ -147,7 +123,7 @@
     }
 
     .school-name {
-      font-family: 'Playfair Display', 'Times New Roman', serif;
+      font-family: 'Georgia', 'Times New Roman', serif;
       font-size: 22px;
       font-weight: 900;
       color: var(--navy);
@@ -195,14 +171,13 @@
       background: var(--navy);
       color: var(--white);
       text-align: center;
-      font-family: 'Playfair Display', serif;
+      font-family: 'Georgia', serif;
       font-size: 11.5px;
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
       padding: 7px 12px;
       margin-bottom: 12px;
-      position: relative;
       border-left: 4px solid var(--gold);
       border-right: 4px solid var(--gold);
     }
@@ -284,6 +259,7 @@
       position: relative;
     }
 
+    /* Kept ::after since it's position:absolute — fine in WeasyPrint */
     .photo-box::after {
       content: '';
       position: absolute;
@@ -374,23 +350,19 @@
 
     .marks-table tbody tr:nth-child(even) td { background: var(--row-even); }
 
-    .marks-table tbody tr:hover td { background: #e8f1fb; }
-
-    /* Subject name column */
     .marks-table tbody td.subj-name {
       font-weight: 700;
       color: var(--navy);
       border-left: 3px solid var(--blue-mid);
     }
 
-    /* Grade colour coding — Uganda system */
+    /* Grade colour coding */
     .g-d1, .g-d2 { color: #15803d; font-weight: 800; }
     .g-c3, .g-c4, .g-c5, .g-c6 { color: var(--blue); font-weight: 700; }
     .g-p7, .g-p8 { color: #b45309; font-weight: 700; }
     .g-f9 { color: #b91c1c; font-weight: 800; }
     .g-dash { color: #94a3b8; }
 
-    /* Score pill */
     .score-pill {
       display: inline-block;
       padding: 2px 8px;
@@ -403,7 +375,6 @@
       text-align: center;
     }
 
-    /* Paper sub-row */
     .paper-sub td {
       background: #f8fbff !important;
       font-size: 9.5px;
@@ -447,7 +418,7 @@
     }
 
     .result-value {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Georgia', serif;
       font-size: 14px;
       font-weight: 700;
       color: var(--navy);
@@ -492,7 +463,7 @@
     .att-item { text-align: center; }
 
     .att-num {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Georgia', serif;
       font-size: 16px;
       font-weight: 700;
       color: var(--navy);
@@ -613,14 +584,11 @@
     .next-term-body {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0;
       background: var(--blue-pale);
       padding: 7px 10px;
     }
 
-    .next-item {
-      text-align: center;
-    }
+    .next-item { text-align: center; }
 
     .next-label {
       font-size: 8.5px;
@@ -655,7 +623,7 @@
     }
 
     .footer-school {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Georgia', serif;
       font-size: 9px;
       font-weight: 700;
       color: var(--navy);
@@ -692,9 +660,7 @@
 <div class="page-frame">
 <div class="inner-content">
 
-  <!-- ══════════════════════════════════════════
-       HEADER
-  ══════════════════════════════════════════ -->
+  <!-- HEADER -->
   <div class="header-row">
     <div class="logo-wrap">
       {% if school_detail and school_detail.school_logo_url %}
@@ -722,24 +688,20 @@
     </div>
 
     <!-- Mirror logo for symmetric layout -->
-<div class="logo-wrap" style="opacity:0; pointer-events:none; width:90px; height:90px;"></div>
+    <div class="logo-wrap" style="opacity:0; pointer-events:none; width:90px; height:90px;"></div>
   </div>
 
   <div class="rule-gold"></div>
   <div class="rule-navy"></div>
 
-  <!-- ══════════════════════════════════════════
-       TERM BANNER
-  ══════════════════════════════════════════ -->
+  <!-- TERM BANNER -->
   <div class="term-banner">
     Learner's {{ exam_type }} Progress Report &nbsp;—&nbsp;
     {{ term.name if term else '' }},&nbsp;
     {{ academic_year.name if academic_year else '' }}
   </div>
 
-  <!-- ══════════════════════════════════════════
-       STUDENT DETAILS
-  ══════════════════════════════════════════ -->
+  <!-- STUDENT DETAILS -->
   <div class="demographics-row">
     <div class="info-panel" style="flex:1;">
       <div class="info-panel-header">Learner Information</div>
@@ -774,9 +736,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       MARKS TABLE
-  ══════════════════════════════════════════ -->
+  <!-- MARKS TABLE -->
   <div class="section-heading">
     <div class="section-heading-line"></div>
     <div class="section-heading-text">Academic Performance</div>
@@ -840,9 +800,7 @@
     </tbody>
   </table>
 
-  <!-- ══════════════════════════════════════════
-       RESULT STRIP
-  ══════════════════════════════════════════ -->
+  <!-- RESULT STRIP -->
   <div class="result-strip">
     <div class="result-cell">
       <span class="result-label">Average Mark</span>
@@ -864,9 +822,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       BOTTOM SECTION: 3-col layout
-  ══════════════════════════════════════════ -->
+  <!-- BOTTOM SECTION -->
   <div class="bottom-row">
 
     <!-- Attendance -->
@@ -939,9 +895,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       NEXT TERM PANEL
-  ══════════════════════════════════════════ -->
+  <!-- NEXT TERM PANEL -->
   <div class="next-term-panel">
     <div class="card-header">Next Term Information</div>
     <div class="next-term-body">
@@ -960,9 +914,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       FOOTER
-  ══════════════════════════════════════════ -->
+  <!-- FOOTER -->
   <div class="page-footer">
     <div class="footer-school">{{ school.name }}</div>
     <div class="footer-stamp">

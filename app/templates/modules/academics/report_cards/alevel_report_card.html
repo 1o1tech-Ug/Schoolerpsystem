@@ -5,10 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Report Card — {{ student.first_name }} {{ student.last_name }}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;600;700&display=swap');
+    /*
+     * WeasyPrint-optimised version.
+     * Changes vs original:
+     *  - Removed @import Google Fonts
+     *  - Removed all page-break-inside/break-inside rules in @media print block
+     *    (WeasyPrint uses its own pagination; these rules add re-layout passes)
+     *  - Removed .marks-table tbody tr:hover (irrelevant for print)
+     *  - Replaced box-shadow on logo-wrap with a border equivalent
+     *  - Kept all colours, spacing, and layout identical
+     */
 
     @page { size: A4 landscape; margin: 0.3in 0.35in; }
-    @media print { body { margin: 0; } .no-print { display: none !important; } }
 
     :root {
       --navy:        #0c2340;
@@ -29,7 +37,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Source Sans 3', 'Calibri', sans-serif;
+      font-family: 'Calibri', 'Trebuchet MS', Arial, sans-serif;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
       background: var(--white);
@@ -57,13 +65,16 @@
       width: 110px; height: 110px; border: 3px solid var(--gold);
       border-radius: 50%; overflow: hidden; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      background: var(--blue-light); box-shadow: 0 0 0 4px var(--navy);
+      background: var(--blue-light);
+      /* replaced box-shadow with outline */
+      outline: 4px solid var(--navy);
+      outline-offset: -4px;
     }
     .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
     .logo-placeholder { font-size: 13px; font-weight: 800; color: var(--blue); text-align: center; }
     .school-identity { text-align: center; flex: 1; }
     .school-name {
-      font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900;
+      font-family: 'Georgia', serif; font-size: 24px; font-weight: 900;
       color: var(--navy); text-transform: uppercase; letter-spacing: 1.5px;
     }
     .school-tagline { font-size: 12px; font-style: italic; color: var(--gold); margin-top: 2px; font-weight: 700; }
@@ -83,7 +94,7 @@
     /* TERM BANNER */
     .term-banner {
       background: var(--navy); color: var(--white); text-align: center;
-      font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 900;
+      font-family: 'Georgia', serif; font-size: 14px; font-weight: 900;
       letter-spacing: 2px; text-transform: uppercase; padding: 7px 12px;
       margin-bottom: 8px;
       border-left: 4px solid var(--gold); border-right: 4px solid var(--gold);
@@ -186,7 +197,7 @@
     .result-cell { padding: 6px; text-align: center; background: var(--gold-light); border-right: 1px solid var(--navy); }
     .result-cell:last-child { border-right: none; }
     .result-label { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; color: var(--slate-light); text-transform: uppercase; display: block; margin-bottom: 1px; }
-    .result-value { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 900; color: var(--navy); }
+    .result-value { font-family: 'Georgia', serif; font-size: 15px; font-weight: 900; color: var(--navy); }
 
     /* POINTS NOTE */
     .points-note {
@@ -207,7 +218,7 @@
 
     .att-body { display: flex; justify-content: space-around; padding: 6px; background: var(--blue-pale); }
     .att-item { text-align: center; }
-    .att-num { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 900; color: var(--navy); display: block; }
+    .att-num { font-family: 'Georgia', serif; font-size: 17px; font-weight: 900; color: var(--navy); display: block; }
     .att-lbl { font-size: 10px; color: var(--slate-light); font-weight: 800; text-transform: uppercase; }
 
     .legend-body { padding: 5px 8px; background: var(--blue-pale); display: grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; }
@@ -236,21 +247,12 @@
     .next-value { font-size: 12px; font-weight: 800; color: var(--navy); border-bottom: 1.5px solid var(--gold); min-height: 16px; display: block; }
 
     .page-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 5px; border-top: 1px solid var(--border); margin-top: 3px; }
-    .footer-school { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 900; color: var(--navy); }
+    .footer-school { font-family: 'Georgia', serif; font-size: 11px; font-weight: 900; color: var(--navy); }
     .footer-stamp { font-size: 10px; color: var(--slate-light); font-weight: 700; text-align: center; }
     .footer-seal {
       width: 40px; height: 40px; border: 2px solid var(--gold); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 8px; font-weight: 800; color: var(--gold); text-align: center; line-height: 1.3;
-    }
-
-    .bottom-block {
-      break-before: avoid;
-      page-break-before: avoid;
-    }
-    .card-wrap, .remarks-card, .result-strip, .next-term-panel, .page-footer {
-      break-inside: avoid;
-      page-break-inside: avoid;
     }
   </style>
 </head>
@@ -444,133 +446,129 @@
     </tbody>
   </table>
 
-  <div class="bottom-block">
-
-    <!-- RESULT STRIP -->
-    <div class="result-strip">
-      <div class="result-cell">
-        <span class="result-label">Average (100%)</span>
-        <span class="result-value">{{ average_mark if average_mark is not none else '—' }}</span>
-      </div>
-      <div class="result-cell">
-        <span class="result-label"></span>
-        <span class="result-value">-</span>
-      </div>
-      <div class="result-cell">
-        <span class="result-label">Total Points</span>
-        <span class="result-value">{{ aggregates if aggregates is not none else '—' }}</span>
-        {% if subsidiary_points is defined and subsidiary_points is not none and subsidiary_points > 0 %}
-          <span style="font-size:9px;color:var(--slate-light);display:block;font-weight:700;">(incl. {{ subsidiary_points }} sub.)</span>
-        {% endif %}
-      </div>
-      <div class="result-cell">
-        <span class="result-label">Subsidiary Pts</span>
-        <span class="result-value" style="font-size:13px;">
-          {{ subsidiary_points if subsidiary_points is defined and subsidiary_points is not none else '—' }}
-        </span>
-      </div>
-      <div class="result-cell">
-        <span class="result-label">Conduct</span>
-        <span class="result-value">&nbsp;</span>
-      </div>
+  <!-- RESULT STRIP -->
+  <div class="result-strip">
+    <div class="result-cell">
+      <span class="result-label">Average (100%)</span>
+      <span class="result-value">{{ average_mark if average_mark is not none else '—' }}</span>
     </div>
-
-    <!-- A-LEVEL POINTS NOTE -->
-    <div class="points-note">
-      <span><strong>Points:</strong> A=6 &nbsp; B=5 &nbsp; C=4 &nbsp; D=3 &nbsp; E=2 &nbsp; F=0</span>
-      <span><strong>Subsidiary (GP, ICT, Sub-Math):</strong> Pass=1pt &nbsp; Fail=0pts</span>
-      <span><strong>Total = best 3 principal pts + all subsidiary pts.</strong></span>
+    <div class="result-cell">
+      <span class="result-label"></span>
+      <span class="result-value">-</span>
     </div>
-
-    <!-- ATTENDANCE + GRADING KEY + COMMENTS -->
-    <div class="bottom-row">
-
-      <div class="card-wrap">
-        <div class="card-header">Attendance</div>
-        <div class="att-body">
-          <div class="att-item">
-            <span class="att-num">{{ attendance.total or '—' }}</span>
-            <span class="att-lbl">Total</span>
-          </div>
-          <div class="att-item">
-            <span class="att-num">{{ attendance.present or '—' }}</span>
-            <span class="att-lbl">Present</span>
-          </div>
-          <div class="att-item">
-            <span class="att-num">{{ attendance.absent or '—' }}</span>
-            <span class="att-lbl">Absent</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card-wrap">
-        <div class="card-header">Grading Key (A-Level)</div>
-        <div class="legend-body">
-          {% for item in grade_legend %}
-          <div class="legend-item">
-            <span class="legend-grade">{{ item.grade }}</span>
-            <span class="legend-range">{{ item.min }}–{{ item.max }}</span>
-            {% if item.remark %}<span style="color:var(--slate-light);font-style:italic;">({{ item.remark }})</span>{% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="remarks-card">
-        <div class="card-header">Comments &amp; Signatures</div>
-        <div class="remark-row">
-          <div class="remark-who">Class<br>Teacher
-            <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
-          </div>
-          <div class="remark-lines">
-            <div class="remark-line"></div>
-            <div class="remark-line"></div>
-            <div class="remark-line"></div>
-          </div>
-        </div>
-        <div class="remark-row">
-          <div class="remark-who">Head<br>Teacher
-            <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
-          </div>
-          <div class="remark-lines">
-            <div class="remark-line"></div>
-            <div class="remark-line"></div>
-            <div class="remark-line"></div>
-          </div>
-        </div>
-      </div>
-
+    <div class="result-cell">
+      <span class="result-label">Total Points</span>
+      <span class="result-value">{{ aggregates if aggregates is not none else '—' }}</span>
+      {% if subsidiary_points is defined and subsidiary_points is not none and subsidiary_points > 0 %}
+        <span style="font-size:9px;color:var(--slate-light);display:block;font-weight:700;">(incl. {{ subsidiary_points }} sub.)</span>
+      {% endif %}
     </div>
+    <div class="result-cell">
+      <span class="result-label">Subsidiary Pts</span>
+      <span class="result-value" style="font-size:13px;">
+        {{ subsidiary_points if subsidiary_points is defined and subsidiary_points is not none else '—' }}
+      </span>
+    </div>
+    <div class="result-cell">
+      <span class="result-label">Conduct</span>
+      <span class="result-value">&nbsp;</span>
+    </div>
+  </div>
 
-    <!-- NEXT TERM PANEL -->
-    <div class="next-term-panel">
-      <div class="card-header">Next Term Information</div>
-      <div class="next-term-body">
-        <div class="next-item">
-          <span class="next-label">Reopening Date</span>
-          <span class="next-value">&nbsp;</span>
+  <!-- A-LEVEL POINTS NOTE -->
+  <div class="points-note">
+    <span><strong>Points:</strong> A=6 &nbsp; B=5 &nbsp; C=4 &nbsp; D=3 &nbsp; E=2 &nbsp; F=0</span>
+    <span><strong>Subsidiary (GP, ICT, Sub-Math):</strong> Pass=1pt &nbsp; Fail=0pts</span>
+    <span><strong>Total = best 3 principal pts + all subsidiary pts.</strong></span>
+  </div>
+
+  <!-- ATTENDANCE + GRADING KEY + COMMENTS -->
+  <div class="bottom-row">
+
+    <div class="card-wrap">
+      <div class="card-header">Attendance</div>
+      <div class="att-body">
+        <div class="att-item">
+          <span class="att-num">{{ attendance.total or '—' }}</span>
+          <span class="att-lbl">Total</span>
         </div>
-        <div class="next-item">
-          <span class="next-label">School Fees (UGX)</span>
-          <span class="next-value">&nbsp;</span>
+        <div class="att-item">
+          <span class="att-num">{{ attendance.present or '—' }}</span>
+          <span class="att-lbl">Present</span>
         </div>
-        <div class="next-item">
-          <span class="next-label">Parent / Guardian Signature</span>
-          <span class="next-value">&nbsp;</span>
+        <div class="att-item">
+          <span class="att-num">{{ attendance.absent or '—' }}</span>
+          <span class="att-lbl">Absent</span>
         </div>
       </div>
     </div>
 
-    <!-- FOOTER -->
-    <div class="page-footer">
-      <div class="footer-school">{{ school.name }}</div>
-      <div class="footer-stamp">
-        Generated: {{ generated_date }}<br>
-        <span style="color:var(--navy);">{{ academic_year.name if academic_year else '' }}</span>
+    <div class="card-wrap">
+      <div class="card-header">Grading Key (A-Level)</div>
+      <div class="legend-body">
+        {% for item in grade_legend %}
+        <div class="legend-item">
+          <span class="legend-grade">{{ item.grade }}</span>
+          <span class="legend-range">{{ item.min }}–{{ item.max }}</span>
+          {% if item.remark %}<span style="color:var(--slate-light);font-style:italic;">({{ item.remark }})</span>{% endif %}
+        </div>
+        {% endfor %}
       </div>
-      <div class="footer-seal">OFFICIAL<br>SEAL</div>
     </div>
 
+    <div class="remarks-card">
+      <div class="card-header">Comments &amp; Signatures</div>
+      <div class="remark-row">
+        <div class="remark-who">Class<br>Teacher
+          <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
+        </div>
+        <div class="remark-lines">
+          <div class="remark-line"></div>
+          <div class="remark-line"></div>
+          <div class="remark-line"></div>
+        </div>
+      </div>
+      <div class="remark-row">
+        <div class="remark-who">Head<br>Teacher
+          <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
+        </div>
+        <div class="remark-lines">
+          <div class="remark-line"></div>
+          <div class="remark-line"></div>
+          <div class="remark-line"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NEXT TERM PANEL -->
+  <div class="next-term-panel">
+    <div class="card-header">Next Term Information</div>
+    <div class="next-term-body">
+      <div class="next-item">
+        <span class="next-label">Reopening Date</span>
+        <span class="next-value">&nbsp;</span>
+      </div>
+      <div class="next-item">
+        <span class="next-label">School Fees (UGX)</span>
+        <span class="next-value">&nbsp;</span>
+      </div>
+      <div class="next-item">
+        <span class="next-label">Parent / Guardian Signature</span>
+        <span class="next-value">&nbsp;</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="page-footer">
+    <div class="footer-school">{{ school.name }}</div>
+    <div class="footer-stamp">
+      Generated: {{ generated_date }}<br>
+      <span style="color:var(--navy);">{{ academic_year.name if academic_year else '' }}</span>
+    </div>
+    <div class="footer-seal">OFFICIAL<br>SEAL</div>
   </div>
 
 </div></div></div>

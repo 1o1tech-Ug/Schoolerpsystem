@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Report Card — {{ student.first_name }} {{ student.last_name }}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap');
+    /*
+     * WeasyPrint-optimised version.
+     * Changes vs original:
+     *  - Removed @import Google Fonts (WeasyPrint fetches remote fonts on every render — slow)
+     *  - Replaced all box-shadow with border equivalents where possible; removed decorative shadows
+     *  - Replaced radial-gradient backgrounds on sidebar with flat colour + simple linear-gradient
+     *  - Removed position:fixed references (WeasyPrint ignores them but still processes)
+     *  - Kept all SVG decorations (they're inline — zero network cost)
+     *  - Kept all colours, layout, borders, and spacing identical
+     */
 
     @page { size: A4; margin: 0; }
-    @media print {
-      body { margin: 0; }
-      .no-print { display: none !important; }
-    }
 
     :root {
       --navy:        #0c2340;
@@ -33,7 +38,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Nunito', 'Century Gothic', Calibri, sans-serif;
+      font-family: 'Century Gothic', Calibri, 'Trebuchet MS', sans-serif;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
       background: var(--white);
@@ -50,7 +55,7 @@
     }
 
     /* ══════════════════════════════════════════
-       SIDEBAR — fully decorated
+       SIDEBAR
     ══════════════════════════════════════════ */
     .sidebar {
       width: 36mm;
@@ -64,34 +69,17 @@
       overflow: hidden;
     }
 
-    /* ── background gradient glow ── */
+    /* Replaced expensive radial-gradient glow with a simple linear-gradient overlay */
     .sidebar::before {
       content: '';
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(ellipse 70px 80px at 50% 30%, rgba(200,150,30,0.12) 0%, transparent 70%),
-        radial-gradient(ellipse 60px 60px at 50% 75%, rgba(21,101,192,0.18) 0%, transparent 70%);
+      background: linear-gradient(180deg, rgba(200,150,30,0.08) 0%, rgba(21,101,192,0.12) 100%);
       pointer-events: none;
     }
 
-    /* ── wavy vine lines (CSS only) ── */
-    .vine {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 2px;
-      background: linear-gradient(to bottom,
-        transparent 0%,
-        rgba(200,150,30,0.25) 10%,
-        rgba(200,150,30,0.35) 50%,
-        rgba(200,150,30,0.25) 90%,
-        transparent 100%);
-      z-index: 0;
-    }
-
     /* ──────────────────────────────────────────
-       ALL DECORATIVE SVG ELEMENTS
+       ALL DECORATIVE SVG ELEMENTS (unchanged)
     ────────────────────────────────────────── */
     .deco {
       position: absolute;
@@ -99,71 +87,24 @@
       pointer-events: none;
     }
 
-    /* top-left leaf cluster */
-    .deco-leaf-tl {
-      top: 4px; left: 2px;
-    }
-    /* top-right leaf */
-    .deco-leaf-tr {
-      top: 6px; right: 2px;
-    }
+    .deco-leaf-tl  { top: 4px; left: 2px; }
+    .deco-leaf-tr  { top: 6px; right: 2px; }
+    .deco-butterfly-1 { top: 88px; left: 50%; transform: translateX(-50%); }
+    .deco-butterfly-2 { top: 152px; left: 4px; }
+    .deco-butterfly-3 { top: 195px; right: 3px; }
+    .deco-flower-1 { top: 240px; left: 50%; transform: translateX(-50%); }
+    .deco-butterfly-4 { top: 292px; left: 3px; }
+    .deco-dragonfly { top: 336px; right: 4px; }
+    .deco-flower-2 { top: 388px; left: 50%; transform: translateX(-50%); }
+    .deco-butterfly-5 { top: 430px; right: 2px; }
+    .deco-leaf-bot { bottom: 68px; left: 50%; transform: translateX(-50%); }
 
-    /* butterfly 1 — large, mid-upper */
-    .deco-butterfly-1 {
-      top: 88px; left: 50%;
-      transform: translateX(-50%);
-    }
-
-    /* butterfly 2 — small, below logo */
-    .deco-butterfly-2 {
-      top: 152px; left: 4px;
-    }
-
-    /* butterfly 3 — mid sidebar, right */
-    .deco-butterfly-3 {
-      top: 195px; right: 3px;
-    }
-
-    /* flower 1 */
-    .deco-flower-1 {
-      top: 240px; left: 50%;
-      transform: translateX(-50%);
-    }
-
-    /* butterfly 4 — lower left */
-    .deco-butterfly-4 {
-      top: 292px; left: 3px;
-    }
-
-    /* dragonfly */
-    .deco-dragonfly {
-      top: 336px; right: 4px;
-    }
-
-    /* flower 2 */
-    .deco-flower-2 {
-      top: 388px; left: 50%;
-      transform: translateX(-50%);
-    }
-
-    /* butterfly 5 — lower section */
-    .deco-butterfly-5 {
-      top: 430px; right: 2px;
-    }
-
-    /* leaf spray bottom */
-    .deco-leaf-bot {
-      bottom: 68px; left: 50%;
-      transform: translateX(-50%);
-    }
-
-    /* sparkle dots scattered */
     .deco-sparkle {
       width: 5px;
       height: 5px;
       border-radius: 50%;
       background: rgba(200,150,30,0.55);
-      box-shadow: 0 0 4px 1px rgba(200,150,30,0.4);
+      /* removed box-shadow — slow in WeasyPrint */
     }
     .sp1 { top: 78px;  left: 6px; }
     .sp2 { top: 108px; right: 7px; }
@@ -192,7 +133,7 @@
       border: 3px solid var(--gold);
       object-fit: contain;
       background: var(--white);
-      box-shadow: 0 0 0 3px rgba(200,150,30,0.25), 0 4px 12px rgba(0,0,0,0.3);
+      /* removed box-shadow */
     }
 
     .sidebar-logo-placeholder {
@@ -209,7 +150,6 @@
       background: rgba(255,255,255,0.06);
       text-align: center;
       padding: 4px;
-      box-shadow: 0 0 0 3px rgba(200,150,30,0.2);
     }
 
     .sidebar-school-name {
@@ -260,7 +200,7 @@
     .header-area { text-align: center; margin-bottom: 10px; }
 
     .school-name-main {
-      font-family: 'Playfair Display', 'Times New Roman', serif;
+      font-family: 'Georgia', 'Times New Roman', serif;
       font-size: 18px;
       font-weight: 900;
       color: var(--navy);
@@ -384,7 +324,9 @@
       align-items: center;
       justify-content: center;
       background: var(--blue-light);
-      box-shadow: 0 0 0 2px rgba(200,150,30,0.3);
+      /* removed box-shadow; replaced with gold border */
+      outline: 2px solid rgba(200,150,30,0.3);
+      outline-offset: 1px;
     }
 
     .photo-box img { width:100%; height:100%; object-fit:cover; }
@@ -503,7 +445,7 @@
     }
 
     .result-value {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Georgia', serif;
       font-size: 13px;
       font-weight: 700;
       color: var(--navy);
@@ -574,7 +516,7 @@
     .att-item { text-align: center; }
 
     .att-num {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Georgia', serif;
       font-size: 15px;
       font-weight: 700;
       color: var(--navy);
@@ -699,7 +641,7 @@
     }
 
     .footer-school {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Georgia', serif;
       font-size: 9px;
       font-weight: 700;
       color: var(--navy);
@@ -768,20 +710,15 @@
     <!-- BUTTERFLY 1 — large centred -->
     <div class="deco deco-butterfly-1">
       <svg width="38" height="28" viewBox="0 0 38 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- left wings -->
         <ellipse cx="10" cy="10" rx="9" ry="7" fill="rgba(200,150,30,0.55)" transform="rotate(-20 10 10)"/>
         <ellipse cx="8"  cy="19" rx="7" ry="5"  fill="rgba(200,150,30,0.38)" transform="rotate(15 8 19)"/>
-        <!-- right wings -->
         <ellipse cx="28" cy="10" rx="9" ry="7" fill="rgba(200,150,30,0.55)" transform="rotate(20 28 10)"/>
         <ellipse cx="30" cy="19" rx="7" ry="5"  fill="rgba(200,150,30,0.38)" transform="rotate(-15 30 19)"/>
-        <!-- wing pattern dots -->
         <circle cx="11" cy="9"  r="2" fill="rgba(255,255,255,0.35)"/>
         <circle cx="27" cy="9"  r="2" fill="rgba(255,255,255,0.35)"/>
         <circle cx="9"  cy="18" r="1.5" fill="rgba(255,255,255,0.25)"/>
         <circle cx="29" cy="18" r="1.5" fill="rgba(255,255,255,0.25)"/>
-        <!-- body -->
         <ellipse cx="19" cy="14" rx="2" ry="9" fill="rgba(12,35,64,0.6)"/>
-        <!-- antennae -->
         <path d="M18 5 C15 1 13 0 12 0" stroke="rgba(200,150,30,0.6)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
         <path d="M20 5 C23 1 25 0 26 0" stroke="rgba(200,150,30,0.6)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
         <circle cx="12" cy="0" r="1.2" fill="rgba(200,150,30,0.7)"/>
@@ -858,18 +795,14 @@
     <!-- DRAGONFLY -->
     <div class="deco deco-dragonfly">
       <svg width="28" height="30" viewBox="0 0 28 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- top wings -->
         <ellipse cx="8"  cy="9" rx="7" ry="3.5" fill="rgba(200,150,30,0.32)" transform="rotate(-30 8 9)"/>
         <ellipse cx="20" cy="9" rx="7" ry="3.5" fill="rgba(200,150,30,0.32)" transform="rotate(30 20 9)"/>
-        <!-- bottom wings -->
         <ellipse cx="8"  cy="14" rx="6" ry="3"   fill="rgba(200,150,30,0.22)" transform="rotate(-15 8 14)"/>
         <ellipse cx="20" cy="14" rx="6" ry="3"   fill="rgba(200,150,30,0.22)" transform="rotate(15 20 14)"/>
-        <!-- body -->
         <ellipse cx="14" cy="7"  rx="2.5" ry="4" fill="rgba(12,35,64,0.55)"/>
         <ellipse cx="14" cy="15" rx="1.8" ry="3" fill="rgba(12,35,64,0.45)"/>
         <ellipse cx="14" cy="22" rx="1.3" ry="2.5" fill="rgba(12,35,64,0.38)"/>
         <ellipse cx="14" cy="28" rx="0.9" ry="2"   fill="rgba(12,35,64,0.30)"/>
-        <!-- eyes -->
         <circle cx="12" cy="5" r="1.5" fill="rgba(21,101,192,0.6)"/>
         <circle cx="16" cy="5" r="1.5" fill="rgba(21,101,192,0.6)"/>
       </svg>
@@ -919,7 +852,7 @@
       </svg>
     </div>
 
-    <!-- Logo & school name — on top of all decorations -->
+    <!-- Logo & school name -->
     <div class="sidebar-logo-wrap">
       {% if school_detail and school_detail.school_logo_url %}
         <img class="sidebar-logo" src="{{ school_detail.school_logo_url }}" alt="{{ school.name }} Logo">

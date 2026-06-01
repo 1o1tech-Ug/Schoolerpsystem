@@ -10,11 +10,17 @@ CHANGES vs original:
     All reads:         READ_LIMIT
   - All except blocks log internally and return safe client messages.
     No str(e) / str(exc) ever reaches the client.
+  - [NEW] Threading job store for non-blocking PDF generation.
+    generate_report_card  → starts a background thread, returns job_id
+    generate_all_report_cards → starts a background thread, returns job_id
+    GET /api/report-cards/job/<job_id> → poll for status / result
 """
 
 import requests as http_requests
 from flask import Response, stream_with_context
 import os
+import uuid
+import threading
 import logging
 from datetime import datetime
 from flask import (
@@ -22,7 +28,7 @@ from flask import (
     render_template, current_app, send_from_directory,
 )
 from flask_jwt_extended import jwt_required, get_jwt
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
 
 from app.extensions import db, limiter
@@ -68,6 +74,60 @@ _SECTION_LABELS = {
     "olevel":  "O-Level",
     "alevel":  "A-Level",
 }
+
+# ═══════════════════════════════════════════════════════════════
+#  THREADING JOB STORE
+#  Simple in-memory dict — no Celery required.
+#  Each job has: status, result, error, progress, total
+#  Jobs are cleaned up after 10 minutes via a daemon thread.
+# ═══════════════════════════════════════════════════════════════
+
+_jobs: dict = {}
+_jobs_lock  = threading.Lock()
+
+def _new_job() -> str:
+    job_id = str(uuid.uuid4())
+    with _jobs_lock:
+        _jobs[job_id] = {
+            "status":   "pending",   # pending | running | done | error
+            "result":   None,
+            "error":    None,
+            "progress": 0,
+            "total":    0,
+            "created":  datetime.utcnow(),
+        }
+    return job_id
+
+
+def _update_job(job_id: str, **kwargs):
+    with _jobs_lock:
+        if job_id in _jobs:
+            _jobs[job_id].update(kwargs)
+
+
+def _get_job(job_id: str) -> dict | None:
+    with _jobs_lock:
+        return dict(_jobs.get(job_id, {}))
+
+
+def _start_cleanup_thread():
+    """Remove jobs older than 10 minutes — runs once every 5 minutes."""
+    def _cleanup():
+        import time
+        while True:
+            time.sleep(300)
+            cutoff = datetime.utcnow()
+            with _jobs_lock:
+                stale = [
+                    jid for jid, j in _jobs.items()
+                    if (cutoff - j["created"]).total_seconds() > 600
+                ]
+                for jid in stale:
+                    del _jobs[jid]
+    t = threading.Thread(target=_cleanup, daemon=True, name="job-cleanup")
+    t.start()
+
+_start_cleanup_thread()
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -164,6 +224,12 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream) -> str | No
             local_path,
         )
         return None
+
+
+def _get_academic_year_for_term(term: Term):
+    if term and term.academic_year_id:
+        return AcademicYear.query.get(term.academic_year_id)
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -308,7 +374,31 @@ def get_students_for_generation():
 
 
 # ═══════════════════════════════════════════════════════════════
+#  JOB STATUS POLL  —  GET /api/report-cards/job/<job_id>
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards/job/<job_id>", methods=["GET"])
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def get_job_status(job_id: str):
+    job = _get_job(job_id)
+    if not job:
+        return jsonify({"message": "Job not found"}), 404
+    return jsonify({
+        "success":  True,
+        "job_id":   job_id,
+        "status":   job["status"],    # pending | running | done | error
+        "progress": job["progress"],  # number of students done (bulk only)
+        "total":    job["total"],     # total students (bulk only)
+        "result":   job["result"],    # set when status == done
+        "error":    job["error"],     # set when status == error
+    }), 200
+
+
+# ═══════════════════════════════════════════════════════════════
 #  GENERATE ONE REPORT  —  POST /api/report-cards/generate
+#  Returns immediately with a job_id.
+#  Poll GET /api/report-cards/job/<job_id> until status == done | error
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/generate", methods=["POST"])
@@ -359,117 +449,114 @@ def generate_report_card():
     school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
     academic_year = _get_academic_year_for_term(term)
 
-    report_type_label = _SECTION_LABELS.get(
-        classify_class(stream.class_.name if stream.class_ else ""), "Unknown"
-    )
-    logger.info(
-        "generate_report_card: student=%s section=%s exam=%s",
-        student_id, report_type_label, exam_type,
-    )
+    # Snapshot all objects needed by the thread (avoids detached instance errors)
+    job_id        = _new_job()
+    static_folder = current_app.static_folder
 
-    try:
-        service       = ReportCardService(school, school_detail)
-        static_folder = current_app.static_folder
+    def _do_generate():
+        _update_job(job_id, status="running")
+        # Push a new app context so SQLAlchemy works in the thread
+        from flask import current_app as _app
+        app = _app._get_current_object()
+        with app.app_context():
+            try:
+                _school  = School.query.get(school_id)
+                _detail  = SchoolDetail.query.filter_by(school_id=school_id).first()
+                _student = Student.query.filter_by(id=student_id, school_id=school_id).first()
+                _term    = Term.query.filter_by(id=term_id, school_id=school_id).first()
+                _stream  = Stream.query.get(stream_id)
+                _ay      = _get_academic_year_for_term(_term)
 
-        if not static_folder:
-            return jsonify({"message": "Server misconfiguration: static folder not set"}), 500
+                service = ReportCardService(_school, _detail)
+                result  = service.generate(
+                    student=_student,
+                    stream=_stream,
+                    term=_term,
+                    academic_year=_ay,
+                    exam_type=exam_type,
+                    static_folder=static_folder,
+                )
 
-        try:
-            result = service.generate(
-                student=student,
-                stream=stream,
-                term=term,
-                academic_year=academic_year,
-                exam_type=exam_type,
-                static_folder=static_folder,
-            )
-        except (ValueError, RuntimeError) as gen_err:
-            return jsonify({"message": str(gen_err)}), 422
+                local_path  = result["local_path"]
+                file_url    = result["file_url"]
+                report_type = result["report_type"]
+                now         = datetime.utcnow()
 
-        local_path  = result["local_path"]
-        file_url    = result["file_url"]
-        report_type = result["report_type"]
+                existing_report = ReportCard.query.filter_by(
+                    school_id=school_id,
+                    student_id=student_id,
+                    term_id=term_id,
+                    exam_type=exam_type,
+                ).first()
 
-        now = datetime.utcnow()
+                if existing_report and existing_report.firebase_url:
+                    _delete_cdn_file(existing_report.firebase_url)
 
-        existing_report = ReportCard.query.filter_by(
-            school_id=school_id,
-            student_id=student_id,
-            term_id=term_id,
-            exam_type=exam_type,
-        ).first()
+                cdn_url    = _upload_report_pdf(local_path, _ay, _term, _stream)
+                public_url = cdn_url or file_url
 
-        if existing_report and existing_report.firebase_url:
-            _delete_cdn_file(existing_report.firebase_url)
+                if existing_report:
+                    old_path = existing_report.local_path
+                    if old_path and old_path != local_path and os.path.exists(old_path):
+                        try:
+                            os.remove(old_path)
+                        except OSError as rm_err:
+                            logger.warning("generate thread: could not remove old file %s — %s", old_path, rm_err)
 
-        cdn_url    = _upload_report_pdf(local_path, academic_year, term, stream)
-        public_url = cdn_url or file_url
+                    existing_report.firebase_url  = public_url
+                    existing_report.firebase_path = local_path
+                    existing_report.local_path    = local_path
+                    existing_report.generated_at  = now
+                    existing_report.generated_by  = int(user_id) if user_id else None
+                    existing_report.status        = "generated"
+                    existing_report.academic_year = _ay.name if _ay else None
+                    report = existing_report
+                else:
+                    report = ReportCard(
+                        school_id=school_id,
+                        student_id=student_id,
+                        term_id=term_id,
+                        exam_type=exam_type,
+                        academic_year=_ay.name if _ay else None,
+                        generated_at=now,
+                        generated_by=int(user_id) if user_id else None,
+                        firebase_url=public_url,
+                        firebase_path=local_path,
+                        local_path=local_path,
+                        status="generated",
+                    )
+                    db.session.add(report)
 
-        if existing_report:
-            old_path = existing_report.local_path
-            if old_path and old_path != local_path and os.path.exists(old_path):
-                try:
-                    os.remove(old_path)
-                except OSError as rm_err:
-                    logger.warning("generate_report_card: could not remove old file %s — %s", old_path, rm_err)
+                db.session.commit()
 
-            existing_report.firebase_url  = public_url
-            existing_report.firebase_path = local_path
-            existing_report.local_path    = local_path
-            existing_report.generated_at  = now
-            existing_report.generated_by  = int(user_id) if user_id else None
-            existing_report.status        = "generated"
-            existing_report.academic_year = academic_year.name if academic_year else None
-            report = existing_report
-        else:
-            report = ReportCard(
-                school_id=school_id,
-                student_id=student_id,
-                term_id=term_id,
-                exam_type=exam_type,
-                academic_year=academic_year.name if academic_year else None,
-                generated_at=now,
-                generated_by=int(user_id) if user_id else None,
-                firebase_url=public_url,
-                firebase_path=local_path,
-                local_path=local_path,
-                status="generated",
-            )
-            db.session.add(report)
+                _update_job(job_id, status="done", result={
+                    "id":            report.id,
+                    "student_name":  f"{_student.first_name} {_student.last_name}",
+                    "report_type":   report_type,
+                    "section_label": _SECTION_LABELS.get(report_type, report_type.title()),
+                    "file_url":      _bust(public_url, now),
+                    "report_id":     report.id,
+                })
 
-        db.session.commit()
+            except Exception as exc:
+                db.session.rollback()
+                logger.exception("generate thread failed | student_id=%s", student_id)
+                _update_job(job_id, status="error", error="Failed to generate report card. Please try again.")
 
-        return jsonify({
-            "success": True,
-            "message": "Report card generated successfully",
-            "report": {
-                "id":            report.id,
-                "student_name":  f"{student.first_name} {student.last_name}",
-                "report_type":   report_type,
-                "section_label": _SECTION_LABELS.get(report_type, report_type.title()),
-                "file_url":      _bust(public_url, now),
-                "report_id":     report.id,
-            },
-        }), 200
+    thread = threading.Thread(target=_do_generate, daemon=True, name=f"gen-{job_id[:8]}")
+    thread.start()
 
-    except SQLAlchemyError:
-        db.session.rollback()
-        logger.exception("generate_report_card DB error | student_id=%s", student_id)
-        return jsonify({"success": False, "message": "Database error. Please try again."}), 500
-    except Exception:
-        db.session.rollback()
-        logger.exception("generate_report_card failed | student_id=%s", student_id)
-        return jsonify({"success": False, "message": "Failed to generate report card. Please try again."}), 500
-
-
-def _get_academic_year_for_term(term: Term):
-    if term and term.academic_year_id:
-        return AcademicYear.query.get(term.academic_year_id)
-    return None
+    return jsonify({
+        "success": True,
+        "job_id":  job_id,
+        "message": "Generation started",
+    }), 202
 
 
 # ═══════════════════════════════════════════════════════════════
 #  GENERATE ALL PENDING  —  POST /api/report-cards/generate-all
+#  Returns immediately with a job_id.
+#  Poll GET /api/report-cards/job/<job_id> for progress + result.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/generate-all", methods=["POST"])
@@ -504,129 +591,140 @@ def generate_all_report_cards():
     if not term:
         return jsonify({"message": "Term not found"}), 404
 
-    report_type_label = _SECTION_LABELS.get(
-        classify_class(stream.class_.name if stream.class_ else ""), "Unknown"
-    )
-    logger.info(
-        "generate_all: section=%s stream=%s term=%s exam=%s",
-        report_type_label, stream_id, term_id, exam_type,
-    )
+    # Pre-fetch pending student ids before handing off to thread
+    ss_rows     = StudentStream.query.filter_by(school_id=school_id, stream_id=stream_id).all()
+    student_ids = [ss.student_id for ss in ss_rows]
 
-    try:
-        ss_rows     = StudentStream.query.filter_by(school_id=school_id, stream_id=stream_id).all()
-        student_ids = [ss.student_id for ss in ss_rows]
-
-        if not student_ids:
-            return jsonify({
-                "success": True, "message": "No students in this stream",
-                "generated": 0, "failed": 0,
-            }), 200
-
-        done_ids = {
-            rc.student_id
-            for rc in ReportCard.query.filter(
-                ReportCard.school_id  == school_id,
-                ReportCard.term_id    == term_id,
-                ReportCard.exam_type  == exam_type,
-                ReportCard.student_id.in_(student_ids),
-            ).all()
-        }
-        pending_ids = [sid for sid in student_ids if sid not in done_ids]
-
-        if not pending_ids:
-            return jsonify({
-                "success": True,
-                "message": "All reports are already generated",
-                "generated": 0, "failed": 0,
-            }), 200
-
-        school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
-        academic_year = _get_academic_year_for_term(term)
-        static_folder = current_app.static_folder
-        service       = ReportCardService(school, school_detail)
-
-        generated, failed, errors = 0, 0, []
-
-        for sid in pending_ids:
-            try:
-                student = Student.query.filter_by(id=sid, school_id=school_id).first()
-                if not student:
-                    failed += 1
-                    errors.append(f"Student {sid} not found")
-                    continue
-
-                result     = service.generate(
-                    student=student,
-                    stream=stream,
-                    term=term,
-                    academic_year=academic_year,
-                    exam_type=exam_type,
-                    static_folder=static_folder,
-                )
-                local_path = result["local_path"]
-                file_url   = result["file_url"]
-                now        = datetime.utcnow()
-
-                existing = ReportCard.query.filter_by(
-                    school_id=school_id, student_id=sid, term_id=term_id, exam_type=exam_type,
-                ).first()
-
-                if existing and existing.firebase_url:
-                    _delete_cdn_file(existing.firebase_url)
-
-                cdn_url    = _upload_report_pdf(local_path, academic_year, term, stream)
-                public_url = cdn_url or file_url
-
-                if existing:
-                    existing.firebase_url  = public_url
-                    existing.firebase_path = local_path
-                    existing.local_path    = local_path
-                    existing.generated_at  = now
-                    existing.generated_by  = int(user_id) if user_id else None
-                    existing.status        = "generated"
-                    existing.academic_year = academic_year.name if academic_year else None
-                else:
-                    db.session.add(ReportCard(
-                        school_id=school_id,
-                        student_id=sid,
-                        term_id=term_id,
-                        exam_type=exam_type,
-                        academic_year=academic_year.name if academic_year else None,
-                        generated_at=now,
-                        generated_by=int(user_id) if user_id else None,
-                        firebase_url=public_url,
-                        firebase_path=local_path,
-                        local_path=local_path,
-                        status="generated",
-                    ))
-
-                db.session.flush()
-                generated += 1
-
-            except Exception as inner_exc:
-                logger.error("generate_all: failed for student=%s — %s", sid, inner_exc)
-                failed += 1
-                errors.append(f"Student {sid}: generation failed")
-
-        try:
-            db.session.commit()
-        except SQLAlchemyError:
-            db.session.rollback()
-            logger.exception("generate_all: commit failed | school_id=%s", school_id)
-            return jsonify({"success": False, "message": "Database commit failed. Please try again."}), 500
-
+    if not student_ids:
         return jsonify({
-            "success":   True,
-            "message":   f"{generated} report(s) generated, {failed} failed.",
-            "generated": generated,
-            "failed":    failed,
-            "errors":    errors[:5],
+            "success": True, "message": "No students in this stream",
+            "generated": 0, "failed": 0,
         }), 200
 
-    except Exception:
-        db.session.rollback()
-        logger.exception("generate_all failed | school_id=%s stream_id=%s", school_id, stream_id)
-        return jsonify({"success": False, "message": "Bulk generation failed. Please try again."}), 500
+    done_ids = {
+        rc.student_id
+        for rc in ReportCard.query.filter(
+            ReportCard.school_id  == school_id,
+            ReportCard.term_id    == term_id,
+            ReportCard.exam_type  == exam_type,
+            ReportCard.student_id.in_(student_ids),
+        ).all()
+    }
+    pending_ids = [sid for sid in student_ids if sid not in done_ids]
+
+    if not pending_ids:
+        return jsonify({
+            "success": True,
+            "message": "All reports are already generated",
+            "generated": 0, "failed": 0,
+        }), 200
+
+    job_id        = _new_job()
+    static_folder = current_app.static_folder
+    _update_job(job_id, total=len(pending_ids))
+
+    def _do_generate_all():
+        _update_job(job_id, status="running")
+        from flask import current_app as _app
+        app = _app._get_current_object()
+        with app.app_context():
+            generated, failed, errors = 0, 0, []
+
+            _school  = School.query.get(school_id)
+            _detail  = SchoolDetail.query.filter_by(school_id=school_id).first()
+            _term    = Term.query.filter_by(id=term_id, school_id=school_id).first()
+            _stream  = Stream.query.get(stream_id)
+            _ay      = _get_academic_year_for_term(_term)
+            service  = ReportCardService(_school, _detail)
+
+            for idx, sid in enumerate(pending_ids):
+                try:
+                    _student = Student.query.filter_by(id=sid, school_id=school_id).first()
+                    if not _student:
+                        failed += 1
+                        errors.append(f"Student {sid} not found")
+                        _update_job(job_id, progress=idx + 1)
+                        continue
+
+                    result     = service.generate(
+                        student=_student,
+                        stream=_stream,
+                        term=_term,
+                        academic_year=_ay,
+                        exam_type=exam_type,
+                        static_folder=static_folder,
+                    )
+                    local_path = result["local_path"]
+                    file_url   = result["file_url"]
+                    now        = datetime.utcnow()
+
+                    existing = ReportCard.query.filter_by(
+                        school_id=school_id, student_id=sid,
+                        term_id=term_id, exam_type=exam_type,
+                    ).first()
+
+                    if existing and existing.firebase_url:
+                        _delete_cdn_file(existing.firebase_url)
+
+                    cdn_url    = _upload_report_pdf(local_path, _ay, _term, _stream)
+                    public_url = cdn_url or file_url
+
+                    if existing:
+                        existing.firebase_url  = public_url
+                        existing.firebase_path = local_path
+                        existing.local_path    = local_path
+                        existing.generated_at  = now
+                        existing.generated_by  = int(user_id) if user_id else None
+                        existing.status        = "generated"
+                        existing.academic_year = _ay.name if _ay else None
+                    else:
+                        db.session.add(ReportCard(
+                            school_id=school_id,
+                            student_id=sid,
+                            term_id=term_id,
+                            exam_type=exam_type,
+                            academic_year=_ay.name if _ay else None,
+                            generated_at=now,
+                            generated_by=int(user_id) if user_id else None,
+                            firebase_url=public_url,
+                            firebase_path=local_path,
+                            local_path=local_path,
+                            status="generated",
+                        ))
+
+                    db.session.flush()
+                    generated += 1
+                    _update_job(job_id, progress=idx + 1)
+
+                except Exception as inner_exc:
+                    logger.error("generate_all thread: failed for student=%s — %s", sid, inner_exc)
+                    failed += 1
+                    errors.append(f"Student {sid}: generation failed")
+                    _update_job(job_id, progress=idx + 1)
+
+            try:
+                db.session.commit()
+                _update_job(job_id, status="done", result={
+                    "generated": generated,
+                    "failed":    failed,
+                    "errors":    errors[:5],
+                    "message":   f"{generated} report(s) generated, {failed} failed.",
+                })
+            except SQLAlchemyError:
+                db.session.rollback()
+                logger.exception("generate_all thread: commit failed | school_id=%s", school_id)
+                _update_job(job_id, status="error",
+                            error="Database commit failed. Some reports may not have been saved.")
+
+    thread = threading.Thread(target=_do_generate_all, daemon=True, name=f"gen-all-{job_id[:8]}")
+    thread.start()
+
+    return jsonify({
+        "success": True,
+        "job_id":  job_id,
+        "total":   len(pending_ids),
+        "message": f"Bulk generation started for {len(pending_ids)} student(s)",
+    }), 202
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -822,143 +920,67 @@ def save_school_details():
             ext = filename.rsplit(".", 1)[1].lower()
             remote_path = f"uploads/logos/school_{school_id}_logo.{ext}"
 
-            detail_check = SchoolDetail.query.filter_by(
-                school_id=school_id
-            ).first()
+            detail_check = SchoolDetail.query.filter_by(school_id=school_id).first()
 
             if detail_check and detail_check.school_logo_url:
                 _delete_cdn_file(detail_check.school_logo_url)
 
-            logo_url = bunny_upload(
-                data=logo_bytes,
-                remote_path=remote_path
-            )
+            logo_url = bunny_upload(data=logo_bytes, remote_path=remote_path)
+            logger.info("save_school_details: logo uploaded to CDN → %s", logo_url)
 
-            logger.info(
-                "save_school_details: logo uploaded to CDN → %s",
-                logo_url
-            )
-
-        po_box_number = (
-            request.form.get("po_box_number", "") or ""
-        ).strip() or None
-
-        district = (
-            request.form.get("district", "") or ""
-        ).strip() or None
-
-        contact_1 = (
-            request.form.get("contact_1", "") or ""
-        ).strip()
-
-        contact_2 = (
-            request.form.get("contact_2", "") or ""
-        ).strip() or None
-
-        website_domain = (
-            request.form.get("website_domain", "") or ""
-        ).strip() or None
-
-        email = (
-            request.form.get("email", "") or ""
-        ).strip() or None
+        po_box_number  = (request.form.get("po_box_number",  "") or "").strip() or None
+        district       = (request.form.get("district",       "") or "").strip() or None
+        contact_1      = (request.form.get("contact_1",      "") or "").strip()
+        contact_2      = (request.form.get("contact_2",      "") or "").strip() or None
+        website_domain = (request.form.get("website_domain", "") or "").strip() or None
+        email          = (request.form.get("email",          "") or "").strip() or None
 
         if not contact_1:
-            return jsonify({
-                "success": False,
-                "message": "Contact 1 is required",
-            }), 400
+            return jsonify({"success": False, "message": "Contact 1 is required"}), 400
 
-        gp_min_mark = None
-        ict_min_mark = None
-        sub_math_min_mark = None
+        gp_min_mark = sub_math_min_mark = ict_min_mark = None
 
-        gp_raw = (
-            request.form.get("gp_min_mark", "") or ""
-        ).strip()
+        for field_name, var_name in [
+            ("gp_min_mark", "gp_min_mark"),
+            ("ict_min_mark", "ict_min_mark"),
+            ("sub_math_min_mark", "sub_math_min_mark"),
+        ]:
+            raw = (request.form.get(field_name, "") or "").strip()
+            if raw:
+                try:
+                    val = float(raw)
+                    if not (0 <= val <= 100):
+                        raise ValueError
+                    if field_name == "gp_min_mark":
+                        gp_min_mark = val
+                    elif field_name == "ict_min_mark":
+                        ict_min_mark = val
+                    else:
+                        sub_math_min_mark = val
+                except ValueError:
+                    label = field_name.replace("_", " ").title()
+                    return jsonify({"success": False, "message": f"{label} must be a number between 0 and 100"}), 400
 
-        ict_raw = (
-            request.form.get("ict_min_mark", "") or ""
-        ).strip()
-
-        sub_math_raw = (
-            request.form.get("sub_math_min_mark", "") or ""
-        ).strip()
-
-        if sub_math_raw:
-            try:
-                sub_math_min_mark = float(sub_math_raw)
-
-                if not (0 <= sub_math_min_mark <= 100):
-                    raise ValueError
-
-            except ValueError:
-                return jsonify({
-                    "success": False,
-                    "message": (
-                        "Sub Math min mark must be a number between 0 and 100"
-                    ),
-                }), 400
-
-        if gp_raw:
-            try:
-                gp_min_mark = float(gp_raw)
-
-                if not (0 <= gp_min_mark <= 100):
-                    raise ValueError
-
-            except ValueError:
-                return jsonify({
-                    "success": False,
-                    "message": (
-                        "GP min mark must be a number between 0 and 100"
-                    ),
-                }), 400
-
-        if ict_raw:
-            try:
-                ict_min_mark = float(ict_raw)
-
-                if not (0 <= ict_min_mark <= 100):
-                    raise ValueError
-
-            except ValueError:
-                return jsonify({
-                    "success": False,
-                    "message": (
-                        "ICT min mark must be a number between 0 and 100"
-                    ),
-                }), 400
-
-        detail = SchoolDetail.query.filter_by(
-            school_id=school_id
-        ).first()
-
+        detail = SchoolDetail.query.filter_by(school_id=school_id).first()
         if not detail:
-            detail = SchoolDetail(
-                school_id=school_id,
-                contact_1=contact_1,
-            )
+            detail = SchoolDetail(school_id=school_id, contact_1=contact_1)
             db.session.add(detail)
 
-        detail.contact_1 = contact_1
-        detail.po_box_number = po_box_number
-        detail.district = district
-        detail.contact_2 = contact_2
+        detail.contact_1      = contact_1
+        detail.po_box_number  = po_box_number
+        detail.district       = district
+        detail.contact_2      = contact_2
         detail.website_domain = website_domain
-        detail.email = email
+        detail.email          = email
 
         if logo_url:
             detail.school_logo_url = logo_url
-
         if gp_min_mark is not None:
             detail.gp_min_mark = gp_min_mark
-
-        if sub_math_min_mark is not None:
-            detail.sub_math_min_mark = sub_math_min_mark
-
         if ict_min_mark is not None:
             detail.ict_min_mark = ict_min_mark
+        if sub_math_min_mark is not None:
+            detail.sub_math_min_mark = sub_math_min_mark
 
         db.session.commit()
 
@@ -970,27 +992,13 @@ def save_school_details():
 
     except SQLAlchemyError:
         db.session.rollback()
-        logger.exception(
-            "save_school_details DB error | school_id=%s",
-            school_id,
-        )
-        return jsonify({
-            "success": False,
-            "message": "Database error. Please try again.",
-        }), 500
-
+        logger.exception("save_school_details DB error | school_id=%s", school_id)
+        return jsonify({"success": False, "message": "Database error. Please try again."}), 500
     except Exception:
         db.session.rollback()
-        logger.exception(
-            "save_school_details failed | school_id=%s",
-            school_id,
-        )
-        return jsonify({
-            "success": False,
-            "message": (
-                "Failed to save school configuration. Please try again."
-            ),
-        }), 500
+        logger.exception("save_school_details failed | school_id=%s", school_id)
+        return jsonify({"success": False, "message": "Failed to save school configuration. Please try again."}), 500
+
 
 # ═══════════════════════════════════════════════════════════════
 #  DOWNLOAD REPORT CARD  —  GET /api/report-cards/<id>/download
@@ -1022,8 +1030,7 @@ def download_report_card(report_id: int):
         if not cdn_url:
             return jsonify({"message": "No file available for this report"}), 404
 
-        cdn_url = cdn_url.split("?")[0]
-
+        cdn_url  = cdn_url.split("?")[0]
         upstream = http_requests.get(cdn_url, stream=True, timeout=30)
         upstream.raise_for_status()
 

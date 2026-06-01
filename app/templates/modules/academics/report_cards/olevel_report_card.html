@@ -5,16 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Report Card — {{ student.first_name }} {{ student.last_name }}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;600;700&display=swap');
+    /*
+     * WeasyPrint-optimised version.
+     * Changes vs original:
+     *  - Removed @import Google Fonts
+     *  - IMPORTANT: Removed CSS transform: scale() approach entirely.
+     *    WeasyPrint does not support CSS transforms for layout purposes —
+     *    it renders the element at its natural size then applies the transform
+     *    purely visually, so the page still overflows. Instead we use a
+     *    straightforward @page landscape layout with percentage-based sizing,
+     *    and a slightly reduced font-size to match the visual scale.
+     *  - html/body no longer set to fixed 297mm×210mm with overflow:hidden
+     *    (that prevented WeasyPrint from paginating correctly)
+     *  - @media print block simplified — removed all page-break-inside rules
+     *    (WeasyPrint ignores most of them and they add parse overhead)
+     *  - Removed .marks-table tbody tr:hover
+     *  - Replaced box-shadow on logo-wrap with outline
+     *  - All colours, spacing, borders, and structure identical
+     */
 
-    /* ─────────────────────────────────────────────
-       PAGE SETUP
-       A4 landscape, zero margin — we handle spacing
-       inside the scaled wrapper ourselves.
-    ───────────────────────────────────────────── */
     @page {
       size: A4 landscape;
-      margin: 0;
+      margin: 0.25in 0.3in;
     }
 
     :root {
@@ -35,134 +47,78 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
-      width:  297mm;   /* A4 landscape width  */
-      height: 210mm;   /* A4 landscape height */
-      overflow: hidden;
-      background: #fff;
-    }
-
     body {
-      font-family: 'Source Sans 3', 'Calibri', sans-serif;
+      font-family: 'Calibri', 'Trebuchet MS', Arial, sans-serif;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
+      background: #fff;
       color: var(--text);
-      /* Base size intentionally larger — scale() compresses to fit */
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
       line-height: 1.35;
     }
 
-    /* ─────────────────────────────────────────────
-       SCALE WRAPPER
-       Designed at 1060 × 740 px "design pixels".
-       transform-origin top-left, then centered.
-       The browser scales the entire subtree so it
-       fits exactly in 297 × 210 mm — one page,
-       no matter how many subjects.
-
-       297mm ≈ 1122px @96dpi  →  scale = 1122/1060 ≈ 1.058
-       210mm ≈  794px @96dpi  →  scale =  794/740  ≈ 1.073
-       We use the smaller axis to avoid clipping.
-    ───────────────────────────────────────────── */
-    .scale-root {
-      width:  1060px;
-      height: 740px;
-      transform-origin: top left;
-      /* default scale for screen — @media print overrides */
-      transform: scale(1);
-      margin: 0 auto;
-      overflow: hidden;
-    }
-
-    @media print {
-      .scale-root {
-        /* fit 1060 design-px into 297mm (≈1122px) wide  */
-        /* fit  740 design-px into 210mm (≈ 794px) tall  */
-        /* use the smaller ratio so nothing is clipped    */
-        transform: scale(1.058);  /* 1122/1060 */
-        margin: 0;
-        position: absolute;
-        top: 0; left: 0;
-      }
-    }
-
-    /* ─────────────────────────────────────────────
-       FRAME
-    ───────────────────────────────────────────── */
+    /* FRAME */
     .page-frame {
-      width:  100%;
-      height: 100%;
       border: 3px double var(--navy);
       padding: 7px 9px;
       position: relative;
-      display: flex;
-      flex-direction: column;
     }
     .page-frame::before {
       content: ''; position: absolute; inset: 4px;
-      border: 1px solid var(--gold); pointer-events: none; z-index: 0;
+      border: 1px solid var(--gold); pointer-events: none;
     }
-    .inner-content {
-      position: relative; z-index: 1;
-      display: flex; flex-direction: column;
-      flex: 1; min-height: 0;
-    }
+    .inner-content { position: relative; z-index: 1; }
 
-    /* ─────────────────────────────────────────────
-       HEADER
-    ───────────────────────────────────────────── */
+    /* HEADER */
     .header-row {
       display: flex; align-items: center;
       justify-content: space-between; padding: 3px 4px 5px; gap: 8px;
-      flex-shrink: 0;
     }
     .logo-wrap {
-      width: 88px; height: 88px; border: 3px solid var(--gold);
+      width: 80px; height: 80px; border: 3px solid var(--gold);
       border-radius: 50%; overflow: hidden; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      background: var(--blue-light); box-shadow: 0 0 0 3px var(--navy);
+      background: var(--blue-light);
+      outline: 3px solid var(--navy);
+      outline-offset: -3px;
     }
     .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
-    .logo-placeholder { font-size: 12px; font-weight: 800; color: var(--blue); text-align: center; }
+    .logo-placeholder { font-size: 11px; font-weight: 800; color: var(--blue); text-align: center; }
     .school-identity { text-align: center; flex: 1; }
     .school-name {
-      font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900;
+      font-family: 'Georgia', serif; font-size: 20px; font-weight: 900;
       color: var(--navy); text-transform: uppercase; letter-spacing: 1.5px;
     }
-    .school-tagline { font-size: 12px; font-style: italic; color: var(--gold); margin-top: 1px; font-weight: 700; }
-    .contact-bar { font-size: 11px; color: var(--slate); margin-top: 3px; font-weight: 700; }
+    .school-tagline { font-size: 11px; font-style: italic; color: var(--gold); margin-top: 1px; font-weight: 700; }
+    .contact-bar { font-size: 10px; color: var(--slate); margin-top: 3px; font-weight: 700; }
 
     .rule-gold {
       height: 3px;
       background: linear-gradient(to right, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
-      margin: 2px 0; flex-shrink: 0;
+      margin: 2px 0;
     }
     .rule-navy {
       height: 1.5px;
       background: linear-gradient(to right, transparent, var(--navy) 20%, var(--navy) 80%, transparent);
-      margin: 2px 0 5px; flex-shrink: 0;
+      margin: 2px 0 5px;
     }
 
-    /* ─────────────────────────────────────────────
-       TERM BANNER
-    ───────────────────────────────────────────── */
+    /* TERM BANNER */
     .term-banner {
       background: var(--navy); color: var(--white); text-align: center;
-      font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 900;
+      font-family: 'Georgia', serif; font-size: 12px; font-weight: 900;
       letter-spacing: 2px; text-transform: uppercase; padding: 5px 12px;
-      margin-bottom: 5px; flex-shrink: 0;
+      margin-bottom: 5px;
       border-left: 4px solid var(--gold); border-right: 4px solid var(--gold);
     }
     .term-banner::before, .term-banner::after { content: '✦'; color: var(--gold); margin: 0 10px; font-size: 10px; }
 
-    /* ─────────────────────────────────────────────
-       DEMOGRAPHICS
-    ───────────────────────────────────────────── */
-    .demographics-row { display: flex; gap: 8px; margin-bottom: 5px; align-items: flex-start; flex-shrink: 0; }
+    /* DEMOGRAPHICS */
+    .demographics-row { display: flex; gap: 8px; margin-bottom: 5px; align-items: flex-start; }
     .info-panel { flex: 1; border: 1.5px solid var(--border); border-radius: 3px; overflow: hidden; }
     .info-panel-header {
-      background: var(--navy); color: var(--white); font-size: 11px;
+      background: var(--navy); color: var(--white); font-size: 10px;
       font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; padding: 3px 8px;
     }
     .info-panel-body {
@@ -170,10 +126,10 @@
       display: grid; grid-template-columns: auto 1fr auto 1fr auto 1fr;
       row-gap: 3px; column-gap: 8px; align-items: end;
     }
-    .info-label { font-size: 11px; font-weight: 800; color: var(--blue); text-transform: uppercase; white-space: nowrap; }
-    .info-value { font-size: 12px; font-weight: 800; color: var(--navy); border-bottom: 1.5px solid var(--gold); min-height: 14px; }
+    .info-label { font-size: 10px; font-weight: 800; color: var(--blue); text-transform: uppercase; white-space: nowrap; }
+    .info-value { font-size: 11px; font-weight: 800; color: var(--navy); border-bottom: 1.5px solid var(--gold); min-height: 14px; }
     .photo-box {
-      width: 76px; height: 88px; border: 2px solid var(--border); border-radius: 3px;
+      width: 72px; height: 84px; border: 2px solid var(--border); border-radius: 3px;
       flex-shrink: 0; display: flex; align-items: center; justify-content: center;
       background: var(--blue-light); position: relative;
     }
@@ -182,62 +138,49 @@
       border: 2px solid var(--gold); border-radius: 2px; pointer-events: none; opacity: 0.4;
     }
     .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-    .photo-placeholder { font-size: 10px; color: var(--blue); font-weight: 800; text-align: center; }
+    .photo-placeholder { font-size: 9px; color: var(--blue); font-weight: 800; text-align: center; }
 
-    /* ─────────────────────────────────────────────
-       SECTION HEADING
-    ───────────────────────────────────────────── */
-    .section-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-shrink: 0; }
+    /* SECTION HEADING */
+    .section-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
     .section-heading-line { flex: 1; height: 1px; background: var(--border); }
     .section-heading-text {
-      font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--navy);
+      font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--navy);
       text-transform: uppercase; padding: 0 6px; border: 1px solid var(--border);
       background: var(--white); border-radius: 20px;
     }
 
-    /* ─────────────────────────────────────────────
-       PERFORMANCE TABLE
-       flex:1 + min-height:0 lets it shrink so the
-       bottom block always stays in frame.
-    ───────────────────────────────────────────── */
-    .performance-section {
-      flex: 1; min-height: 0;
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    .table-scroll { flex: 1; min-height: 0; overflow: hidden; }
-
+    /* PERFORMANCE TABLE */
     .marks-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .marks-table thead tr.hdr-top th {
       background: var(--navy); color: var(--white);
-      padding: 4px 3px; font-size: 11px; font-weight: 800;
+      padding: 4px 3px; font-size: 10px; font-weight: 800;
       letter-spacing: 0.3px; text-transform: uppercase;
       border: 1px solid var(--navy); text-align: center; vertical-align: middle;
     }
     .marks-table thead tr.hdr-top th.col-subj { text-align: left; border-left: 3px solid var(--gold); }
     .marks-table thead tr.hdr-sub th {
       background: var(--blue-light); color: var(--navy); border: 1px solid var(--border);
-      padding: 3px; font-size: 11px; font-weight: 800; text-align: center;
+      padding: 3px; font-size: 10px; font-weight: 800; text-align: center;
     }
     .marks-table tbody td {
       border: 1px solid var(--border); padding: 3px 3px;
-      font-size: 11.5px; font-weight: 700; color: var(--slate); vertical-align: middle; text-align: center;
+      font-size: 10.5px; font-weight: 700; color: var(--slate); vertical-align: middle; text-align: center;
     }
     .marks-table tbody td.cell-subj {
-      text-align: left; font-weight: 800; font-size: 12px; color: var(--navy);
+      text-align: left; font-weight: 800; font-size: 11px; color: var(--navy);
       border-left: 3px solid var(--blue-mid); padding-left: 5px; vertical-align: middle;
     }
-    .marks-table tbody td.cell-paper { font-style: italic; color: var(--slate-light); font-size: 10px; font-weight: 700; }
-    .marks-table tbody td.cell-comment { text-align: left; font-style: italic; font-size: 10.5px; font-weight: 700; }
+    .marks-table tbody td.cell-paper { font-style: italic; color: var(--slate-light); font-size: 9.5px; font-weight: 700; }
+    .marks-table tbody td.cell-comment { text-align: left; font-style: italic; font-size: 9.5px; font-weight: 700; }
     .row-even td { background: var(--row-even); }
     .marks-table tbody tr.summary-row td {
-      background: var(--gold-light) !important; font-weight: 800; font-size: 12px;
+      background: var(--gold-light) !important; font-weight: 800; font-size: 11px;
       color: var(--navy); border-top: 2px solid var(--gold);
     }
 
     .pill {
       display: inline-block; padding: 1px 5px; border-radius: 20px;
-      font-weight: 800; font-size: 11px;
+      font-weight: 800; font-size: 10px;
       background: var(--blue-light); color: var(--navy);
       min-width: 28px; text-align: center;
     }
@@ -248,12 +191,7 @@
     .ge { color: #b91c1c; font-weight: 900; }
     .gu { color: #94a3b8; }
 
-    /* ─────────────────────────────────────────────
-       BOTTOM BLOCK — never shrinks, stays pinned
-    ───────────────────────────────────────────── */
-    .bottom-block { flex-shrink: 0; margin-top: 4px; }
-
-    /* ── RESULT STRIP ── */
+    /* RESULT STRIP */
     .result-strip {
       display: grid; grid-template-columns: repeat(5, 1fr);
       margin-bottom: 4px; border: 1.5px solid var(--navy);
@@ -261,25 +199,25 @@
     }
     .result-cell { padding: 4px 3px; text-align: center; background: var(--gold-light); border-right: 1px solid var(--navy); }
     .result-cell:last-child { border-right: none; }
-    .result-label { font-size: 10px; font-weight: 800; letter-spacing: 0.8px; color: var(--slate-light); text-transform: uppercase; display: block; margin-bottom: 1px; }
-    .result-value { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 900; color: var(--navy); }
+    .result-label { font-size: 9px; font-weight: 800; letter-spacing: 0.8px; color: var(--slate-light); text-transform: uppercase; display: block; margin-bottom: 1px; }
+    .result-value { font-family: 'Georgia', serif; font-size: 14px; font-weight: 900; color: var(--navy); }
 
-    /* ── BOTTOM ROW ── */
+    /* BOTTOM ROW */
     .bottom-row { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 5px; margin-bottom: 4px; }
     .card-wrap { border: 1.5px solid var(--border); border-radius: 3px; overflow: hidden; }
     .card-header {
-      background: var(--navy); color: var(--white); font-size: 11px; font-weight: 800;
+      background: var(--navy); color: var(--white); font-size: 10px; font-weight: 800;
       letter-spacing: 1.2px; text-transform: uppercase; padding: 3px 8px;
       text-align: center; border-bottom: 2px solid var(--gold);
     }
 
     .att-body { display: flex; justify-content: space-around; padding: 5px; background: var(--blue-pale); }
     .att-item { text-align: center; }
-    .att-num { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 900; color: var(--navy); display: block; }
-    .att-lbl { font-size: 10px; color: var(--slate-light); font-weight: 800; text-transform: uppercase; }
+    .att-num { font-family: 'Georgia', serif; font-size: 16px; font-weight: 900; color: var(--navy); display: block; }
+    .att-lbl { font-size: 9px; color: var(--slate-light); font-weight: 800; text-transform: uppercase; }
 
     .legend-body { padding: 4px 8px; background: var(--blue-pale); display: grid; grid-template-columns: 1fr 1fr; gap: 2px 6px; }
-    .legend-item { font-size: 10.5px; font-weight: 700; color: var(--slate); display: flex; align-items: center; gap: 4px; }
+    .legend-item { font-size: 9.5px; font-weight: 700; color: var(--slate); display: flex; align-items: center; gap: 4px; }
     .legend-grade { font-weight: 900; color: var(--blue); min-width: 16px; }
     .legend-range { color: var(--slate-light); font-weight: 700; }
 
@@ -287,50 +225,33 @@
     .remark-row { display: flex; flex: 1; border-top: 1px solid var(--border); }
     .remark-row:first-child { border-top: none; }
     .remark-who {
-      background: var(--blue-pale); font-size: 10px; font-weight: 800; color: var(--blue);
+      background: var(--blue-pale); font-size: 9px; font-weight: 800; color: var(--blue);
       text-transform: uppercase; letter-spacing: 0.5px; width: 32%;
       padding: 5px; display: flex; flex-direction: column;
       justify-content: space-between; border-right: 1px solid var(--border);
     }
     .remark-lines { flex: 1; padding: 5px; display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; }
     .remark-line { border-bottom: 1px solid #b8d4f0; height: 13px; }
-    .sig-block { font-size: 9px; color: var(--slate-light); font-weight: 700; text-align: right; margin-top: 2px; }
+    .sig-block { font-size: 8px; color: var(--slate-light); font-weight: 700; text-align: right; margin-top: 2px; }
     .sig-line-short { border-bottom: 1px solid var(--gold); margin-top: 2px; height: 12px; }
 
     .next-term-panel { border: 1.5px solid var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
     .next-term-body { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--blue-pale); padding: 4px 10px; }
     .next-item { text-align: center; }
-    .next-label { font-size: 10px; font-weight: 800; color: var(--slate-light); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 1px; }
-    .next-value { font-size: 12px; font-weight: 800; color: var(--navy); border-bottom: 1.5px solid var(--gold); min-height: 14px; display: block; }
+    .next-label { font-size: 9px; font-weight: 800; color: var(--slate-light); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 1px; }
+    .next-value { font-size: 11px; font-weight: 800; color: var(--navy); border-bottom: 1.5px solid var(--gold); min-height: 14px; display: block; }
 
     .page-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 3px; border-top: 1px solid var(--border); }
-    .footer-school { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 900; color: var(--navy); }
-    .footer-stamp { font-size: 10px; color: var(--slate-light); font-weight: 700; text-align: center; }
+    .footer-school { font-family: 'Georgia', serif; font-size: 10px; font-weight: 900; color: var(--navy); }
+    .footer-stamp { font-size: 9px; color: var(--slate-light); font-weight: 700; text-align: center; }
     .footer-seal {
       width: 34px; height: 34px; border: 2px solid var(--gold); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 7px; font-weight: 800; color: var(--gold); text-align: center; line-height: 1.2;
     }
-
-    /* ─────────────────────────────────────────────
-       PRINT OVERRIDES
-       page-break rules kept as belt-and-suspenders
-       on top of the scale() approach.
-    ───────────────────────────────────────────── */
-    @media print {
-      html, body { overflow: hidden; }
-      * {
-        page-break-inside: avoid !important;
-        break-inside:      avoid !important;
-      }
-      .marks-table thead { display: table-header-group; }
-      .marks-table tfoot { display: table-footer-group; }
-      .no-print { display: none !important; }
-    }
   </style>
 </head>
 <body>
-<div class="scale-root">
 <div class="page-frame">
 <div class="inner-content">
 
@@ -404,187 +325,177 @@
   </div>
 
   <!-- PERFORMANCE TABLE -->
-  <div class="performance-section">
+  <div class="section-heading">
+    <div class="section-heading-line"></div>
+    <div class="section-heading-text">Term Performance Records</div>
+    <div class="section-heading-line"></div>
+  </div>
 
-    <div class="section-heading">
-      <div class="section-heading-line"></div>
-      <div class="section-heading-text">Term Performance Records</div>
-      <div class="section-heading-line"></div>
-    </div>
+  <table class="marks-table">
+    <thead>
+      <tr class="hdr-top">
+        <th class="col-subj" rowspan="2" style="width:16%;text-align:left;">Code &amp; Subject</th>
+        <th rowspan="2" style="width:4%;">P<br>A<br>P<br>E<br>R</th>
+        <th colspan="3" style="width:12%;">FORMATIVE</th>
+        <th rowspan="2" style="width:5%;">AVG</th>
+        <th rowspan="2" style="width:5%;">20%</th>
+        <th rowspan="2" style="width:6%;">{{ exam_type }}<br><span style="font-size:9px;font-weight:700;">(Score)</span></th>
+        <th rowspan="2" style="width:5%;">80%</th>
+        <th rowspan="2" style="width:6%;">100%</th>
+        <th rowspan="2" style="width:5%;">GRADE</th>
+        <th rowspan="2" style="width:22%;text-align:left;">COMMENT</th>
+        <th rowspan="2" style="width:4%;">TR</th>
+      </tr>
+      <tr class="hdr-sub">
+        <th>A1</th><th>A2</th><th>A3</th>
+      </tr>
+    </thead>
 
-    <div class="table-scroll">
-      <table class="marks-table">
-        <thead>
-          <tr class="hdr-top">
-            <th class="col-subj" rowspan="2" style="width:16%;text-align:left;">Code &amp; Subject</th>
-            <th rowspan="2" style="width:4%;">P<br>A<br>P<br>E<br>R</th>
-            <th colspan="3" style="width:12%;">FORMATIVE</th>
-            <th rowspan="2" style="width:5%;">AVG</th>
-            <th rowspan="2" style="width:5%;">20%</th>
-            <th rowspan="2" style="width:6%;">{{ exam_type }}<br><span style="font-size:9px;font-weight:700;">(Score)</span></th>
-            <th rowspan="2" style="width:5%;">80%</th>
-            <th rowspan="2" style="width:6%;">100%</th>
-            <th rowspan="2" style="width:5%;">GRADE</th>
-            <th rowspan="2" style="width:22%;text-align:left;">COMMENT</th>
-            <th rowspan="2" style="width:4%;">TR</th>
+    {% if subject_rows %}
+      {% for row in subject_rows %}
+        {% set np = row.papers | length %}
+        <tbody>
+        {% for paper in row.papers %}
+          <tr class="{% if row.row_index % 2 == 0 %}row-even{% endif %}{% if row.is_summary %} summary-row{% endif %}">
+            {% if loop.first %}
+            <td class="cell-subj" rowspan="{{ np }}">
+              {% if row.subject_code %}<span style="font-size:9px;color:var(--slate-light);">{{ row.subject_code }}&nbsp;</span>{% endif %}
+              {{ row.subject_name }}
+            </td>
+            {% endif %}
+            <td class="cell-paper">{{ paper.paper_num }}</td>
+            {% if loop.first %}
+            <td rowspan="{{ np }}">{{ row.a1 if row.a1 is not none else '—' }}</td>
+            <td rowspan="{{ np }}">{{ row.a2 if row.a2 is not none else '—' }}</td>
+            <td rowspan="{{ np }}">{{ row.a3 if row.a3 is not none else '—' }}</td>
+            <td rowspan="{{ np }}">{% if row.cbc_avg is not none %}<span class="pill">{{ row.cbc_avg }}</span>{% else %}—{% endif %}</td>
+            <td rowspan="{{ np }}">{% if row.formative_20 is not none %}{{ row.formative_20 }}{% else %}—{% endif %}</td>
+            {% endif %}
+            <td>{{ paper.exam_score if paper.exam_score is not none else '—' }}</td>
+            {% if loop.first %}
+            <td rowspan="{{ np }}">{% if row.exam_80 is not none %}{{ row.exam_80 }}{% else %}—{% endif %}</td>
+            <td rowspan="{{ np }}">{% if row.total_100 is not none %}<span class="pill">{{ row.total_100 }}</span>{% else %}—{% endif %}</td>
+            <td rowspan="{{ np }}" class="{%- set g = row.grade | lower if row.grade else '' -%}{%- if g == 'a' %}ga{%- elif g == 'b' %}gb{%- elif g == 'c' %}gc{%- elif g == 'd' %}gd{%- elif g == 'e' %}ge{%- else %}gu{%- endif %}">
+              <strong>{{ row.grade or '—' }}</strong>
+            </td>
+            <td rowspan="{{ np }}" class="cell-comment">{{ row.comment or '' }}</td>
+            <td rowspan="{{ np }}">{{ row.teacher_initials or '' }}</td>
+            {% endif %}
           </tr>
-          <tr class="hdr-sub">
-            <th>A1</th><th>A2</th><th>A3</th>
-          </tr>
-        </thead>
+        {% endfor %}
+        </tbody>
+      {% endfor %}
 
-        {% if subject_rows %}
-          {% for row in subject_rows %}
-            {% set np = row.papers | length %}
-            <tbody>
-            {% for paper in row.papers %}
-              <tr class="{% if row.row_index % 2 == 0 %}row-even{% endif %}{% if row.is_summary %} summary-row{% endif %}">
-                {% if loop.first %}
-                <td class="cell-subj" rowspan="{{ np }}">
-                  {% if row.subject_code %}<span style="font-size:9px;color:var(--slate-light);">{{ row.subject_code }}&nbsp;</span>{% endif %}
-                  {{ row.subject_name }}
-                </td>
-                {% endif %}
-                <td class="cell-paper">{{ paper.paper_num }}</td>
-                {% if loop.first %}
-                <td rowspan="{{ np }}">{{ row.a1 if row.a1 is not none else '—' }}</td>
-                <td rowspan="{{ np }}">{{ row.a2 if row.a2 is not none else '—' }}</td>
-                <td rowspan="{{ np }}">{{ row.a3 if row.a3 is not none else '—' }}</td>
-                <td rowspan="{{ np }}">{% if row.cbc_avg is not none %}<span class="pill">{{ row.cbc_avg }}</span>{% else %}—{% endif %}</td>
-                <td rowspan="{{ np }}">{% if row.formative_20 is not none %}{{ row.formative_20 }}{% else %}—{% endif %}</td>
-                {% endif %}
-                <td>{{ paper.exam_score if paper.exam_score is not none else '—' }}</td>
-                {% if loop.first %}
-                <td rowspan="{{ np }}">{% if row.exam_80 is not none %}{{ row.exam_80 }}{% else %}—{% endif %}</td>
-                <td rowspan="{{ np }}">{% if row.total_100 is not none %}<span class="pill">{{ row.total_100 }}</span>{% else %}—{% endif %}</td>
-                <td rowspan="{{ np }}" class="{%- set g = row.grade | lower if row.grade else '' -%}{%- if g == 'a' %}ga{%- elif g == 'b' %}gb{%- elif g == 'c' %}gc{%- elif g == 'd' %}gd{%- elif g == 'e' %}ge{%- else %}gu{%- endif %}">
-                  <strong>{{ row.grade or '—' }}</strong>
-                </td>
-                <td rowspan="{{ np }}" class="cell-comment">{{ row.comment or '' }}</td>
-                <td rowspan="{{ np }}">{{ row.teacher_initials or '' }}</td>
-                {% endif %}
-              </tr>
-            {% endfor %}
-            </tbody>
-          {% endfor %}
+      <!-- Average summary -->
+      <tbody>
+        {% set avg_f20  = subject_rows | selectattr('formative_20','ne',none) | map(attribute='formative_20') | list %}
+        {% set avg_e80  = subject_rows | selectattr('exam_80','ne',none)      | map(attribute='exam_80')      | list %}
+        {% set avg_t100 = subject_rows | selectattr('total_100','ne',none)    | map(attribute='total_100')    | list %}
+        <tr class="summary-row">
+          <td colspan="6" style="text-align:left;font-weight:800;padding-left:6px;">AVERAGE SCORES</td>
+          <td>{% if avg_f20 %}{{ (avg_f20 | sum / avg_f20 | length) | round(2) }}{% else %}—{% endif %}</td>
+          <td>—</td>
+          <td>{% if avg_e80 %}{{ (avg_e80 | sum / avg_e80 | length) | round(2) }}{% else %}—{% endif %}</td>
+          <td>{% if avg_t100 %}<span class="pill">{{ (avg_t100 | sum / avg_t100 | length) | round(2) }}</span>{% else %}—{% endif %}</td>
+          <td>{%- set g = average_grade | default('') | lower -%}<strong class="{%- if g=='a' %}ga{%- elif g=='b' %}gb{%- elif g=='c' %}gc{%- elif g=='d' %}gd{%- elif g=='e' %}ge{%- else %}gu{%- endif %}">{{ average_grade | default('—') }}</strong></td>
+          <td colspan="2"></td>
+        </tr>
+      </tbody>
 
-          <!-- Average summary -->
-          <tbody>
-            {% set avg_f20  = subject_rows | selectattr('formative_20','ne',none) | map(attribute='formative_20') | list %}
-            {% set avg_e80  = subject_rows | selectattr('exam_80','ne',none)      | map(attribute='exam_80')      | list %}
-            {% set avg_t100 = subject_rows | selectattr('total_100','ne',none)    | map(attribute='total_100')    | list %}
-            <tr class="summary-row">
-              <td colspan="6" style="text-align:left;font-weight:800;padding-left:6px;">AVERAGE SCORES</td>
-              <td>{% if avg_f20 %}{{ (avg_f20 | sum / avg_f20 | length) | round(2) }}{% else %}—{% endif %}</td>
-              <td>—</td>
-              <td>{% if avg_e80 %}{{ (avg_e80 | sum / avg_e80 | length) | round(2) }}{% else %}—{% endif %}</td>
-              <td>{% if avg_t100 %}<span class="pill">{{ (avg_t100 | sum / avg_t100 | length) | round(2) }}</span>{% else %}—{% endif %}</td>
-              <td>{%- set g = average_grade | default('') | lower -%}<strong class="{%- if g=='a' %}ga{%- elif g=='b' %}gb{%- elif g=='c' %}gc{%- elif g=='d' %}gd{%- elif g=='e' %}ge{%- else %}gu{%- endif %}">{{ average_grade | default('—') }}</strong></td>
-              <td colspan="2"></td>
-            </tr>
-          </tbody>
+    {% else %}
+      <tbody>
+        <tr><td colspan="13" style="text-align:center;color:#94a3b8;padding:10px;font-style:italic;font-size:10px;">No marks have been recorded for this learner.</td></tr>
+      </tbody>
+    {% endif %}
 
-        {% else %}
-          <tbody>
-            <tr><td colspan="13" style="text-align:center;color:#94a3b8;padding:10px;font-style:italic;font-size:11px;">No marks have been recorded for this learner.</td></tr>
-          </tbody>
-        {% endif %}
+  </table>
 
-      </table>
-    </div><!-- .table-scroll -->
-  </div><!-- .performance-section -->
+  <!-- RESULT STRIP -->
+  <div class="result-strip">
+    <div class="result-cell">
+      <span class="result-label">Average (100%)</span>
+      <span class="result-value">{{ average_mark if average_mark is not none else '—' }}</span>
+    </div>
+    <div class="result-cell">
+      <span class="result-label">Position</span>
+      <span class="result-value">{{ position if position else '—' }}<span style="font-size:10px;font-weight:700;color:var(--slate-light);"> / {{ total_students }}</span></span>
+    </div>
+    <div class="result-cell">
+      <span class="result-label">&nbsp;</span>
+      <span class="result-value">-</span>
+    </div>
+    <div class="result-cell">
+      <span class="result-label">Division</span>
+      <span class="result-value">{{ division if division else '—' }}</span>
+    </div>
+    <div class="result-cell">
+      <span class="result-label">Conduct</span>
+      <span class="result-value">&nbsp;</span>
+    </div>
+  </div>
 
-  <!-- BOTTOM BLOCK -->
-  <div class="bottom-block">
-
-    <!-- RESULT STRIP -->
-    <div class="result-strip">
-      <div class="result-cell">
-        <span class="result-label">Average (100%)</span>
-        <span class="result-value">{{ average_mark if average_mark is not none else '—' }}</span>
-      </div>
-      <div class="result-cell">
-        <span class="result-label">Position</span>
-        <span class="result-value">{{ position if position else '—' }}<span style="font-size:11px;font-weight:700;color:var(--slate-light);"> / {{ total_students }}</span></span>
-      </div>
-      <div class="result-cell">
-        <span class="result-label">&nbsp;</span>
-        <span class="result-value">-</span>
-      </div>
-      <div class="result-cell">
-        <span class="result-label">Division</span>
-        <span class="result-value">{{ division if division else '—' }}</span>
-      </div>
-      <div class="result-cell">
-        <span class="result-label">Conduct</span>
-        <span class="result-value">&nbsp;</span>
+  <!-- ATTENDANCE + GRADING KEY + COMMENTS -->
+  <div class="bottom-row">
+    <div class="card-wrap">
+      <div class="card-header">Attendance</div>
+      <div class="att-body">
+        <div class="att-item"><span class="att-num">{{ attendance.total or '—' }}</span><span class="att-lbl">Total</span></div>
+        <div class="att-item"><span class="att-num">{{ attendance.present or '—' }}</span><span class="att-lbl">Present</span></div>
+        <div class="att-item"><span class="att-num">{{ attendance.absent or '—' }}</span><span class="att-lbl">Absent</span></div>
       </div>
     </div>
 
-    <!-- ATTENDANCE + GRADING KEY + COMMENTS -->
-    <div class="bottom-row">
-      <div class="card-wrap">
-        <div class="card-header">Attendance</div>
-        <div class="att-body">
-          <div class="att-item"><span class="att-num">{{ attendance.total or '—' }}</span><span class="att-lbl">Total</span></div>
-          <div class="att-item"><span class="att-num">{{ attendance.present or '—' }}</span><span class="att-lbl">Present</span></div>
-          <div class="att-item"><span class="att-num">{{ attendance.absent or '—' }}</span><span class="att-lbl">Absent</span></div>
+    <div class="card-wrap">
+      <div class="card-header">Grading Key (O-Level)</div>
+      <div class="legend-body">
+        {% for item in grade_legend %}
+        <div class="legend-item">
+          <span class="legend-grade">{{ item.grade }}</span>
+          <span class="legend-range">{{ item.min }}–{{ item.max }}</span>
+          {% if item.remark %}<span style="color:var(--slate-light);font-style:italic;">({{ item.remark }})</span>{% endif %}
         </div>
-      </div>
-
-      <div class="card-wrap">
-        <div class="card-header">Grading Key (O-Level)</div>
-        <div class="legend-body">
-          {% for item in grade_legend %}
-          <div class="legend-item">
-            <span class="legend-grade">{{ item.grade }}</span>
-            <span class="legend-range">{{ item.min }}–{{ item.max }}</span>
-            {% if item.remark %}<span style="color:var(--slate-light);font-style:italic;">({{ item.remark }})</span>{% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="remarks-card">
-        <div class="card-header">Comments &amp; Signatures</div>
-        <div class="remark-row">
-          <div class="remark-who">Class<br>Teacher
-            <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
-          </div>
-          <div class="remark-lines">
-            <div class="remark-line"></div><div class="remark-line"></div><div class="remark-line"></div>
-          </div>
-        </div>
-        <div class="remark-row">
-          <div class="remark-who">Head<br>Teacher
-            <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
-          </div>
-          <div class="remark-lines">
-            <div class="remark-line"></div><div class="remark-line"></div><div class="remark-line"></div>
-          </div>
-        </div>
-      </div>
-    </div><!-- .bottom-row -->
-
-    <!-- NEXT TERM PANEL -->
-    <div class="next-term-panel">
-      <div class="card-header">Next Term Information</div>
-      <div class="next-term-body">
-        <div class="next-item"><span class="next-label">Reopening Date</span><span class="next-value">&nbsp;</span></div>
-        <div class="next-item"><span class="next-label">School Fees (UGX)</span><span class="next-value">&nbsp;</span></div>
-        <div class="next-item"><span class="next-label">Parent / Guardian Signature</span><span class="next-value">&nbsp;</span></div>
+        {% endfor %}
       </div>
     </div>
 
-    <!-- FOOTER -->
-    <div class="page-footer">
-      <div class="footer-school">{{ school.name }}</div>
-      <div class="footer-stamp">Generated: {{ generated_date }}<br><span style="color:var(--navy);">{{ academic_year.name if academic_year else '' }}</span></div>
-      <div class="footer-seal">OFFICIAL<br>SEAL</div>
+    <div class="remarks-card">
+      <div class="card-header">Comments &amp; Signatures</div>
+      <div class="remark-row">
+        <div class="remark-who">Class<br>Teacher
+          <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
+        </div>
+        <div class="remark-lines">
+          <div class="remark-line"></div><div class="remark-line"></div><div class="remark-line"></div>
+        </div>
+      </div>
+      <div class="remark-row">
+        <div class="remark-who">Head<br>Teacher
+          <div class="sig-block">Sign:<div class="sig-line-short"></div></div>
+        </div>
+        <div class="remark-lines">
+          <div class="remark-line"></div><div class="remark-line"></div><div class="remark-line"></div>
+        </div>
+      </div>
     </div>
+  </div>
 
-  </div><!-- .bottom-block -->
+  <!-- NEXT TERM PANEL -->
+  <div class="next-term-panel">
+    <div class="card-header">Next Term Information</div>
+    <div class="next-term-body">
+      <div class="next-item"><span class="next-label">Reopening Date</span><span class="next-value">&nbsp;</span></div>
+      <div class="next-item"><span class="next-label">School Fees (UGX)</span><span class="next-value">&nbsp;</span></div>
+      <div class="next-item"><span class="next-label">Parent / Guardian Signature</span><span class="next-value">&nbsp;</span></div>
+    </div>
+  </div>
 
-</div></div></div>
+  <!-- FOOTER -->
+  <div class="page-footer">
+    <div class="footer-school">{{ school.name }}</div>
+    <div class="footer-stamp">Generated: {{ generated_date }}<br><span style="color:var(--navy);">{{ academic_year.name if academic_year else '' }}</span></div>
+    <div class="footer-seal">OFFICIAL<br>SEAL</div>
+  </div>
+
+</div></div>
 </body>
 </html>

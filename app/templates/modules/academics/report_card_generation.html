@@ -332,6 +332,7 @@
 .badge-amber  { background: var(--amber-light);  color: #b45309; }
 .badge-teal   { background: var(--teal-light);   color: #0369a1; }
 .badge-slate  { background: var(--slate-100);    color: var(--slate-500); }
+.badge-orange { background: #fff7ed;             color: #c2410c; }
 
 .badge-dot {
   width: 6px;
@@ -340,6 +341,14 @@
   background: currentColor;
   display: inline-block;
   flex-shrink: 0;
+}
+
+/* Spinning dot for "generating" state */
+@keyframes spin { to { transform: rotate(360deg); } }
+.badge-spinning .badge-dot {
+  animation: spin .8s linear infinite;
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
 /* ════════════════════════════════════════════
@@ -386,7 +395,7 @@
   height: 100%;
   background: var(--blue);
   border-radius: 999px;
-  transition: width .3s ease;
+  transition: width .4s ease;
 }
 
 /* ════════════════════════════════════════════
@@ -526,7 +535,7 @@
         </div>
         <div class="rc-card-subtitle">
           Select a class &amp; stream, term and exam type — the system will automatically
-          choose the Nursery or Primary template.
+          choose the correct template.
         </div>
       </div>
       <button class="btn btn-config" onclick="openConfigModal()">
@@ -591,7 +600,7 @@
         </button>
       </div>
 
-      <!-- Progress bar (shown during generate-all) -->
+      <!-- Bulk progress bar — shown while generate-all job is running -->
       <div id="gen-progress-wrap" style="display:none; margin-top:16px;">
         <div style="font-size:12px; color:var(--slate-500); margin-bottom:4px;" id="gen-progress-label">
           Generating…
@@ -608,7 +617,9 @@
             Showing <strong id="gen-count">0</strong> students —
             <span id="gen-generated-count" style="color:var(--green); font-weight:600;">0 generated</span>
           </div>
-
+          <button class="btn btn-generate" id="gen-all-btn" onclick="generateAll()">
+            ⚡ Generate All Pending
+          </button>
         </div>
 
         <div class="table-wrapper">
@@ -912,16 +923,21 @@
 /* ─────────────────────────────────────
    CONSTANTS
 ───────────────────────────────────── */
-const MAX_LOGO_BYTES = 5 * 1024 * 1024;
-const ALLOWED_EXTS   = new Set(["png", "jpg", "jpeg", "webp"]);
+const MAX_LOGO_BYTES  = 5 * 1024 * 1024;
+const ALLOWED_EXTS    = new Set(["png", "jpg", "jpeg", "webp"]);
+const POLL_INTERVAL   = 2500;   // ms between job status polls
+const POLL_MAX_TRIES  = 120;    // give up after ~5 minutes
 
 /* ─────────────────────────────────────
    STATE
 ───────────────────────────────────── */
-let _loadedStudents   = {};   // id → student object
+let _loadedStudents   = {};
 let _pendingDeleteId  = null;
-let _pendingDeleteSrc = null; // "gen" | "saved"
+let _pendingDeleteSrc = null;
 let _reqInFlight      = false;
+let _bulkJobId        = null;   // currently running generate-all job
+let _bulkPollTimer    = null;
+let _singlePollers    = {};     // { studentId: { jobId, timer, tries } }
 
 /* ─────────────────────────────────────
    AUTH HEADERS
@@ -963,35 +979,18 @@ function toast(msg, type = "info", ms = 4000) {
 ───────────────────────────────────── */
 async function downloadReport(reportId, label) {
   if (!reportId) { toast("No file available to download", "warning"); return; }
-
   toast("Preparing download…", "info", 2000);
-
   try {
-    const res = await fetch(`/api/report-cards/${reportId}/download`, {
-      headers: _auth(false),
-    });
-
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      throw new Error(d.message || `Server returned ${res.status}`);
-    }
-
+    const res = await fetch(`/api/report-cards/${reportId}/download`, { headers: _auth(false) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || `Server returned ${res.status}`); }
     const blob     = await res.blob();
     const blobUrl  = URL.createObjectURL(blob);
     const filename = `report_${(label || "card").replace(/\s+/g, "_")}.pdf`;
-
-    const a    = document.createElement("a");
-    a.href     = blobUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
+    const a        = document.createElement("a");
+    a.href = blobUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-
-  } catch (e) {
-    toast(e.message || "Download failed", "error");
-  }
+  } catch (e) { toast(e.message || "Download failed", "error"); }
 }
 
 /* ─────────────────────────────────────
@@ -1000,95 +999,72 @@ async function downloadReport(reportId, label) {
 function _validateField(id, errId) {
   const el  = document.getElementById(id);
   const err = document.getElementById(errId);
-  if (!el.value) {
-    el.classList.add("is-error");
-    err && err.classList.add("visible");
-    return false;
-  }
-  el.classList.remove("is-error");
-  err && err.classList.remove("visible");
-  return true;
+  if (!el.value) { el.classList.add("is-error"); err && err.classList.add("visible"); return false; }
+  el.classList.remove("is-error"); err && err.classList.remove("visible"); return true;
 }
-
 function _validateGenSection() {
-  const a = _validateField("gen-stream",    "err-gen-stream");
-  const b = _validateField("gen-term",      "err-gen-term");
-  const c = _validateField("gen-exam-type", "err-gen-exam-type");
-  return a && b && c;
+  return _validateField("gen-stream","err-gen-stream")
+       & _validateField("gen-term","err-gen-term")
+       & _validateField("gen-exam-type","err-gen-exam-type");
 }
-
 function _validateSavedSection() {
-  const a = _validateField("saved-year",      "err-saved-year");
-  const b = _validateField("saved-stream",    "err-saved-stream");
-  const c = _validateField("saved-term",      "err-saved-term");
-  const d = _validateField("saved-exam-type", "err-saved-exam-type");
-  return a && b && c && d;
+  return _validateField("saved-year","err-saved-year")
+       & _validateField("saved-stream","err-saved-stream")
+       & _validateField("saved-term","err-saved-term")
+       & _validateField("saved-exam-type","err-saved-exam-type");
 }
 
-["gen-stream", "gen-term", "gen-exam-type"].forEach(id => {
-  document.getElementById(id)?.addEventListener("change", () => {
+["gen-stream","gen-term","gen-exam-type","saved-year","saved-stream","saved-term","saved-exam-type"]
+  .forEach(id => document.getElementById(id)?.addEventListener("change", () => {
     document.getElementById(id)?.classList.remove("is-error");
-    document.getElementById("err-" + id)?.classList.remove("visible");
-  });
-});
-["saved-year", "saved-stream", "saved-term", "saved-exam-type"].forEach(id => {
-  document.getElementById(id)?.addEventListener("change", () => {
-    document.getElementById(id)?.classList.remove("is-error");
-    document.getElementById("err-" + id)?.classList.remove("visible");
-  });
-});
+    document.getElementById("err-"+id)?.classList.remove("visible");
+  }));
 
 /* ─────────────────────────────────────
    SKELETON ROWS
 ───────────────────────────────────── */
 function _skeletons(n, cols) {
-  let h = "";
-  const widths = [60, 130, 100, 70, 80, 110];
-  for (let i = 0; i < n; i++) {
-    h += "<tr class='skeleton-row'>";
-    for (let j = 0; j < cols; j++)
-      h += `<td><div class="skeleton-block" style="width:${widths[j] || 80}px"></div></td>`;
-    h += "</tr>";
-  }
-  return h;
+  const widths = [60,130,100,70,80,110];
+  return Array.from({length:n}, () =>
+    `<tr class='skeleton-row'>${Array.from({length:cols}, (_,j) =>
+      `<td><div class="skeleton-block" style="width:${widths[j]||80}px"></div></td>`
+    ).join("")}</tr>`
+  ).join("");
 }
 
 /* ─────────────────────────────────────
-   TYPE BADGE
+   BADGES
 ───────────────────────────────────── */
 function _typeBadge(reportType) {
-  if (reportType === "nursery")
-    return `<span class="badge badge-teal">🌱 Nursery</span>`;
-  return `<span class="badge badge-blue">📚 Primary/Secondary</span>`;
+  return reportType === "nursery"
+    ? `<span class="badge badge-teal">🌱 Nursery</span>`
+    : `<span class="badge badge-blue">📚 Primary/Secondary</span>`;
 }
 
-/* ─────────────────────────────────────
-   STATUS BADGE
-───────────────────────────────────── */
-function _buildStatusBadge(generated) {
+function _buildStatusBadge(generated, generating = false) {
+  if (generating)
+    return `<span class="badge badge-orange badge-spinning"><span class="badge-dot"></span>Generating…</span>`;
   return generated
     ? `<span class="badge badge-green"><span class="badge-dot"></span>Generated</span>`
     : `<span class="badge badge-slate"><span class="badge-dot"></span>Pending</span>`;
 }
 
 /* ─────────────────────────────────────
-   BUILD ACTIONS CELL (gen section)
+   BUILD ACTIONS CELL
 ───────────────────────────────────── */
-function _buildGenActions(s) {
+function _buildGenActions(s, generating = false) {
+  if (generating)
+    return `<span style="font-size:12px;color:var(--slate-400);">⏳ Please wait…</span>`;
   if (s.report_generated) {
     const viewUrl = _esc(s.report_url || "");
     const label   = _esc(s.student_code || s.name || "");
     return `<div class="actions-cell">
       <a href="${viewUrl}" target="_blank" rel="noopener" class="btn btn-view btn-sm">👁 View</a>
-      <button class="btn btn-download btn-sm"
-              onclick="downloadReport(${s.report_id}, '${label}')">⬇ Download</button>
-      <button class="btn btn-delete btn-sm"
-              onclick="confirmDeleteReport(${s.report_id}, 'gen')">🗑 Delete</button>
+      <button class="btn btn-download btn-sm" onclick="downloadReport(${s.report_id},'${label}')">⬇ Download</button>
+      <button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${s.report_id},'gen')">🗑 Delete</button>
     </div>`;
   }
-  return `<button class="btn btn-generate btn-sm"
-            id="gen-btn-${s.id}"
-            onclick="generateOne(${s.id})">⚡ Generate</button>`;
+  return `<button class="btn btn-generate btn-sm" id="gen-btn-${s.id}" onclick="generateOne(${s.id})">⚡ Generate</button>`;
 }
 
 /* ─────────────────────────────────────
@@ -1096,7 +1072,7 @@ function _buildGenActions(s) {
 ───────────────────────────────────── */
 async function loadStudents() {
   if (_reqInFlight) return;
-  if (!_validateGenSection()) { toast("Please fill all required filters", "warning"); return; }
+  if (!_validateGenSection()) { toast("Please fill all required filters","warning"); return; }
 
   const streamId = document.getElementById("gen-stream").value;
   const termId   = document.getElementById("gen-term").value;
@@ -1106,31 +1082,25 @@ async function loadStudents() {
   const icon = document.getElementById("load-btn-icon");
   const txt  = document.getElementById("load-btn-text");
 
-  _reqInFlight     = true;
-  btn.disabled     = true;
-  icon.textContent = "⏳";
-  txt.textContent  = "Loading…";
+  _reqInFlight = true; btn.disabled = true;
+  icon.textContent = "⏳"; txt.textContent = "Loading…";
 
-  const tbody = document.getElementById("gen-tbody");
-  tbody.innerHTML = _skeletons(5, 6);
+  document.getElementById("gen-tbody").innerHTML = _skeletons(5,6);
   document.getElementById("gen-table-wrap").style.display = "block";
   document.getElementById("gen-empty").style.display      = "none";
 
   try {
-    const p   = new URLSearchParams({ stream_id: streamId, term_id: termId, exam_type: examType });
+    const p   = new URLSearchParams({ stream_id:streamId, term_id:termId, exam_type:examType });
     const res = await fetch(`/api/report-cards/students?${p}`, { headers: _auth() });
     const d   = await res.json();
     if (!res.ok) throw new Error(d.message || "Failed to load students");
     _renderStudents(d.students || []);
   } catch (e) {
-    toast(e.message, "error");
+    toast(e.message,"error");
     document.getElementById("gen-table-wrap").style.display = "none";
-    document.getElementById("gen-empty").style.display      = "none";
   } finally {
-    _reqInFlight     = false;
-    btn.disabled     = false;
-    icon.textContent = "🔍";
-    txt.textContent  = "Load Students";
+    _reqInFlight = false; btn.disabled = false;
+    icon.textContent = "🔍"; txt.textContent = "Load Students";
   }
 }
 
@@ -1145,15 +1115,9 @@ function _renderStudents(students) {
   _loadedStudents = {};
   students.forEach(s => { _loadedStudents[s.id] = s; });
 
-  if (!students.length) {
-    wrap.style.display  = "none";
-    empty.style.display = "block";
-    return;
-  }
+  if (!students.length) { wrap.style.display="none"; empty.style.display="block"; return; }
 
-  wrap.style.display  = "block";
-  empty.style.display = "none";
-
+  wrap.style.display="block"; empty.style.display="none";
   _updateGenCounts();
 
   tbody.innerHTML = students.map(s => `
@@ -1176,24 +1140,47 @@ function _updateGenCounts() {
 }
 
 /* ─────────────────────────────────────
-   UPDATE ONE ROW IN-PLACE
+   PATCH ONE ROW IN-PLACE
 ───────────────────────────────────── */
-function _patchStudentRow(studentId, updatedStudentObj) {
-  _loadedStudents[studentId] = updatedStudentObj;
+function _patchStudentRow(studentId, updatedObj, generating = false) {
+  _loadedStudents[studentId] = updatedObj;
   _updateGenCounts();
-
-  const statusCell = document.getElementById(`status-cell-${studentId}`);
-  const actionCell = document.getElementById(`action-cell-${studentId}`);
-  if (statusCell) statusCell.innerHTML = _buildStatusBadge(updatedStudentObj.report_generated);
-  if (actionCell) actionCell.innerHTML = _buildGenActions(updatedStudentObj);
+  const sc = document.getElementById(`status-cell-${studentId}`);
+  const ac = document.getElementById(`action-cell-${studentId}`);
+  if (sc) sc.innerHTML = _buildStatusBadge(updatedObj.report_generated, generating);
+  if (ac) ac.innerHTML = _buildGenActions(updatedObj, generating);
 }
 
 /* ─────────────────────────────────────
-   GENERATE ONE
+   POLL A SINGLE JOB
+───────────────────────────────────── */
+function _pollJob(jobId, onDone, onError, onTick) {
+  let tries = 0;
+  const timer = setInterval(async () => {
+    tries++;
+    if (tries > POLL_MAX_TRIES) {
+      clearInterval(timer);
+      onError("Timed out waiting for report generation.");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/report-cards/job/${jobId}`, { headers: _auth() });
+      const d   = await res.json();
+      if (!res.ok) { clearInterval(timer); onError(d.message || "Job poll failed"); return; }
+      if (onTick) onTick(d);
+      if (d.status === "done")  { clearInterval(timer); onDone(d.result); }
+      if (d.status === "error") { clearInterval(timer); onError(d.error || "Generation failed"); }
+    } catch (e) { /* network blip — keep polling */ }
+  }, POLL_INTERVAL);
+  return timer;
+}
+
+/* ─────────────────────────────────────
+   GENERATE ONE  (non-blocking)
 ───────────────────────────────────── */
 async function generateOne(studentId) {
-  const btn = document.getElementById(`gen-btn-${studentId}`);
-  if (btn) { btn.disabled = true; btn.textContent = "⏳ Generating…"; }
+  // Optimistically mark as "generating"
+  _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, true);
 
   try {
     const res = await fetch("/api/report-cards/generate", {
@@ -1209,29 +1196,39 @@ async function generateOne(studentId) {
     const d = await res.json();
     if (!res.ok) throw new Error(d.message || "Generation failed");
 
-    const report     = d.report || {};
-    const reportType = report.report_type || _loadedStudents[studentId]?.report_type || "";
-    const updated    = {
-      ..._loadedStudents[studentId],
-      report_generated: true,
-      report_id:        report.id       || null,
-      report_url:       report.file_url || report.url || "",
-      report_type:      reportType,
-    };
+    const jobId = d.job_id;
 
-    _patchStudentRow(studentId, updated);
-
-    const label = reportType === "nursery" ? "nursery" : "primary";
-    toast(`Report generated (${label} template)`, "success");
+    // Poll until done
+    _pollJob(
+      jobId,
+      // onDone
+      (result) => {
+        const reportType = result.report_type || _loadedStudents[studentId]?.report_type || "";
+        const updated = {
+          ..._loadedStudents[studentId],
+          report_generated: true,
+          report_id:        result.report_id || result.id || null,
+          report_url:       result.file_url  || "",
+          report_type:      reportType,
+        };
+        _patchStudentRow(studentId, updated, false);
+        toast(`Report generated (${_esc(result.section_label || reportType)})`, "success");
+      },
+      // onError
+      (errMsg) => {
+        _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
+        toast(errMsg, "error");
+      }
+    );
 
   } catch (e) {
+    _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
     toast(e.message, "error");
-    if (btn) { btn.disabled = false; btn.textContent = "⚡ Generate"; }
   }
 }
 
 /* ─────────────────────────────────────
-   GENERATE ALL PENDING
+   GENERATE ALL PENDING  (non-blocking)
 ───────────────────────────────────── */
 async function generateAll() {
   const pending = Object.values(_loadedStudents).filter(s => !s.report_generated);
@@ -1242,69 +1239,93 @@ async function generateAll() {
   const pbar   = document.getElementById("gen-progress-bar");
   const plabel = document.getElementById("gen-progress-label");
 
-  btn.disabled        = true;
+  btn.disabled = true;
   pwrap.style.display = "block";
+  pbar.style.width    = "0%";
+  plabel.textContent  = `Starting bulk generation for ${pending.length} student(s)…`;
 
-  let done    = 0;
-  const total = pending.length;
+  // Mark all pending rows as "generating"
+  pending.forEach(s => _patchStudentRow(s.id, { ...s }, true));
 
-  for (const student of pending) {
-    plabel.textContent = `Generating ${done + 1} of ${total}: ${student.name}…`;
-    pbar.style.width   = `${Math.round((done / total) * 100)}%`;
+  try {
+    const res = await fetch("/api/report-cards/generate-all", {
+      method:  "POST",
+      headers: _auth(),
+      body: JSON.stringify({
+        stream_id: document.getElementById("gen-stream").value,
+        term_id:   document.getElementById("gen-term").value,
+        exam_type: document.getElementById("gen-exam-type").value,
+      }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.message || "Bulk generation failed");
 
-    try {
-      const res = await fetch("/api/report-cards/generate", {
-        method:  "POST",
-        headers: _auth(),
-        body: JSON.stringify({
-          student_id: student.id,
-          term_id:    document.getElementById("gen-term").value,
-          exam_type:  document.getElementById("gen-exam-type").value,
-          stream_id:  document.getElementById("gen-stream").value,
-        }),
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.message);
+    const jobId = d.job_id;
+    const total = d.total || pending.length;
 
-      const report  = d.report || {};
-      const updated = {
-        ..._loadedStudents[student.id],
-        report_generated: true,
-        report_id:        report.id       || null,
-        report_url:       report.file_url || report.url || "",
-        report_type:      report.report_type || _loadedStudents[student.id]?.report_type || "",
-      };
-      _patchStudentRow(student.id, updated);
-      done++;
-    } catch (e) {
-      toast(`Failed for ${student.name}: ${e.message}`, "error");
-    }
-  }
+    _bulkJobId = jobId;
 
-  pbar.style.width   = "100%";
-  plabel.textContent = `Done — ${done} of ${total} generated.`;
-  toast(`${done} of ${total} reports generated`, "success");
+    _bulkPollTimer = _pollJob(
+      jobId,
+      // onDone
+      (result) => {
+        _bulkJobId = null;
+        pbar.style.width   = "100%";
+        plabel.textContent = result.message || "Done";
 
-  setTimeout(() => {
+        // Reload the student list to get fresh report URLs
+        loadStudents();
+
+        const msg = result.message || `${result.generated} report(s) generated`;
+        toast(msg, result.failed > 0 ? "warning" : "success");
+
+        setTimeout(() => {
+          pwrap.style.display = "none";
+          pbar.style.width    = "0%";
+        }, 3000);
+        btn.disabled = false;
+
+        if (result.errors && result.errors.length) {
+          result.errors.forEach(e => toast(e, "warning", 6000));
+        }
+      },
+      // onError
+      (errMsg) => {
+        _bulkJobId = null;
+        // Revert generating indicators
+        pending.forEach(s => _patchStudentRow(s.id, { ...s }, false));
+        pwrap.style.display = "none";
+        btn.disabled = false;
+        toast(errMsg, "error");
+      },
+      // onTick  — update progress bar
+      (jobData) => {
+        const done = jobData.progress || 0;
+        const pct  = total > 0 ? Math.round((done / total) * 100) : 0;
+        pbar.style.width   = `${pct}%`;
+        plabel.textContent = `Generating… ${done} / ${total}`;
+      }
+    );
+
+  } catch (e) {
+    pending.forEach(s => _patchStudentRow(s.id, { ...s }, false));
     pwrap.style.display = "none";
-    pbar.style.width    = "0%";
-  }, 3000);
-
-  btn.disabled = false;
+    btn.disabled = false;
+    toast(e.message, "error");
+  }
 }
 
 /* ─────────────────────────────────────
    LOAD SAVED REPORTS
 ───────────────────────────────────── */
 async function loadSavedReports() {
-  if (!_validateSavedSection()) { toast("Please fill all required filters", "warning"); return; }
+  if (!_validateSavedSection()) { toast("Please fill all required filters","warning"); return; }
 
   const btn = document.getElementById("saved-load-btn");
   btn.disabled  = true;
   btn.innerHTML = "⏳ Loading…";
 
-  const tbody = document.getElementById("saved-tbody");
-  tbody.innerHTML = _skeletons(4, 7);
+  document.getElementById("saved-tbody").innerHTML = _skeletons(4,7);
   document.getElementById("saved-table-wrap").style.display = "block";
   document.getElementById("saved-empty").style.display      = "none";
 
@@ -1320,7 +1341,7 @@ async function loadSavedReports() {
     if (!res.ok) throw new Error(d.message || "Failed to load reports");
     _renderSaved(d.report_cards || []);
   } catch (e) {
-    toast(e.message, "error");
+    toast(e.message,"error");
     document.getElementById("saved-table-wrap").style.display = "none";
   } finally {
     btn.disabled  = false;
@@ -1336,41 +1357,30 @@ function _renderSaved(reports) {
   const empty = document.getElementById("saved-empty");
   const tbody = document.getElementById("saved-tbody");
 
-  if (!reports.length) {
-    wrap.style.display  = "none";
-    empty.style.display = "block";
-    return;
-  }
+  if (!reports.length) { wrap.style.display="none"; empty.style.display="block"; return; }
 
-  wrap.style.display  = "block";
-  empty.style.display = "none";
-
-  const examCls = { BOT: "badge-blue", MID: "badge-amber", EOT: "badge-green" };
+  wrap.style.display="block"; empty.style.display="none";
+  const examCls = { BOT:"badge-blue", MID:"badge-amber", EOT:"badge-green" };
 
   tbody.innerHTML = reports.map(r => {
     const cls     = examCls[r.exam_type] || "badge-slate";
     const date    = r.generated_at
-      ? new Date(r.generated_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      ? new Date(r.generated_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})
       : "—";
     const viewUrl = _esc(r.file_url || "");
     const label   = _esc(r.student_code || r.student_name || "");
-
     return `<tr id="saved-row-${r.id}">
       <td><span class="cell-code">${_esc(r.student_code)}</span></td>
       <td><div class="cell-name">${_esc(r.student_name)}</div></td>
       <td>${_esc(r.class_name)} — ${_esc(r.stream_name)}</td>
       <td><span class="badge ${cls}">${_esc(r.exam_type)}</span></td>
-      <td>${_esc(r.academic_year || "—")}</td>
+      <td>${_esc(r.academic_year||"—")}</td>
       <td>${date}</td>
-      <td>
-        <div class="actions-cell">
-          <a href="${viewUrl}" target="_blank" rel="noopener" class="btn btn-view btn-sm">👁 View</a>
-          <button class="btn btn-download btn-sm"
-                  onclick="downloadReport(${r.id}, '${label}')">⬇ Download</button>
-          <button class="btn btn-delete btn-sm"
-                  onclick="confirmDeleteReport(${r.id}, 'saved')">🗑 Delete</button>
-        </div>
-      </td>
+      <td><div class="actions-cell">
+        <a href="${viewUrl}" target="_blank" rel="noopener" class="btn btn-view btn-sm">👁 View</a>
+        <button class="btn btn-download btn-sm" onclick="downloadReport(${r.id},'${label}')">⬇ Download</button>
+        <button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${r.id},'saved')">🗑 Delete</button>
+      </div></td>
     </tr>`;
   }).join("");
 }
@@ -1385,68 +1395,42 @@ function confirmDeleteReport(id, src) {
     "Are you sure you want to delete this report card? The file will be permanently removed.";
   document.getElementById("confirmModal").classList.add("open");
 }
-
-function closeConfirmModal() {
-  document.getElementById("confirmModal").classList.remove("open");
-}
+function closeConfirmModal() { document.getElementById("confirmModal").classList.remove("open"); }
 
 document.getElementById("confirm-delete-btn").addEventListener("click", async () => {
   if (!_pendingDeleteId) return;
-
   const deleteId  = _pendingDeleteId;
   const deleteSrc = _pendingDeleteSrc;
-
   const btn       = document.getElementById("confirm-delete-btn");
-  btn.disabled    = true;
-  btn.textContent = "⏳ Deleting…";
-
+  btn.disabled    = true; btn.textContent = "⏳ Deleting…";
   document.getElementById("confirmModal").classList.remove("open");
-  _pendingDeleteId  = null;
-  _pendingDeleteSrc = null;
+  _pendingDeleteId = null; _pendingDeleteSrc = null;
 
   try {
-    const res = await fetch(`/api/report-cards/${deleteId}`, {
-      method:  "DELETE",
-      headers: _auth(false),
-    });
-    const d = await res.json();
+    const res = await fetch(`/api/report-cards/${deleteId}`, { method:"DELETE", headers:_auth(false) });
+    const d   = await res.json();
     if (!res.ok) throw new Error(d.message || "Delete failed");
-
-    toast("Report deleted successfully", "success");
+    toast("Report deleted successfully","success");
 
     if (deleteSrc === "gen") {
       const student = Object.values(_loadedStudents).find(s => s.report_id === deleteId);
-      if (student) {
-        const updated = {
-          ...student,
-          report_generated: false,
-          report_id:        null,
-          report_url:       "",
-        };
-        _patchStudentRow(student.id, updated);
-      }
+      if (student) _patchStudentRow(student.id, { ...student, report_generated:false, report_id:null, report_url:"" });
     } else {
       const row = document.getElementById(`saved-row-${deleteId}`);
       if (row) {
-        row.style.transition = "opacity .2s";
-        row.style.opacity    = "0";
+        row.style.transition="opacity .2s"; row.style.opacity="0";
         setTimeout(() => {
           row.remove();
           const tbody = document.getElementById("saved-tbody");
-          if (!tbody || tbody.children.length === 0) {
-            document.getElementById("saved-table-wrap").style.display = "none";
-            document.getElementById("saved-empty").style.display      = "block";
+          if (!tbody || !tbody.children.length) {
+            document.getElementById("saved-table-wrap").style.display="none";
+            document.getElementById("saved-empty").style.display="block";
           }
         }, 200);
       }
     }
-
-  } catch (e) {
-    toast(e.message, "error");
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = "🗑️ Delete Report";
-  }
+  } catch (e) { toast(e.message,"error"); }
+  finally { btn.disabled=false; btn.textContent="🗑️ Delete Report"; }
 });
 
 /* ─────────────────────────────────────
@@ -1459,37 +1443,21 @@ function validateLogoFile(input) {
   const file    = input.files[0];
   const preview = document.getElementById("logo-preview");
   const errEl   = document.getElementById("logo-error");
-
-  errEl.classList.remove("visible");
-  errEl.textContent = "";
-  input.classList.remove("is-error");
-
+  errEl.classList.remove("visible"); errEl.textContent=""; input.classList.remove("is-error");
   if (!file) return true;
-
   const ext = file.name.split(".").pop().toLowerCase();
   if (!ALLOWED_EXTS.has(ext)) {
-    errEl.textContent = `Invalid type ".${ext}". Allowed: PNG, JPG, JPEG, WEBP`;
-    errEl.classList.add("visible");
-    input.classList.add("is-error");
-    input.value           = "";
-    preview.style.display = "none";
+    errEl.textContent=`Invalid type ".${ext}". Allowed: PNG, JPG, JPEG, WEBP`;
+    errEl.classList.add("visible"); input.classList.add("is-error"); input.value=""; preview.style.display="none";
     return false;
   }
   if (file.size > MAX_LOGO_BYTES) {
-    errEl.textContent = "File exceeds 5MB limit";
-    errEl.classList.add("visible");
-    input.classList.add("is-error");
-    input.value           = "";
-    preview.style.display = "none";
+    errEl.textContent="File exceeds 5MB limit";
+    errEl.classList.add("visible"); input.classList.add("is-error"); input.value=""; preview.style.display="none";
     return false;
   }
-
-  const r  = new FileReader();
-  r.onload = e => {
-    preview.src           = e.target.result;
-    preview.style.display = "block";
-    preview.classList.add("visible");
-  };
+  const r = new FileReader();
+  r.onload = e => { preview.src=e.target.result; preview.style.display="block"; preview.classList.add("visible"); };
   r.readAsDataURL(file);
   return true;
 }
@@ -1497,87 +1465,43 @@ function validateLogoFile(input) {
 async function saveConfig() {
   const c1  = document.getElementById("cfg-contact1");
   const ec1 = document.getElementById("err-contact1");
-
-  if (!c1.value.trim()) {
-    c1.classList.add("is-error");
-    ec1.classList.add("visible");
-    toast("Contact 1 is required", "warning");
-    return;
-  }
-  c1.classList.remove("is-error");
-  ec1.classList.remove("visible");
+  if (!c1.value.trim()) { c1.classList.add("is-error"); ec1.classList.add("visible"); toast("Contact 1 is required","warning"); return; }
+  c1.classList.remove("is-error"); ec1.classList.remove("visible");
 
   const logoInput = document.getElementById("cfg-logo");
   if (logoInput.files[0] && !validateLogoFile(logoInput)) return;
 
-  const btn       = document.getElementById("cfg-save-btn");
-  btn.disabled    = true;
-  btn.textContent = "⏳ Saving…";
+  const btn = document.getElementById("cfg-save-btn");
+  btn.disabled=true; btn.textContent="⏳ Saving…";
 
   try {
     const fd = new FormData();
     if (logoInput.files[0]) fd.append("school_logo", logoInput.files[0]);
+    const fields = { po_box_number:"cfg-po-box", district:"cfg-district", contact_1:"cfg-contact1",
+                     contact_2:"cfg-contact2", website_domain:"cfg-website", email:"cfg-email" };
+    for (const [k,id] of Object.entries(fields)) { const el=document.getElementById(id); if(el) fd.append(k,el.value.trim()); }
+    const numFields = { gp_min_mark:"cfg-gp-min-mark", ict_min_mark:"cfg-ict-min-mark", sub_math_min_mark:"cfg-sub-math-min-mark" };
+    for (const [k,id] of Object.entries(numFields)) { const el=document.getElementById(id); if(el) fd.append(k,el.value); }
 
-    // Standard text fields
-    const fields = {
-      po_box_number:  "cfg-po-box",
-      district:       "cfg-district",
-      contact_1:      "cfg-contact1",
-      contact_2:      "cfg-contact2",
-      website_domain: "cfg-website",
-      email:          "cfg-email",
-    };
-    for (const [k, id] of Object.entries(fields)) {
-      const el = document.getElementById(id);
-      if (el) fd.append(k, el.value.trim());
-    }
-
-    // Secondary-only numeric fields — only appended when inputs exist in the DOM
-    const numericFields = {
-      gp_min_mark:       "cfg-gp-min-mark",
-      ict_min_mark:      "cfg-ict-min-mark",
-      sub_math_min_mark: "cfg-sub-math-min-mark",
-    };
-    for (const [k, id] of Object.entries(numericFields)) {
-      const el = document.getElementById(id);
-      if (el) fd.append(k, el.value);
-    }
-
-    const tok = localStorage.getItem("access_token")
-             || sessionStorage.getItem("access_token") || "";
-    const res = await fetch("/api/school/details", {
-      method:  "POST",
-      headers: { Authorization: `Bearer ${tok}` },
-      body:    fd,
-    });
-    const d = await res.json();
+    const tok = localStorage.getItem("access_token") || sessionStorage.getItem("access_token") || "";
+    const res = await fetch("/api/school/details", { method:"POST", headers:{ Authorization:`Bearer ${tok}` }, body:fd });
+    const d   = await res.json();
     if (!res.ok) throw new Error(d.message || "Save failed");
-
-    toast("Configuration saved successfully", "success");
+    toast("Configuration saved successfully","success");
     closeConfigModal();
-
-    if (d.logo_url) {
-      const logoEl = document.getElementById("logo-preview");
-      if (logoEl) { logoEl.src = d.logo_url; logoEl.style.display = "block"; }
-    }
-
-  } catch (e) {
-    toast(e.message, "error");
-  } finally {
-    btn.disabled  = false;
-    btn.innerHTML = "💾 &nbsp;Save Configuration";
-  }
+    if (d.logo_url) { const lp=document.getElementById("logo-preview"); if(lp){ lp.src=d.logo_url; lp.style.display="block"; } }
+  } catch (e) { toast(e.message,"error"); }
+  finally { btn.disabled=false; btn.innerHTML="💾 &nbsp;Save Configuration"; }
 }
 
 /* ─────────────────────────────────────
    MODAL CLOSE: outside click + ESC
 ───────────────────────────────────── */
 document.querySelectorAll(".modal-backdrop").forEach(m =>
-  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); })
+  m.addEventListener("click", e => { if(e.target===m) m.classList.remove("open"); })
 );
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape")
-    document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+  if (e.key==="Escape") document.querySelectorAll(".modal-backdrop").forEach(m=>m.classList.remove("open"));
 });
 </script>
 
