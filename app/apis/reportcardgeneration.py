@@ -12,8 +12,10 @@ CHANGES vs original:
     No str(e) / str(exc) ever reaches the client.
   - [NEW] Threading job store for non-blocking PDF generation.
     generate_report_card  → starts a background thread, returns job_id
-    generate_all_report_cards → starts a background thread, returns job_id
     GET /api/report-cards/job/<job_id> → poll for status / result
+  - [FIX] App context captured before thread starts to avoid
+    RuntimeError: Working outside of application context.
+  - [REMOVED] generate_all_report_cards endpoint.
 """
 
 import requests as http_requests
@@ -388,8 +390,8 @@ def get_job_status(job_id: str):
         "success":  True,
         "job_id":   job_id,
         "status":   job["status"],    # pending | running | done | error
-        "progress": job["progress"],  # number of students done (bulk only)
-        "total":    job["total"],     # total students (bulk only)
+        "progress": job["progress"],  # not used for single generation
+        "total":    job["total"],     # not used for single generation
         "result":   job["result"],    # set when status == done
         "error":    job["error"],     # set when status == error
     }), 200
@@ -446,19 +448,18 @@ def generate_report_card():
     if not stream:
         return jsonify({"message": "Stream not found for this student"}), 404
 
-    school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
-    academic_year = _get_academic_year_for_term(term)
+    # ── FIX: capture the real app object NOW, while still inside the
+    #         request context where current_app proxy is valid.
+    #         The thread cannot use current_app — it has no request context.
+    from flask import current_app as _cur_app
+    _flask_app    = _cur_app._get_current_object()
+    static_folder = _flask_app.static_folder
 
-    # Snapshot all objects needed by the thread (avoids detached instance errors)
-    job_id        = _new_job()
-    static_folder = current_app.static_folder
+    job_id = _new_job()
 
     def _do_generate():
         _update_job(job_id, status="running")
-        # Push a new app context so SQLAlchemy works in the thread
-        from flask import current_app as _app
-        app = _app._get_current_object()
-        with app.app_context():
+        with _flask_app.app_context():
             try:
                 _school  = School.query.get(school_id)
                 _detail  = SchoolDetail.query.filter_by(school_id=school_id).first()
@@ -538,7 +539,7 @@ def generate_report_card():
                     "report_id":     report.id,
                 })
 
-            except Exception as exc:
+            except Exception:
                 db.session.rollback()
                 logger.exception("generate thread failed | student_id=%s", student_id)
                 _update_job(job_id, status="error", error="Failed to generate report card. Please try again.")
@@ -550,180 +551,6 @@ def generate_report_card():
         "success": True,
         "job_id":  job_id,
         "message": "Generation started",
-    }), 202
-
-
-# ═══════════════════════════════════════════════════════════════
-#  GENERATE ALL PENDING  —  POST /api/report-cards/generate-all
-#  Returns immediately with a job_id.
-#  Poll GET /api/report-cards/job/<job_id> for progress + result.
-# ═══════════════════════════════════════════════════════════════
-
-@report_cards_api.route("/report-cards/generate-all", methods=["POST"])
-@jwt_required()
-@limiter.limit(REPORT_ALL_LIMIT)
-def generate_all_report_cards():
-    claims = get_jwt()
-    staff_id, err = _teacher_required(claims)
-    if err:
-        return err
-
-    school_id, user_id, _ = _get_context(claims)
-    school, err = _school_or_404(school_id)
-    if err:
-        return err
-
-    data      = request.get_json(force=True) or {}
-    stream_id = data.get("stream_id")
-    term_id   = data.get("term_id")
-    exam_type = str(data.get("exam_type", "")).strip().upper()
-
-    if not stream_id or not term_id or not exam_type:
-        return jsonify({"message": "stream_id, term_id and exam_type are required"}), 400
-    if exam_type not in VALID_EXAM_TYPES:
-        return jsonify({"message": f"exam_type must be one of {sorted(VALID_EXAM_TYPES)}"}), 400
-
-    stream = Stream.query.get(stream_id)
-    if not stream:
-        return jsonify({"message": "Stream not found"}), 404
-
-    term = Term.query.filter_by(id=term_id, school_id=school_id).first()
-    if not term:
-        return jsonify({"message": "Term not found"}), 404
-
-    # Pre-fetch pending student ids before handing off to thread
-    ss_rows     = StudentStream.query.filter_by(school_id=school_id, stream_id=stream_id).all()
-    student_ids = [ss.student_id for ss in ss_rows]
-
-    if not student_ids:
-        return jsonify({
-            "success": True, "message": "No students in this stream",
-            "generated": 0, "failed": 0,
-        }), 200
-
-    done_ids = {
-        rc.student_id
-        for rc in ReportCard.query.filter(
-            ReportCard.school_id  == school_id,
-            ReportCard.term_id    == term_id,
-            ReportCard.exam_type  == exam_type,
-            ReportCard.student_id.in_(student_ids),
-        ).all()
-    }
-    pending_ids = [sid for sid in student_ids if sid not in done_ids]
-
-    if not pending_ids:
-        return jsonify({
-            "success": True,
-            "message": "All reports are already generated",
-            "generated": 0, "failed": 0,
-        }), 200
-
-    job_id        = _new_job()
-    static_folder = current_app.static_folder
-    _update_job(job_id, total=len(pending_ids))
-
-    def _do_generate_all():
-        _update_job(job_id, status="running")
-        from flask import current_app as _app
-        app = _app._get_current_object()
-        with app.app_context():
-            generated, failed, errors = 0, 0, []
-
-            _school  = School.query.get(school_id)
-            _detail  = SchoolDetail.query.filter_by(school_id=school_id).first()
-            _term    = Term.query.filter_by(id=term_id, school_id=school_id).first()
-            _stream  = Stream.query.get(stream_id)
-            _ay      = _get_academic_year_for_term(_term)
-            service  = ReportCardService(_school, _detail)
-
-            for idx, sid in enumerate(pending_ids):
-                try:
-                    _student = Student.query.filter_by(id=sid, school_id=school_id).first()
-                    if not _student:
-                        failed += 1
-                        errors.append(f"Student {sid} not found")
-                        _update_job(job_id, progress=idx + 1)
-                        continue
-
-                    result     = service.generate(
-                        student=_student,
-                        stream=_stream,
-                        term=_term,
-                        academic_year=_ay,
-                        exam_type=exam_type,
-                        static_folder=static_folder,
-                    )
-                    local_path = result["local_path"]
-                    file_url   = result["file_url"]
-                    now        = datetime.utcnow()
-
-                    existing = ReportCard.query.filter_by(
-                        school_id=school_id, student_id=sid,
-                        term_id=term_id, exam_type=exam_type,
-                    ).first()
-
-                    if existing and existing.firebase_url:
-                        _delete_cdn_file(existing.firebase_url)
-
-                    cdn_url    = _upload_report_pdf(local_path, _ay, _term, _stream)
-                    public_url = cdn_url or file_url
-
-                    if existing:
-                        existing.firebase_url  = public_url
-                        existing.firebase_path = local_path
-                        existing.local_path    = local_path
-                        existing.generated_at  = now
-                        existing.generated_by  = int(user_id) if user_id else None
-                        existing.status        = "generated"
-                        existing.academic_year = _ay.name if _ay else None
-                    else:
-                        db.session.add(ReportCard(
-                            school_id=school_id,
-                            student_id=sid,
-                            term_id=term_id,
-                            exam_type=exam_type,
-                            academic_year=_ay.name if _ay else None,
-                            generated_at=now,
-                            generated_by=int(user_id) if user_id else None,
-                            firebase_url=public_url,
-                            firebase_path=local_path,
-                            local_path=local_path,
-                            status="generated",
-                        ))
-
-                    db.session.flush()
-                    generated += 1
-                    _update_job(job_id, progress=idx + 1)
-
-                except Exception as inner_exc:
-                    logger.error("generate_all thread: failed for student=%s — %s", sid, inner_exc)
-                    failed += 1
-                    errors.append(f"Student {sid}: generation failed")
-                    _update_job(job_id, progress=idx + 1)
-
-            try:
-                db.session.commit()
-                _update_job(job_id, status="done", result={
-                    "generated": generated,
-                    "failed":    failed,
-                    "errors":    errors[:5],
-                    "message":   f"{generated} report(s) generated, {failed} failed.",
-                })
-            except SQLAlchemyError:
-                db.session.rollback()
-                logger.exception("generate_all thread: commit failed | school_id=%s", school_id)
-                _update_job(job_id, status="error",
-                            error="Database commit failed. Some reports may not have been saved.")
-
-    thread = threading.Thread(target=_do_generate_all, daemon=True, name=f"gen-all-{job_id[:8]}")
-    thread.start()
-
-    return jsonify({
-        "success": True,
-        "job_id":  job_id,
-        "total":   len(pending_ids),
-        "message": f"Bulk generation started for {len(pending_ids)} student(s)",
     }), 202
 
 

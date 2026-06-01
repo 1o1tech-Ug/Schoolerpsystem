@@ -382,23 +382,6 @@
 }
 
 /* ════════════════════════════════════════════
-   PROGRESS BAR
-════════════════════════════════════════════ */
-.progress-wrap {
-  background: var(--slate-100);
-  border-radius: 999px;
-  height: 8px;
-  overflow: hidden;
-  margin-top: 6px;
-}
-.progress-fill {
-  height: 100%;
-  background: var(--blue);
-  border-radius: 999px;
-  transition: width .4s ease;
-}
-
-/* ════════════════════════════════════════════
    MODALS
 ════════════════════════════════════════════ */
 .modal-backdrop {
@@ -600,16 +583,6 @@
         </button>
       </div>
 
-      <!-- Bulk progress bar — shown while generate-all job is running -->
-      <div id="gen-progress-wrap" style="display:none; margin-top:16px;">
-        <div style="font-size:12px; color:var(--slate-500); margin-bottom:4px;" id="gen-progress-label">
-          Generating…
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-fill" id="gen-progress-bar" style="width:0%"></div>
-        </div>
-      </div>
-
       <!-- Student table -->
       <div id="gen-table-wrap" style="display:none; margin-top:24px;">
         <div class="table-header-bar">
@@ -617,9 +590,6 @@
             Showing <strong id="gen-count">0</strong> students —
             <span id="gen-generated-count" style="color:var(--green); font-weight:600;">0 generated</span>
           </div>
-          <button class="btn btn-generate" id="gen-all-btn" onclick="generateAll()">
-            ⚡ Generate All Pending
-          </button>
         </div>
 
         <div class="table-wrapper">
@@ -935,9 +905,6 @@ let _loadedStudents   = {};
 let _pendingDeleteId  = null;
 let _pendingDeleteSrc = null;
 let _reqInFlight      = false;
-let _bulkJobId        = null;   // currently running generate-all job
-let _bulkPollTimer    = null;
-let _singlePollers    = {};     // { studentId: { jobId, timer, tries } }
 
 /* ─────────────────────────────────────
    AUTH HEADERS
@@ -1154,7 +1121,7 @@ function _patchStudentRow(studentId, updatedObj, generating = false) {
 /* ─────────────────────────────────────
    POLL A SINGLE JOB
 ───────────────────────────────────── */
-function _pollJob(jobId, onDone, onError, onTick) {
+function _pollJob(jobId, onDone, onError) {
   let tries = 0;
   const timer = setInterval(async () => {
     tries++;
@@ -1167,7 +1134,6 @@ function _pollJob(jobId, onDone, onError, onTick) {
       const res = await fetch(`/api/report-cards/job/${jobId}`, { headers: _auth() });
       const d   = await res.json();
       if (!res.ok) { clearInterval(timer); onError(d.message || "Job poll failed"); return; }
-      if (onTick) onTick(d);
       if (d.status === "done")  { clearInterval(timer); onDone(d.result); }
       if (d.status === "error") { clearInterval(timer); onError(d.error || "Generation failed"); }
     } catch (e) { /* network blip — keep polling */ }
@@ -1223,94 +1189,6 @@ async function generateOne(studentId) {
 
   } catch (e) {
     _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
-    toast(e.message, "error");
-  }
-}
-
-/* ─────────────────────────────────────
-   GENERATE ALL PENDING  (non-blocking)
-───────────────────────────────────── */
-async function generateAll() {
-  const pending = Object.values(_loadedStudents).filter(s => !s.report_generated);
-  if (!pending.length) { toast("All reports are already generated!", "info"); return; }
-
-  const btn    = document.getElementById("gen-all-btn");
-  const pwrap  = document.getElementById("gen-progress-wrap");
-  const pbar   = document.getElementById("gen-progress-bar");
-  const plabel = document.getElementById("gen-progress-label");
-
-  btn.disabled = true;
-  pwrap.style.display = "block";
-  pbar.style.width    = "0%";
-  plabel.textContent  = `Starting bulk generation for ${pending.length} student(s)…`;
-
-  // Mark all pending rows as "generating"
-  pending.forEach(s => _patchStudentRow(s.id, { ...s }, true));
-
-  try {
-    const res = await fetch("/api/report-cards/generate-all", {
-      method:  "POST",
-      headers: _auth(),
-      body: JSON.stringify({
-        stream_id: document.getElementById("gen-stream").value,
-        term_id:   document.getElementById("gen-term").value,
-        exam_type: document.getElementById("gen-exam-type").value,
-      }),
-    });
-    const d = await res.json();
-    if (!res.ok) throw new Error(d.message || "Bulk generation failed");
-
-    const jobId = d.job_id;
-    const total = d.total || pending.length;
-
-    _bulkJobId = jobId;
-
-    _bulkPollTimer = _pollJob(
-      jobId,
-      // onDone
-      (result) => {
-        _bulkJobId = null;
-        pbar.style.width   = "100%";
-        plabel.textContent = result.message || "Done";
-
-        // Reload the student list to get fresh report URLs
-        loadStudents();
-
-        const msg = result.message || `${result.generated} report(s) generated`;
-        toast(msg, result.failed > 0 ? "warning" : "success");
-
-        setTimeout(() => {
-          pwrap.style.display = "none";
-          pbar.style.width    = "0%";
-        }, 3000);
-        btn.disabled = false;
-
-        if (result.errors && result.errors.length) {
-          result.errors.forEach(e => toast(e, "warning", 6000));
-        }
-      },
-      // onError
-      (errMsg) => {
-        _bulkJobId = null;
-        // Revert generating indicators
-        pending.forEach(s => _patchStudentRow(s.id, { ...s }, false));
-        pwrap.style.display = "none";
-        btn.disabled = false;
-        toast(errMsg, "error");
-      },
-      // onTick  — update progress bar
-      (jobData) => {
-        const done = jobData.progress || 0;
-        const pct  = total > 0 ? Math.round((done / total) * 100) : 0;
-        pbar.style.width   = `${pct}%`;
-        plabel.textContent = `Generating… ${done} / ${total}`;
-      }
-    );
-
-  } catch (e) {
-    pending.forEach(s => _patchStudentRow(s.id, { ...s }, false));
-    pwrap.style.display = "none";
-    btn.disabled = false;
     toast(e.message, "error");
   }
 }
