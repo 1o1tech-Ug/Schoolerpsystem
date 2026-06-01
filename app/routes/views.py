@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, jsonify, render_template, redirect, url_for
 from flask_jwt_extended import jwt_required, current_user, get_jwt, get_jwt_identity
 from app.models.user import User
 from app.extensions import limiter
@@ -28,7 +28,9 @@ def protected():
         "role": current_user.role,
         "school_id": current_user.school_id
     }), 200
-
+@views_bp.route("/")
+def home():
+    return redirect(url_for("auth.login_page"))
 
 # =========================================================
 # BASE ROUTE (non-superadmin roles)

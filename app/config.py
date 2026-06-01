@@ -12,8 +12,8 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_TOKEN_LOCATION = ["cookies"]
-    JWT_COOKIE_SECURE = os.getenv("FLASK_ENV") == "production"  # True in prod, False in dev
-    JWT_COOKIE_SAMESITE = "None" if os.getenv("FLASK_ENV") == "production" else "Lax"
+    JWT_COOKIE_SECURE = True
+    JWT_COOKIE_SAMESITE = "None"
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
@@ -26,7 +26,5 @@ class Config:
 
     # CORS — Render domain pattern + local dev
     CORS_ORIGINS = [
-        "https://1o1tech.onrender.com",   # your exact Render domain
-        "http://localhost:5000",           # Flask dev server
-        "http://127.0.0.1:5000",
-    ]
+    "https://oneo1schoolerpsystem.onrender.com",
+]
