@@ -578,3 +578,7 @@ WHERE token_blocklist.jti = %(jti_1)s
 [2026-05-31 22:54:21] WARNING | GET /googleapis.com | IP=127.0.0.1 | USER=1 | app.core.error_handlers | 404 Not Found | GET /googleapis.com | IP=127.0.0.1 | USER=1
 [2026-05-31 22:57:02] WARNING | POST /auth/staff/login | IP=127.0.0.1 | USER=2 | app.routes.auth | Failed staff login attempt | school_id=3 username=st
 [2026-05-31 22:57:02] WARNING | POST /auth/staff/login | IP=127.0.0.1 | USER=2 | app.routes.auth | Failed staff login attempt | school_id=3 username=st
+[2026-06-01 10:28:55] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-01 10:28:55] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-01 10:29:27] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-01 10:29:27] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-

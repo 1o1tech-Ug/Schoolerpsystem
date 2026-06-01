@@ -269,22 +269,43 @@
             width: var(--sidebar-w);
             background: var(--sidebar-bg);
             border-right: 1px solid var(--border-dim);
-            overflow-y: auto;
-            overflow-x: hidden;
+
+            /* FIX: use flex column so sidebar-body can grow and scroll
+               independently, keeping the footer always visible at the bottom */
             display: flex;
             flex-direction: column;
+            overflow: hidden;          /* outer container never scrolls */
+
             transition: width var(--dur) var(--ease);
             z-index: 1100;
         }
 
-        /* Scrollbar styling */
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        /* Scrollable nav area only — footer stays pinned */
+        .sidebar-body {
+            flex: 1 1 0;              /* grow to fill space, shrink when needed */
+            min-height: 0;            /* critical: allows flex child to shrink below content size */
+            overflow-y: auto;         /* scroll only this region */
+            overflow-x: hidden;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
 
-        .sidebar.collapsed { width: var(--sidebar-collapsed-w); }
+        /* Thin, unobtrusive scrollbar */
+        .sidebar-body::-webkit-scrollbar { width: 4px; }
+        .sidebar-body::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-body::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+        }
+        .sidebar-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.28);
+        }
 
         /* Hide text when collapsed */
+        .sidebar.collapsed { width: var(--sidebar-collapsed-w); }
+
         .sidebar.collapsed .nav-label,
         .sidebar.collapsed .menu-text,
         .sidebar.collapsed .chevron,
@@ -299,14 +320,6 @@
         .sidebar.collapsed .module-icon { margin: 0; }
 
         /* Nav groups */
-        .sidebar-body {
-            flex: 1;
-            padding: 16px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
         .nav-label {
             padding: 10px 6px 5px;
             font-size: 10px;
@@ -441,8 +454,9 @@
         /* ─── SIDEBAR FOOTER ─── */
 
         .sidebar-footer {
+            flex-shrink: 0;           /* never squish the footer */
             padding: 12px;
-            margin-top: auto;
+            border-top: 1px solid var(--border-dim);
         }
         .sidebar-footer-inner {
             background: rgba(255,255,255,0.04);
@@ -1085,7 +1099,13 @@
             const section = document.getElementById(id);
             const isOpen  = section.classList.contains('open');
             document.querySelectorAll('.nav-section').forEach(s => s.classList.remove('open'));
-            if (!isOpen) section.classList.add('open');
+            if (!isOpen) {
+                section.classList.add('open');
+                // Scroll the newly opened section into view smoothly
+                setTimeout(() => {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 50);
+            }
         }
 
         /* Auto-open active section based on current URL */
