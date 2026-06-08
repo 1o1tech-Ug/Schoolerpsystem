@@ -584,3 +584,355 @@ WHERE token_blocklist.jti = %(jti_1)s
 [2026-06-01 10:29:27] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
 [2026-06-01 13:22:10] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
 [2026-06-01 13:22:10] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:11:46] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:11:46] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:12:06] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-08 10:12:06] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-08 10:12:18] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:12:18] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:12:21] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:12:21] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:12:55] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:12:55] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:12:58] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:12:58] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:13:04] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:13:04] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:13:05] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:13:05] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:13:08] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:13:08] ERROR | GET / | IP=127.0.0.1 | USER=- | app.core.error_handlers | UNHANDLED EXCEPTION | GET / | IP=127.0.0.1 | USER=- | BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/routes/views.py", line 33, in home
+    return render_template("index.html")
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/index.html", line 661, in top-level template code
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/werkzeug/routing/map.py", line 901, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.login'. Did you mean 'auth.login_page' instead?
+[2026-06-08 10:15:07] WARNING | GET /static/CEO.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/CEO.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:15:07] WARNING | GET /static/CEO.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/CEO.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:15:07] WARNING | GET /static/lady.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/lady.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:15:07] WARNING | GET /static/lady.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/lady.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:15:07] WARNING | GET /static/other.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/other.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:15:07] WARNING | GET /static/other.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/other.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:16:38] WARNING | GET /static/CEO.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/CEO.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:16:38] WARNING | GET /static/CEO.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/CEO.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:16:38] WARNING | GET /static/lady.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/lady.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:16:38] WARNING | GET /static/lady.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/lady.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:16:38] WARNING | GET /static/other.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/other.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:16:38] WARNING | GET /static/other.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/other.jpg | IP=127.0.0.1 | USER=-
+[2026-06-08 10:17:25] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-08 10:17:25] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
