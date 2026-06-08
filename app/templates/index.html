@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="1O1 Technologies Uganda – Smart Software Solutions for Modern Schools. Manage fees, attendance, report cards, staff, and parent communication from one powerful platform.">
+  <meta name="keywords" content="school management system Uganda, school ERP Uganda, school software Kampala, report cards, fee management, attendance tracking">
+  <meta name="author" content="1O1 Technologies Uganda">
+  <meta property="og:title" content="1O1 Technologies Uganda – Smart Software Solutions for Modern Schools">
+  <meta property="og:description" content="Track fees, attendance, academics, report cards, staff management, and parent communication from a single platform.">
+  <meta property="og:type" content="website">
+  <title>1O1 Technologies Uganda – Smart Software Solutions for Modern Schools</title>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "1O1 School Management System",
+    "applicationCategory": "EducationApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "priceCurrency": "UGX" },
+    "author": {
+      "@type": "Organization",
+      "name": "1O1 Technologies Uganda",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Sir Apollo Kaggwa Road, Safina Trading Centre, Shop 066",
+        "addressLocality": "Kampala",
+        "addressCountry": "UG"
+      },
+      "telephone": "+256777080843"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --blue: #2d6cdf;
+      --blue-light: #1e9af3;
+      --blue-dark: #1a3a5c;
+      --blue-50: #eef2f9;
+      --blue-100: #dde7f5;
+      --dark: #0d1b2a;
+      --dark-2: #1a3a5c;
+      --gray: #64748b;
+      --light: #f8fafc;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; overflow-x: hidden; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #fff;
+      color: var(--dark);
+      overflow-x: hidden;
+    }
+    h1, h2, h3, h4, h5 { font-family: 'Syne', sans-serif; }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #f1f5f9;
+      transition: box-shadow .3s;
+    }
+    .navbar.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 68px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #2d6cdf, #1e9af3);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon i { color: #fff; font-size: 18px; }
+    .logo-text {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: 20px; color: var(--dark);
+    }
+    .logo-text span { color: var(--blue); }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a {
+      font-size: 14px; font-weight: 500; color: #475569;
+      text-decoration: none; transition: color .2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -3px; left: 0;
+      width: 0; height: 2px; background: var(--blue);
+      transition: width .3s;
+    }
+    .nav-links a:hover { color: var(--blue); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-cta { display: flex; gap: 10px; align-items: center; }
+    .btn-outline {
+      padding: 8px 20px; border-radius: 8px;
+      border: 2px solid var(--blue); color: var(--blue);
+      font-weight: 600; font-size: 14px; cursor: pointer;
+      text-decoration: none; transition: all .2s;
+      font-family: 'Syne', sans-serif;
+    }
+    .btn-outline:hover { background: var(--blue); color: #fff; }
+    .btn-primary {
+      padding: 8px 20px; border-radius: 8px;
+      background: linear-gradient(90deg, var(--blue), var(--blue-light));
+      color: #fff;
+      font-weight: 600; font-size: 14px; cursor: pointer;
+      text-decoration: none; transition: all .2s;
+      font-family: 'Syne', sans-serif; border: 2px solid transparent;
+    }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(45,108,223,.35); }
+    .hamburger {
+      display: none; background: none; border: none;
+      font-size: 22px; color: var(--dark); cursor: pointer;
+    }
+
+    /* ── MOBILE MENU ── */
+    .mobile-nav {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(13,27,42,.7); backdrop-filter: blur(4px);
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-panel {
+      margin-left: auto;
+      width: 280px; height: 100%; background: #fff;
+      padding: 24px; transform: translateX(100%);
+      transition: transform .35s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; gap: 8px;
+      overflow-y: auto;
+    }
+    .mobile-nav.open .mobile-panel { transform: translateX(0); }
+    .mobile-panel-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 16px;
+    }
+    .mobile-panel a {
+      padding: 12px; border-radius: 8px; font-weight: 500;
+      color: #475569; text-decoration: none; display: block;
+      transition: all .2s; font-size: 15px;
+    }
+    .mobile-panel a:hover { background: var(--blue-50); color: var(--blue); }
+    .mobile-panel .divider { height: 1px; background: #f1f5f9; margin: 8px 0; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: var(--dark);
+      position: relative;
+      display: flex; align-items: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 50%, rgba(30,154,243,.22) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(45,108,223,.15) 0%, transparent 60%),
+        linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 100%);
+    }
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 0; opacity: .04;
+      background-image:
+        linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    .hero-inner {
+      position: relative; z-index: 2;
+      max-width: 1200px; margin: 0 auto; padding: 120px 24px 80px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px;
+      align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(45,108,223,.15); border: 1px solid rgba(45,108,223,.3);
+      border-radius: 100px; padding: 6px 14px; margin-bottom: 24px;
+    }
+    .hero-badge span { font-size: 12px; color: #4fa3f7; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+    .hero-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 800; line-height: 1.1;
+      color: #fff; margin-bottom: 20px;
+    }
+    .hero h1 span { color: #4fa3f7; }
+    .hero p {
+      font-size: 17px; color: #94a3b8; line-height: 1.7;
+      margin-bottom: 36px; max-width: 520px;
+    }
+    .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 48px; }
+    .btn-hero-primary {
+      padding: 14px 28px; border-radius: 10px;
+      background: linear-gradient(90deg, var(--blue), var(--blue-light));
+      color: #fff;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: all .25s; border: 2px solid transparent; cursor: pointer;
+    }
+    .btn-hero-primary:hover { opacity: .9; transform: translateY(-2px); box-shadow: 0 12px 28px rgba(45,108,223,.4); }
+    .trust-badges {
+      display: flex; flex-wrap: wrap; gap: 12px;
+    }
+    .trust-badge {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px; padding: 8px 14px;
+      font-size: 12px; font-weight: 500; color: #cbd5e1;
+    }
+    .trust-badge i { color: #4fa3f7; font-size: 13px; }
+    .hero-visual { position: relative; }
+    .dashboard-mockup {
+      background: #1e293b; border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.1);
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05);
+      animation: heroFloat 5s ease-in-out infinite;
+    }
+    @keyframes heroFloat {
+      0%,100% { transform: translateY(0) rotateX(2deg); }
+      50% { transform: translateY(-14px) rotateX(2deg); }
+    }
+    .mockup-bar {
+      background: #0d1b2a; padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-screen { padding: 16px; background: #1e293b; min-height: 300px; }
+    .mockup-header-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .mockup-title { font-family: 'Syne',sans-serif; font-weight: 700; color: #fff; font-size: 15px; }
+    .mockup-date { font-size: 11px; color: #64748b; }
+    .stat-cards-row {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-card-m {
+      background: #0d1b2a; border-radius: 10px; padding: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .stat-card-m .label { font-size: 9px; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card-m .value { font-family: 'Syne',sans-serif; font-size: 18px; font-weight: 800; color: #fff; }
+    .stat-card-m .change { font-size: 9px; color: #4ade80; margin-top: 2px; }
+    .mini-chart {
+      background: #0d1b2a; border-radius: 10px; padding: 12px;
+      margin-bottom: 10px; border: 1px solid rgba(255,255,255,.06);
+    }
+    .mini-chart-label { font-size: 10px; color: #64748b; margin-bottom: 8px; }
+    .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 50px; }
+    .chart-bar {
+      flex: 1; background: rgba(45,108,223,.3); border-radius: 3px 3px 0 0;
+    }
+    .chart-bar.active { background: var(--blue-light); }
+    .notification-row {
+      background: rgba(45,108,223,.12); border: 1px solid rgba(45,108,223,.25);
+      border-radius: 8px; padding: 8px 12px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: #4fa3f7;
+    }
+    .float-card {
+      position: absolute; background: #fff;
+      border-radius: 12px; padding: 12px 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.3);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .float-card-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--blue-50);
+    }
+    .float-card-icon i { color: var(--blue); font-size: 16px; }
+    .float-card-text { font-size: 11px; }
+    .float-card-text strong { display: block; font-family: 'Syne',sans-serif; font-size: 13px; }
+    .float-left { left: -30px; top: 30%; animation: floatLeft 4s ease-in-out infinite 1s; }
+    .float-right { right: -20px; bottom: 25%; animation: floatRight 4.5s ease-in-out infinite .5s; }
+    @keyframes floatLeft { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes floatRight { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+    /* ── SECTIONS SHARED ── */
+    .section { padding: 96px 0; }
+    .section-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .section-label {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--blue); background: var(--blue-50);
+      border: 1px solid var(--blue-100); border-radius: 100px;
+      padding: 5px 14px; margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800;
+      line-height: 1.15; color: var(--dark); margin-bottom: 16px;
+    }
+    .section-title span { color: var(--blue); }
+    .section-subtitle {
+      font-size: 17px; color: var(--gray); max-width: 560px;
+      line-height: 1.65; margin-bottom: 60px;
+    }
+    .section-header { margin-bottom: 56px; }
+
+    /* ── STATS ── */
+    .stats-section { background: var(--dark); padding: 64px 0; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 2px; }
+    .stat-item {
+      padding: 40px 32px; text-align: center;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-number {
+      font-family: 'Syne',sans-serif; font-size: 3rem; font-weight: 800;
+      color: #4fa3f7; line-height: 1;
+      display: block; margin-bottom: 8px;
+    }
+    .stat-label { font-size: 14px; color: #94a3b8; font-weight: 500; }
+    .stat-icon { color: #4fa3f7; font-size: 22px; margin-bottom: 16px; display: block; }
+
+    /* ── WHY CHOOSE US ── */
+    .why-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .why-card {
+      padding: 28px; border-radius: 16px;
+      border: 1px solid #f1f5f9;
+      background: #fff;
+      transition: all .3s;
+      position: relative; overflow: hidden;
+    }
+    .why-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--blue-light));
+      opacity: 0; transition: opacity .3s;
+    }
+    .why-card:hover { box-shadow: 0 12px 32px rgba(0,0,0,.08); transform: translateY(-4px); }
+    .why-card:hover::before { opacity: 1; }
+    .why-icon {
+      width: 52px; height: 52px; border-radius: 12px;
+      background: var(--blue-50); display: flex; align-items: center;
+      justify-content: center; margin-bottom: 16px;
+    }
+    .why-icon i { color: var(--blue); font-size: 22px; }
+    .why-card h3 { font-size: 17px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .why-card p { font-size: 14px; color: var(--gray); line-height: 1.65; }
+
+    /* ── FEATURES ── */
+    .features-bg { background: var(--light); }
+    .features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .feature-card {
+      background: #fff; border-radius: 16px;
+      border: 1px solid #e2e8f0; padding: 28px;
+      transition: all .3s;
+      position: relative;
+    }
+    .feature-card:hover {
+      border-color: var(--blue); box-shadow: 0 12px 32px rgba(45,108,223,.12);
+      transform: translateY(-4px);
+    }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 12px;
+      background: var(--blue-50); display: flex; align-items: center;
+      justify-content: center; margin-bottom: 18px;
+    }
+    .feature-icon i { color: var(--blue); font-size: 22px; }
+    .feature-card h3 { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: var(--gray); line-height: 1.6; }
+    .coming-soon-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #fff7ed; border: 1px solid #fed7aa;
+      color: #c2410c; font-size: 10px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      border-radius: 100px; padding: 3px 10px;
+      margin-top: 10px;
+    }
+    .coming-soon-badge i { font-size: 9px; }
+
+    /* ── TEAM ── */
+    .team-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
+    .team-card {
+      background: #fff; border-radius: 20px;
+      border: 1px solid #f1f5f9; padding: 32px 24px;
+      text-align: center; transition: all .3s;
+    }
+    .team-card:hover { box-shadow: 0 16px 40px rgba(0,0,0,.1); transform: translateY(-4px); border-color: var(--blue-100); }
+    .team-avatar {
+      width: 100px; height: 100px; border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne',sans-serif; font-size: 28px; font-weight: 800;
+      color: var(--blue); background: var(--blue-50);
+      border: 3px solid var(--blue-100);
+      overflow: hidden;
+    }
+    .team-avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+      object-position: center top;
+      border-radius: 50%;
+    }
+    .team-card h3 { font-size: 18px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .team-role { font-size: 13px; font-weight: 600; color: var(--blue); margin-bottom: 12px; letter-spacing: .02em; text-transform: uppercase; }
+    .team-card p { font-size: 14px; color: var(--gray); line-height: 1.6; }
+
+    /* ── TRUST ── */
+    .trust-bg { background: var(--light); }
+    .trust-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .trust-card {
+      background: #fff; border-radius: 16px; padding: 28px;
+      border: 1px solid #f1f5f9; display: flex; gap: 16px;
+      align-items: flex-start; transition: all .3s;
+    }
+    .trust-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+    .trust-card-icon {
+      width: 48px; height: 48px; flex-shrink: 0;
+      border-radius: 12px; background: var(--blue-50);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .trust-card-icon i { color: var(--blue); font-size: 20px; }
+    .trust-card h3 { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+    .trust-card p { font-size: 13px; color: var(--gray); line-height: 1.6; }
+
+    /* ── FAQ ── */
+    .faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .faq-item {
+      background: #fff; border-radius: 12px;
+      border: 1px solid #e2e8f0; overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .faq-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,.06); }
+    .faq-question {
+      width: 100%; padding: 20px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: none; border: none; cursor: pointer;
+      text-align: left; font-family: 'Syne',sans-serif;
+      font-size: 15px; font-weight: 600; color: var(--dark);
+      gap: 12px;
+    }
+    .faq-question .faq-arrow {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--blue-50); display: flex; align-items: center; justify-content: center;
+      transition: all .3s;
+    }
+    .faq-question .faq-arrow i { color: var(--blue); font-size: 12px; transition: transform .3s; }
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height .4s ease, padding .3s;
+      font-size: 14px; color: var(--gray); line-height: 1.7;
+      padding: 0 24px;
+    }
+    .faq-item.open .faq-answer { max-height: 200px; padding-bottom: 20px; }
+    .faq-item.open .faq-arrow { background: var(--blue); }
+    .faq-item.open .faq-arrow i { color: #fff; transform: rotate(180deg); }
+
+    /* ── FINAL CTA ── */
+    .cta-section {
+      background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 60%, #1e5fa8 100%);
+      padding: 96px 0;
+    }
+    .cta-inner { text-align: center; max-width: 700px; margin: 0 auto; padding: 0 24px; }
+    .cta-inner h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: #fff; margin-bottom: 16px; }
+    .cta-inner p { font-size: 17px; color: rgba(255,255,255,.8); margin-bottom: 36px; line-height: 1.65; }
+    .cta-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 36px; }
+    .btn-cta-white {
+      padding: 14px 28px; border-radius: 10px;
+      background: #fff; color: var(--blue-dark);
+      font-family: 'Syne',sans-serif; font-weight: 700; font-size: 15px;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: all .2s; cursor: pointer; border: none;
+    }
+    .btn-cta-white:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.2); }
+    .btn-cta-outline {
+      padding: 14px 28px; border-radius: 10px;
+      background: transparent; color: #fff;
+      border: 2px solid rgba(255,255,255,.5);
+      font-family: 'Syne',sans-serif; font-weight: 700; font-size: 15px;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: all .2s;
+    }
+    .btn-cta-outline:hover { background: rgba(255,255,255,.1); border-color: #fff; }
+    .cta-contact { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+    .cta-contact-item {
+      display: flex; align-items: center; gap: 8px;
+      color: rgba(255,255,255,.8); font-size: 14px;
+    }
+    .cta-contact-item i { font-size: 16px; color: rgba(255,255,255,.6); }
+
+    /* ── FOOTER ── */
+    footer { background: var(--dark); color: #94a3b8; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 60px 24px 32px; }
+    .footer-grid {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px;
+      margin-bottom: 48px;
+    }
+    .footer-brand p { font-size: 14px; color: #64748b; line-height: 1.7; margin: 12px 0 20px; }
+    .footer-col h4 { font-family: 'Syne',sans-serif; font-weight: 700; color: #f1f5f9; font-size: 14px; margin-bottom: 16px; letter-spacing: .04em; text-transform: uppercase; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col ul li a { color: #64748b; text-decoration: none; font-size: 14px; transition: color .2s; }
+    .footer-col ul li a:hover { color: #4fa3f7; }
+    .footer-contact-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 13px; color: #64748b; margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .footer-contact-item i { color: #4fa3f7; font-size: 13px; flex-shrink: 0; margin-top: 2px; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.06);
+      padding-top: 24px; display: flex; justify-content: space-between;
+      align-items: center; gap: 12px;
+    }
+    .footer-bottom p { font-size: 13px; color: #475569; }
+
+    /* ── DEMO MODAL ── */
+    .demo-modal {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.7); align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .demo-modal.open { display: flex; }
+    .demo-modal-inner {
+      background: #fff; border-radius: 20px; padding: 40px;
+      width: 100%; max-width: 480px;
+      position: relative; box-shadow: 0 40px 80px rgba(0,0,0,.3);
+      max-height: 90vh; overflow-y: auto;
+    }
+    .demo-modal-inner h3 { font-size: 24px; font-weight: 800; color: var(--dark); margin-bottom: 8px; }
+    .demo-modal-inner > p { font-size: 14px; color: var(--gray); margin-bottom: 24px; line-height: 1.6; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 6px; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 11px 14px; border-radius: 9px;
+      border: 1.5px solid #d0d9ea; font-size: 14px; outline: none;
+      transition: border-color .2s, box-shadow .2s; font-family: 'DM Sans',sans-serif;
+      background: #f7f9fc; color: var(--dark);
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--blue); background: #fff;
+      box-shadow: 0 0 0 3px rgba(45,108,223,.12);
+    }
+    .form-group input.error-field, .form-group select.error-field {
+      border-color: #e74c3c;
+      box-shadow: 0 0 0 3px rgba(231,76,60,.1);
+    }
+    .field-error { font-size: 12px; color: #c0392b; margin-top: 5px; display: none; }
+    .field-error.show { display: block; }
+    .close-modal-btn {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; font-size: 22px;
+      color: #94a3b8; cursor: pointer;
+    }
+    .close-modal-btn:hover { color: var(--dark); }
+    .form-submit-btn {
+      width: 100%; padding: 14px; font-size: 15px;
+      font-family: 'Syne',sans-serif; font-weight: 700;
+      border: none; border-radius: 10px; cursor: pointer;
+      background: linear-gradient(90deg, var(--blue), var(--blue-light));
+      color: #fff; transition: all .2s; margin-top: 4px;
+    }
+    .form-submit-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .form-submit-btn:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast-success {
+      background: #edfbf1; border: 1px solid #86efac;
+      border-radius: 10px; padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 16px; display: none;
+    }
+    .toast-success.show { display: flex; }
+    .toast-success i { color: #16a34a; font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .toast-success-text strong { display: block; font-size: 14px; font-weight: 700; color: #15803d; }
+    .toast-success-text span { font-size: 13px; color: #166534; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 48px; padding: 100px 24px 60px; }
+      .hero-visual { order: -1; }
+      .float-left, .float-right { display: none; }
+      .stats-grid { grid-template-columns: repeat(2,1fr); }
+      .why-grid { grid-template-columns: repeat(2,1fr); }
+      .features-grid { grid-template-columns: repeat(2,1fr); }
+      .team-grid { grid-template-columns: repeat(2,1fr); }
+      .trust-grid { grid-template-columns: repeat(2,1fr); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: block; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .why-grid, .features-grid, .team-grid, .trust-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+      .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+      .stat-cards-row { grid-template-columns: repeat(2,1fr); }
+    }
+
+    /* Animations */
+    .fade-up {
+      opacity: 0; transform: translateY(32px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    .fade-up-d1 { transition-delay: .1s; }
+    .fade-up-d2 { transition-delay: .2s; }
+    .fade-up-d3 { transition-delay: .3s; }
+    .fade-up-d4 { transition-delay: .4s; }
+    .fade-up-d5 { transition-delay: .5s; }
+    .fade-up-d6 { transition-delay: .6s; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="#home" class="logo">
+      <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <span class="logo-text">1O1 <span>Technologies</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#team">Team</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <div class="nav-cta">
+      <a href="/login" class="btn-outline">Login</a>
+      <a href="#demo" class="btn-primary" onclick="openDemoModal(event)">Book Free Demo</a>
+    </div>
+    <button class="hamburger" onclick="openMobileMenu()" aria-label="Menu">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-nav" id="mobileNav" onclick="closeMobileMenuBg(event)">
+  <div class="mobile-panel" id="mobilePanel">
+    <div class="mobile-panel-header">
+      <a href="#home" class="logo" onclick="closeMobileMenu()">
+        <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+        <span class="logo-text">1O1 <span>Technologies</span></span>
+      </a>
+      <button onclick="closeMobileMenu()" style="background:none;border:none;font-size:20px;color:#475569;cursor:pointer;"><i class="fas fa-times"></i></button>
+    </div>
+    <a href="#features" onclick="closeMobileMenu()">Features</a>
+    <a href="#team" onclick="closeMobileMenu()">Team</a>
+    <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
+    <a href="#contact" onclick="closeMobileMenu()">Contact</a>
+    <div class="divider"></div>
+    <a href="{{ auth.login }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    <a href="#demo" onclick="openDemoModal(event);closeMobileMenu();" style="background:linear-gradient(90deg,var(--blue),var(--blue-light));color:#fff;border-radius:8px;text-align:center;font-weight:700;font-family:'Syne',sans-serif;">Book Free Demo</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section id="home" class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">
+        <span class="dot"></span>
+        <span>Trusted by Schools Across Uganda</span>
+      </div>
+      <h1>Manage Your Entire School From <span>One Powerful Platform</span></h1>
+      <p>Track fees, attendance, academics, report cards, staff management, and parent communication from a single school management system built for modern Ugandan schools.</p>
+      <div class="hero-ctas">
+        <button class="btn-hero-primary" onclick="openDemoModal(event)">
+          <i class="fas fa-calendar-check"></i> Book Free Demo
+        </button>
+        <a href="https://wa.me/256777080843" target="_blank" class="btn-hero-primary" style="background:transparent;border:2px solid rgba(255,255,255,.25);">
+          <i class="fab fa-whatsapp"></i> WhatsApp Us
+        </a>
+      </div>
+      <div class="trust-badges">
+        <div class="trust-badge"><i class="fas fa-shield-halved"></i> Secure Cloud Platform</div>
+        <div class="trust-badge"><i class="fas fa-headset"></i> Local Ugandan Support</div>
+        <div class="trust-badge"><i class="fas fa-bolt"></i> Easy Setup</div>
+        <div class="trust-badge"><i class="fas fa-mobile-screen"></i> Mobile Friendly</div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="float-card float-left">
+        <div class="float-card-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="float-card-text">
+          <strong>Fee Collected</strong>
+          <span style="color:var(--gray);">UGX 2,400,000</span>
+        </div>
+      </div>
+      <div class="dashboard-mockup">
+        <div class="mockup-bar">
+          <div class="mockup-dot" style="background:#ef4444;"></div>
+          <div class="mockup-dot" style="background:#f59e0b;"></div>
+          <div class="mockup-dot" style="background:#22c55e;"></div>
+          <span style="flex:1;text-align:center;font-size:11px;color:#475569;">School Dashboard – 1O1 ERP</span>
+        </div>
+        <div class="mockup-screen">
+          <div class="mockup-header-row">
+            <span class="mockup-title">Good Morning, Headteacher 👋</span>
+            <span class="mockup-date">Term 2 · June 2026</span>
+          </div>
+          <div class="stat-cards-row">
+            <div class="stat-card-m">
+              <div class="label">Students</div>
+              <div class="value">824</div>
+              <div class="change">↑ +12 this term</div>
+            </div>
+            <div class="stat-card-m">
+              <div class="label">Present Today</div>
+              <div class="value">791</div>
+              <div class="change">96% attendance</div>
+            </div>
+            <div class="stat-card-m">
+              <div class="label">Fees Paid</div>
+              <div class="value">68%</div>
+              <div class="change" style="color:#fb923c;">↑ collecting</div>
+            </div>
+            <div class="stat-card-m">
+              <div class="label">Staff</div>
+              <div class="value">47</div>
+              <div class="change">All active</div>
+            </div>
+          </div>
+          <div class="mini-chart">
+            <div class="mini-chart-label">Fee Collection – Last 6 Months</div>
+            <div class="chart-bars">
+              <div class="chart-bar" style="height:40%;"></div>
+              <div class="chart-bar" style="height:55%;"></div>
+              <div class="chart-bar" style="height:45%;"></div>
+              <div class="chart-bar" style="height:70%;"></div>
+              <div class="chart-bar active" style="height:85%;"></div>
+              <div class="chart-bar active" style="height:100%;"></div>
+            </div>
+          </div>
+          <div class="notification-row">
+            <i class="fas fa-bell"></i>
+            <span>3 report cards pending review · 12 fee reminders sent today</span>
+          </div>
+        </div>
+      </div>
+      <div class="float-card float-right">
+        <div class="float-card-icon"><i class="fas fa-file-alt"></i></div>
+        <div class="float-card-text">
+          <strong>Report Cards</strong>
+          <span style="color:#22c55e;">↑ Generated in 2s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-section">
+  <div class="section-inner">
+    <div class="stats-grid">
+      <div class="stat-item fade-up fade-up-d1">
+        <i class="fas fa-school stat-icon"></i>
+        <span class="stat-number" data-target="50">0</span>
+        <span class="stat-label">Schools Using the System</span>
+      </div>
+      <div class="stat-item fade-up fade-up-d2">
+        <i class="fas fa-user-graduate stat-icon"></i>
+        <span class="stat-number" data-target="25000">0</span>
+        <span class="stat-label">Students Managed</span>
+      </div>
+      <div class="stat-item fade-up fade-up-d3">
+        <i class="fas fa-file-alt stat-icon"></i>
+        <span class="stat-number" data-target="120000">0</span>
+        <span class="stat-label">Report Cards Generated</span>
+      </div>
+      <div class="stat-item fade-up fade-up-d4">
+        <i class="fas fa-clock stat-icon"></i>
+        <span class="stat-number">24/7</span>
+        <span class="stat-label">Support Availability</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WHY SCHOOLS CHOOSE US -->
+<section class="section" id="why">
+  <div class="section-inner">
+    <div class="section-header" style="text-align:center;">
+      <span class="section-label">Why Choose Us</span>
+      <h2 class="section-title">Why Schools Choose <span>1O1 Technologies</span></h2>
+      <p class="section-subtitle" style="margin:0 auto 56px;">Designed specifically for Ugandan schools — built around the real challenges that school directors, bursars, and head teachers face every day.</p>
+    </div>
+    <div class="why-grid">
+      <div class="why-card fade-up fade-up-d1">
+        <div class="why-icon"><i class="fas fa-bolt"></i></div>
+        <h3>Faster Report Generation</h3>
+        <p>Generate end-of-term report cards for hundreds of students in seconds — no manual calculations, no delays.</p>
+      </div>
+      <div class="why-card fade-up fade-up-d2">
+        <div class="why-icon"><i class="fas fa-wallet"></i></div>
+        <h3>Better Fee Collection</h3>
+        <p>Track outstanding balances, send automatic SMS reminders, and reconcile payments with School Pay integration.</p>
+      </div>
+      <div class="why-card fade-up fade-up-d3">
+        <div class="why-icon"><i class="fas fa-comments"></i></div>
+        <h3>Improved Parent Communication</h3>
+        <p>Keep parents informed with instant SMS alerts for attendance, fees, academic progress, and school announcements.</p>
+      </div>
+      <div class="why-card fade-up fade-up-d4">
+        <div class="why-icon"><i class="fas fa-leaf"></i></div>
+        <h3>Reduced Paperwork</h3>
+        <p>Go digital — eliminate manual registers, paper ledgers, and handwritten report cards entirely.</p>
+      </div>
+      <div class="why-card fade-up fade-up-d5">
+        <div class="why-icon"><i class="fas fa-chart-bar"></i></div>
+        <h3>Real-Time School Insights</h3>
+        <p>See live dashboards on attendance, fee collection, and academic performance — make faster, better decisions.</p>
+      </div>
+      <div class="why-card fade-up fade-up-d6">
+        <div class="why-icon"><i class="fas fa-headset"></i></div>
+        <h3>Local Support Team</h3>
+        <p>Our team is based in Kampala. Get fast, reliable support from people who understand your context.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section features-bg" id="features">
+  <div class="section-inner">
+    <div class="section-header" style="text-align:center;">
+      <span class="section-label">Full Feature Suite</span>
+      <h2 class="section-title">Everything Your School Needs</h2>
+      <p class="section-subtitle" style="margin:0 auto 56px;">13 powerful modules — all in one system. No spreadsheets. No juggling software.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade-up fade-up-d1">
+        <div class="feature-icon"><i class="fas fa-user-graduate"></i></div>
+        <h3>Student Management</h3>
+        <p>Maintain complete, searchable student profiles — admission details, guardian contacts, class history, and documents — all in one place.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d2">
+        <div class="feature-icon"><i class="fas fa-clipboard-check"></i></div>
+        <h3>Attendance Tracking</h3>
+        <p>Record and monitor daily attendance digitally. Get instant visibility on absenteeism and generate term attendance summaries.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d3">
+        <div class="feature-icon"><i class="fas fa-money-bill-wave"></i></div>
+        <h3>Fees Management</h3>
+        <p>Know exactly who has paid and who hasn't. Issue receipts, track balances per student, and export fee statements in seconds.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d4">
+        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+        <h3>Finance &amp; Accounting</h3>
+        <p>Track school income and expenses with complete financial visibility. Manage budgets, expenditures, and produce financial reports.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d5">
+        <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
+        <h3>Report Card Generation</h3>
+        <p>Generate professional, print-ready report cards in seconds. Supports multiple grading systems including UNEB and custom formats.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d6">
+        <div class="feature-icon"><i class="fas fa-paint-brush"></i></div>
+        <h3>Report Card Customization</h3>
+        <p>Brand report cards with your school logo, colors, and layout preferences. Every report card reflects your school's identity.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d1">
+        <div class="feature-icon"><i class="fas fa-users"></i></div>
+        <h3>Parent Portal</h3>
+        <p>Give parents secure online access to their child's attendance records, academic progress, fee balances, and report cards.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d2">
+        <div class="feature-icon"><i class="fas fa-id-badge"></i></div>
+        <h3>Staff Management</h3>
+        <p>Manage all staff records, roles, leave applications, and performance information from a single, organized interface.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d3">
+        <div class="feature-icon"><i class="fas fa-hand-holding-usd"></i></div>
+        <h3>Payroll Management</h3>
+        <p>Process staff salaries accurately every month. Manage deductions, allowances, and generate payslips automatically.</p>
+      </div>
+      <!-- SMS — coming soon -->
+      <div class="feature-card fade-up fade-up-d4">
+        <div class="feature-icon"><i class="fas fa-sms"></i></div>
+        <h3>SMS Notifications</h3>
+        <p>Send automated fee reminders, attendance alerts, and exam results to parents and staff via SMS — keeping everyone informed.</p>
+        <span class="coming-soon-badge"><i class="fas fa-clock"></i> Coming Soon</span>
+      </div>
+      <!-- School Pay — coming soon -->
+      <div class="feature-card fade-up fade-up-d5">
+        <div class="feature-icon"><i class="fas fa-link"></i></div>
+        <h3>School Pay Integration</h3>
+        <p>Connect directly to School Pay for seamless mobile money and bank payment reconciliation without manual data entry.</p>
+        <span class="coming-soon-badge"><i class="fas fa-clock"></i> Coming Soon</span>
+      </div>
+      <div class="feature-card fade-up fade-up-d6">
+        <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+        <h3>Academic Analytics</h3>
+        <p>Identify top performers, struggling students, and class trends. Use data to improve teaching and academic outcomes.</p>
+      </div>
+      <div class="feature-card fade-up fade-up-d1">
+        <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
+        <h3>Multi-Term Reporting</h3>
+        <p>Track progress across Terms 1, 2, and 3. Compare performance trends and generate comprehensive annual academic reports.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="section" id="team">
+  <div class="section-inner">
+    <div style="text-align:center; margin-bottom:56px;">
+      <span class="section-label">Our Team</span>
+      <h2 class="section-title">The People Behind the Platform</h2>
+      <p class="section-subtitle" style="margin:0 auto;">A dedicated Ugandan team building software that truly understands local schools.</p>
+    </div>
+    <div class="team-grid">
+      <div class="team-card fade-up fade-up-d1">
+        <div class="team-avatar">
+          <img src="{{ url_for('static', filename='CEO.jpg') }}" alt="Kakembo Aman">
+        </div>
+        <h3>Kakembo Aman</h3>
+        <div class="team-role">Software Engineer</div>
+        <p>Responsible for software architecture, backend systems, and platform scalability — ensuring the system performs reliably for schools of all sizes.</p>
+      </div>
+      <div class="team-card fade-up fade-up-d2">
+        <div class="team-avatar">
+          <img src="{{ url_for('static', filename='lady.jpg') }}" alt="Nakato Christine">
+        </div>
+        <h3>Nakato Christine</h3>
+        <div class="team-role">Business Development Manager</div>
+        <p>Focused on client success, partnerships, and business growth — helping schools get maximum value from the platform.</p>
+      </div>
+      <div class="team-card fade-up fade-up-d3">
+        <div class="team-avatar">
+          <img src="{{ url_for('static', filename='other.jpg') }}" alt="Sekitoleko Mubarak">
+        </div>
+        <h3>Sekitoleko Mubarak</h3>
+        <div class="team-role">Software Developer</div>
+        <p>Specializes in frontend development, user experience, and product innovation — making the system intuitive and easy to use.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="section trust-bg" id="trust">
+  <div class="section-inner">
+    <div style="text-align:center; margin-bottom:56px;">
+      <span class="section-label">Trust &amp; Reliability</span>
+      <h2 class="section-title">Why Schools Trust <span>1O1 Technologies Uganda</span></h2>
+    </div>
+    <div class="trust-grid">
+      <div class="trust-card fade-up fade-up-d1">
+        <div class="trust-card-icon"><i class="fas fa-lock"></i></div>
+        <div>
+          <h3>Secure Data Management</h3>
+          <p>Student and financial data is stored securely with encrypted backups, role-based access controls, and data isolation per school.</p>
+        </div>
+      </div>
+      <div class="trust-card fade-up fade-up-d2">
+        <div class="trust-card-icon"><i class="fas fa-cloud"></i></div>
+        <div>
+          <h3>Reliable Cloud Infrastructure</h3>
+          <p>Built on enterprise-grade cloud infrastructure with high uptime — your data is always accessible when you need it.</p>
+        </div>
+      </div>
+      <div class="trust-card fade-up fade-up-d3">
+        <div class="trust-card-icon"><i class="fas fa-sync-alt"></i></div>
+        <div>
+          <h3>Continuous Product Updates</h3>
+          <p>We ship regular improvements and new features based on direct feedback from the schools we serve — at no extra cost.</p>
+        </div>
+      </div>
+      <div class="trust-card fade-up fade-up-d4">
+        <div class="trust-card-icon"><i class="fas fa-headset"></i></div>
+        <div>
+          <h3>Dedicated Customer Support</h3>
+          <p>Our support team in Kampala is available by phone, WhatsApp, and email to resolve issues quickly when they arise.</p>
+        </div>
+      </div>
+      <div class="trust-card fade-up fade-up-d5">
+        <div class="trust-card-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div>
+          <h3>Local Training &amp; Onboarding</h3>
+          <p>Every new school receives hands-on training for staff. We don't just hand over a system — we make sure your team is fully confident.</p>
+        </div>
+      </div>
+      <div class="trust-card fade-up fade-up-d6">
+        <div class="trust-card-icon"><i class="fas fa-tag"></i></div>
+        <div>
+          <h3>Affordable Pricing</h3>
+          <p>Transparent, fair pricing designed for Ugandan schools. No hidden costs, no per-user charges — just one predictable subscription.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section-inner">
+    <div style="text-align:center; margin-bottom:52px;">
+      <span class="section-label">FAQ</span>
+      <h2 class="section-title">Common Questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          Can report cards be customized to our school's format?
+          <span class="faq-arrow"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="faq-answer">Yes. Report cards can be customized with your school name, logo, colors, grading scale, and subject layout. Multiple templates are supported, including standard secondary and primary formats.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          Do you provide training for our staff?
+          <span class="faq-arrow"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="faq-answer">Absolutely. Every new school receives dedicated onboarding sessions for admin staff, bursars, and teachers. We offer in-person training in Kampala and remote training via video call where needed.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          Can we import our existing student data?
+          <span class="faq-arrow"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="faq-answer">Yes. You can import existing student data using our Excel/CSV template. Our team will assist with data migration to ensure a smooth transition from your current system.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          Does the system work on mobile devices?
+          <span class="faq-arrow"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="faq-answer">Yes. The system is fully mobile-responsive and works on any smartphone or tablet browser. Teachers can record attendance on their phones, and parents can check balances on theirs.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          Is technical support included in the subscription?
+          <span class="faq-arrow"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="faq-answer">Yes. All subscriptions include technical support. You can reach our team by phone, WhatsApp, or email. We also provide a help documentation portal for self-service troubleshooting.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          Can parents access their child's information?
+          <span class="faq-arrow"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="faq-answer">Yes. The Parent Portal allows parents to log in and view their child's attendance, academic progress, fee balance, and report cards securely from any device.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFAQ(this)">
+          When will SMS notifications and School Pay be available?
+          <span class="faq-arrow"><i class="fas fa-chevron-down"></i></span>
+        </button>
+        <div class="faq-answer">Both SMS notifications and School Pay integration are currently in active development. We expect to launch these features in the coming months. Schools that book a demo will be the first to know and get early access.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="cta-section" id="contact">
+  <div class="cta-inner">
+    <span class="section-label" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);color:#fff;">Get Started Today</span>
+    <h2>Ready to Modernize Your School?</h2>
+    <p>Book a free demo today and discover how our School Management System can simplify your school's operations — from day one.</p>
+    <div class="cta-buttons">
+      <button class="btn-cta-white" onclick="openDemoModal(event)">
+        <i class="fas fa-calendar-check"></i> Book Free Demo
+      </button>
+      <a href="https://wa.me/256777080843" target="_blank" class="btn-cta-outline">
+        <i class="fab fa-whatsapp"></i> Contact Us on WhatsApp
+      </a>
+    </div>
+    <div class="cta-contact">
+      <div class="cta-contact-item">
+        <i class="fas fa-phone"></i>
+        <span>+256 777 080 843</span>
+      </div>
+      <div class="cta-contact-item">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>Sir Apollo Kaggwa Rd, Safina Trading Centre, Shop 066, Kampala</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#home" class="logo">
+          <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+          <span class="logo-text">1O1 <span>Technologies</span></span>
+        </a>
+        <p>1O1 Technologies Uganda develops powerful software solutions that help schools automate administration, improve efficiency, and enhance communication.</p>
+        <div style="display:flex;gap:12px;">
+          <a href="https://wa.me/256777080843" target="_blank" style="width:36px;height:36px;background:rgba(255,255,255,.07);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#64748b;text-decoration:none;transition:all .2s;" onmouseover="this.style.color='#4fa3f7'" onmouseout="this.style.color='#64748b'"><i class="fab fa-whatsapp"></i></a>
+          <a href="tel:+256777080843" style="width:36px;height:36px;background:rgba(255,255,255,.07);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#64748b;text-decoration:none;transition:all .2s;" onmouseover="this.style.color='#4fa3f7'" onmouseout="this.style.color='#64748b'"><i class="fas fa-phone"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#" onclick="openDemoModal(event)">Book Free Demo</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#team">Our Team</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <div class="footer-contact-item"><i class="fas fa-phone"></i><span>+256 777 080 843</span></div>
+        <div class="footer-contact-item"><i class="fab fa-whatsapp"></i><a href="https://wa.me/256777080843" target="_blank" style="color:#64748b;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='#4fa3f7'" onmouseout="this.style.color='#64748b'">Chat on WhatsApp</a></div>
+        <div class="footer-contact-item"><i class="fas fa-map-marker-alt"></i><span>Sir Apollo Kaggwa Rd, Safina Trading Centre, Shop 066, Kampala</span></div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 1O1 Technologies Uganda. All Rights Reserved.</p>
+      <p style="font-size:13px;color:#334155;">Smart Software Solutions for Modern Schools</p>
+    </div>
+  </div>
+</footer>
+
+<!-- DEMO MODAL -->
+<div class="demo-modal" id="demoModal">
+  <div class="demo-modal-inner">
+    <button class="close-modal-btn" onclick="closeDemoModal()">×</button>
+    <h3>Book Your Free Demo</h3>
+    <p>Fill in your details and our Kampala team will contact you within 24 hours to schedule a personalized walkthrough.</p>
+
+    <!-- Success toast (shown after submit) -->
+    <div class="toast-success" id="demoSuccessToast">
+      <i class="fas fa-check-circle"></i>
+      <div class="toast-success-text">
+        <strong>Request received!</strong>
+        <span>We'll call or WhatsApp you within 24 hours to schedule your demo.</span>
+      </div>
+    </div>
+
+    <div id="demoForm">
+      <div class="form-group">
+        <label>Your Name <span style="color:#e74c3c;">*</span></label>
+        <input type="text" id="demo_name" placeholder="e.g. John Mukasa">
+        <div class="field-error" id="err_name">Please enter your full name.</div>
+      </div>
+      <div class="form-group">
+        <label>School Name <span style="color:#e74c3c;">*</span></label>
+        <input type="text" id="demo_school" placeholder="e.g. St. Mary's Secondary School">
+        <div class="field-error" id="err_school">Please enter your school name.</div>
+      </div>
+      <div class="form-group">
+        <label>Phone Number <span style="color:#e74c3c;">*</span></label>
+        <input type="tel" id="demo_phone" placeholder="+256 7XX XXX XXX">
+        <div class="field-error" id="err_phone">Please enter a valid phone number.</div>
+      </div>
+      <div class="form-group">
+        <label>Number of Students (approximate)</label>
+        <input type="number" id="demo_students" placeholder="e.g. 500" min="1">
+      </div>
+      <div class="form-group">
+        <label>Your Role <span style="color:#e74c3c;">*</span></label>
+        <select id="demo_role">
+          <option value="">Select your role</option>
+          <option>School Director / Proprietor</option>
+          <option>Head Teacher / Principal</option>
+          <option>Bursar / Accountant</option>
+          <option>Administrator</option>
+          <option>Other</option>
+        </select>
+        <div class="field-error" id="err_role">Please select your role.</div>
+      </div>
+
+      <button class="form-submit-btn" id="demoSubmitBtn" onclick="submitDemoForm()">
+        <i class="fas fa-calendar-check" style="margin-right:8px;"></i>Submit Demo Request
+      </button>
+      <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px;">Or call us directly: <a href="tel:+256777080843" style="color:var(--blue);text-decoration:none;font-weight:600;">+256 777 080 843</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── STORAGE KEY ── */
+  const DEMO_STORAGE_KEY = 'demo_requests';
+
+  /* ── Navbar scroll ── */
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  /* ── Mobile menu ── */
+  function openMobileMenu() {
+    document.getElementById('mobileNav').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobileMenu() {
+    document.getElementById('mobileNav').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeMobileMenuBg(e) {
+    if (e.target === document.getElementById('mobileNav')) closeMobileMenu();
+  }
+
+  /* ── Demo modal ── */
+  function openDemoModal(e) {
+    if (e) e.preventDefault();
+    resetDemoForm();
+    document.getElementById('demoModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDemoModal() {
+    document.getElementById('demoModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('demoModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDemoModal();
+  });
+
+  /* ── Field validation helpers ── */
+  function clearFieldError(inputId, errId) {
+    document.getElementById(inputId).classList.remove('error-field');
+    document.getElementById(errId).classList.remove('show');
+  }
+
+  function showFieldError(inputId, errId) {
+    document.getElementById(inputId).classList.add('error-field');
+    document.getElementById(errId).classList.add('show');
+  }
+
+  function resetDemoForm() {
+    ['demo_name','demo_school','demo_phone','demo_students','demo_role'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = ''; el.classList.remove('error-field'); }
+    });
+    ['err_name','err_school','err_phone','err_role'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('show');
+    });
+    document.getElementById('demoSuccessToast').classList.remove('show');
+    document.getElementById('demoForm').style.display = '';
+    const btn = document.getElementById('demoSubmitBtn');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-calendar-check" style="margin-right:8px;"></i>Submit Demo Request';
+  }
+
+  /* ── Phone validation ── */
+  function isValidPhone(phone) {
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    return /^(\+?256|0)[37]\d{8}$/.test(cleaned) || /^\+?\d{7,15}$/.test(cleaned);
+  }
+
+  /* ── Save demo request to localStorage ── */
+  function saveDemoRequest(data) {
+    try {
+      const existing = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || '[]');
+      existing.push({ ...data, id: Date.now(), submittedAt: new Date().toISOString() });
+      localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(existing));
+    } catch(err) {
+      console.warn('Could not save demo request to storage:', err);
+    }
+  }
+
+  /* ── Submit demo form ── */
+  function submitDemoForm() {
+    const name   = document.getElementById('demo_name').value.trim();
+    const school = document.getElementById('demo_school').value.trim();
+    const phone  = document.getElementById('demo_phone').value.trim();
+    const role   = document.getElementById('demo_role').value;
+    const students = document.getElementById('demo_students').value.trim();
+
+    let hasError = false;
+
+    // Validate name
+    if (!name) { showFieldError('demo_name', 'err_name'); hasError = true; }
+    else clearFieldError('demo_name', 'err_name');
+
+    // Validate school
+    if (!school) { showFieldError('demo_school', 'err_school'); hasError = true; }
+    else clearFieldError('demo_school', 'err_school');
+
+    // Validate phone
+    if (!phone || !isValidPhone(phone)) { showFieldError('demo_phone', 'err_phone'); hasError = true; }
+    else clearFieldError('demo_phone', 'err_phone');
+
+    // Validate role
+    if (!role) { showFieldError('demo_role', 'err_role'); hasError = true; }
+    else clearFieldError('demo_role', 'err_role');
+
+    if (hasError) return;
+
+    // Show loading
+    const btn = document.getElementById('demoSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+    // Save data
+    const requestData = { name, school, phone, role, students: students || null };
+    saveDemoRequest(requestData);
+
+    // Simulate brief processing delay then show success
+    setTimeout(() => {
+      document.getElementById('demoForm').style.display = 'none';
+      document.getElementById('demoSuccessToast').classList.add('show');
+      // Auto-close after 3s
+      setTimeout(closeDemoModal, 3000);
+    }, 800);
+  }
+
+  /* ── FAQ ── */
+  function toggleFAQ(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  /* ── Fade-up on scroll ── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  /* ── Counter animation ── */
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target);
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(timer); }
+      el.textContent = Math.floor(current).toLocaleString() + '+';
+    }, 16);
+  }
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.target.dataset.target) {
+        animateCounter(e.target);
+        counterObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.stat-number[data-target]').forEach(el => counterObserver.observe(el));
+
+  /* ── Keyboard close ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeDemoModal(); closeMobileMenu(); }
+  });
+
+  /* ── Live field-error clearing ── */
+  document.getElementById('demo_name').addEventListener('input', function() {
+    if (this.value.trim()) clearFieldError('demo_name', 'err_name');
+  });
+  document.getElementById('demo_school').addEventListener('input', function() {
+    if (this.value.trim()) clearFieldError('demo_school', 'err_school');
+  });
+  document.getElementById('demo_phone').addEventListener('input', function() {
+    if (isValidPhone(this.value.trim())) clearFieldError('demo_phone', 'err_phone');
+  });
+  document.getElementById('demo_role').addEventListener('change', function() {
+    if (this.value) clearFieldError('demo_role', 'err_role');
+  });
+</script>
+</body>
+</html>
