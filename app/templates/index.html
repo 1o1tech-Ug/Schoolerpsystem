@@ -658,7 +658,7 @@
     <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
     <a href="#contact" onclick="closeMobileMenu()">Contact</a>
     <div class="divider"></div>
-    <a href="{{ auth.login }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
+    <a href="{{ url_for('auth.login') }}" onclick="closeMobileMenu()" style="color:var(--dark);font-weight:600;">Login</a>
     <a href="#demo" onclick="openDemoModal(event);closeMobileMenu();" style="background:linear-gradient(90deg,var(--blue),var(--blue-light));color:#fff;border-radius:8px;text-align:center;font-weight:700;font-family:'Syne',sans-serif;">Book Free Demo</a>
   </div>
 </div>
