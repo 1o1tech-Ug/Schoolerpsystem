@@ -28,6 +28,12 @@ class Student(db.Model):
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=True)
 
     # Relationships
+    invoices = db.relationship(
+    'Invoice',
+    backref='student',
+    cascade='all, delete-orphan',
+    passive_deletes=True
+)
     academic = db.relationship("StudentAcademic", backref="student", uselist=False)
     guardian = db.relationship("Guardian", backref="student", lazy=True)
     medical_record = db.relationship("MedicalRecord", backref="student", uselist=False)

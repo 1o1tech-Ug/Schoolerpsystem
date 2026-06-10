@@ -14,10 +14,13 @@ class Invoice(db.Model):
     )
 
     student_id = db.Column(
-        db.Integer,
-        db.ForeignKey('students.id'),
-        nullable=False
-    )
+    db.Integer,
+    db.ForeignKey(
+        'students.id',
+        ondelete='CASCADE'
+    ),
+    nullable=False
+)
 
     term_id = db.Column(
         db.Integer,

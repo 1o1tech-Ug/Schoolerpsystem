@@ -936,3 +936,652 @@ werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.l
 [2026-06-08 10:16:38] WARNING | GET /static/other.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/other.jpg | IP=127.0.0.1 | USER=-
 [2026-06-08 10:17:25] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
 [2026-06-08 10:17:25] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-09 10:05:14] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-09 10:05:14] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-10 23:05:37] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:05:37] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:09:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:09:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:09:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:09:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:10:44] WARNING | GET /static/images/CEO.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/images/CEO.jpg | IP=127.0.0.1 | USER=-
+[2026-06-10 23:10:44] WARNING | GET /static/images/lady.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/images/lady.jpg | IP=127.0.0.1 | USER=-
+[2026-06-10 23:10:44] WARNING | GET /static/images/CEO.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/images/CEO.jpg | IP=127.0.0.1 | USER=-
+[2026-06-10 23:10:44] WARNING | GET /static/images/lady.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/images/lady.jpg | IP=127.0.0.1 | USER=-
+[2026-06-10 23:10:44] WARNING | GET /static/images/other.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/images/other.jpg | IP=127.0.0.1 | USER=-
+[2026-06-10 23:10:44] WARNING | GET /static/images/other.jpg | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /static/images/other.jpg | IP=127.0.0.1 | USER=-
+[2026-06-10 23:10:46] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-10 23:10:46] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-10 23:11:05] WARNING | GET /googleapis.com | IP=127.0.0.1 | USER=1 | app.core.error_handlers | 404 Not Found | GET /googleapis.com | IP=127.0.0.1 | USER=1
+[2026-06-10 23:11:05] WARNING | GET /googleapis.com | IP=127.0.0.1 | USER=1 | app.core.error_handlers | 404 Not Found | GET /googleapis.com | IP=127.0.0.1 | USER=1
+[2026-06-10 23:25:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:25:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:26:50] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:26:50] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:28:13] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:28:13] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:28:48] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:28:48] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:29:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:29:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:29:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:29:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:29:23] WARNING | GET /googleapis.com | IP=127.0.0.1 | USER=1 | app.core.error_handlers | 404 Not Found | GET /googleapis.com | IP=127.0.0.1 | USER=1
+[2026-06-10 23:29:23] WARNING | GET /googleapis.com | IP=127.0.0.1 | USER=1 | app.core.error_handlers | 404 Not Found | GET /googleapis.com | IP=127.0.0.1 | USER=1
+[2026-06-10 23:36:38] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:36:38] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:41:41] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:41:41] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:44:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:44:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:45:34] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:45:34] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:45:37] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:45:37] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:46:06] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:46:06] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:46:09] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:46:09] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:49:04] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:49:04] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:53:12] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:53:12] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-10 23:55:55] WARNING | POST /auth/staff/login | IP=127.0.0.1 | USER=1 | app.routes.auth | Failed staff login attempt | school_id=4 username=admin
+[2026-06-10 23:55:55] WARNING | POST /auth/staff/login | IP=127.0.0.1 | USER=1 | app.routes.auth | Failed staff login attempt | school_id=4 username=admin
+[2026-06-10 23:56:15] WARNING | GET /googleapis.com | IP=127.0.0.1 | USER=1 | app.core.error_handlers | 404 Not Found | GET /googleapis.com | IP=127.0.0.1 | USER=1
+[2026-06-10 23:56:15] WARNING | GET /googleapis.com | IP=127.0.0.1 | USER=1 | app.core.error_handlers | 404 Not Found | GET /googleapis.com | IP=127.0.0.1 | USER=1
+[2026-06-11 00:03:44] ERROR | GET /students/registration | IP=127.0.0.1 | USER=7 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /students/registration | IP=127.0.0.1 | USER=7 | OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '2c3d2b92-26fa-4db7-aa5b-6d5f8896f32b', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: SSL error: unexpected eof while reading
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '2c3d2b92-26fa-4db7-aa5b-6d5f8896f32b', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-06-11 00:03:44] ERROR | GET /students/registration | IP=127.0.0.1 | USER=7 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /students/registration | IP=127.0.0.1 | USER=7 | OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '2c3d2b92-26fa-4db7-aa5b-6d5f8896f32b', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: SSL error: unexpected eof while reading
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '2c3d2b92-26fa-4db7-aa5b-6d5f8896f32b', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-06-11 00:12:06] WARNING | POST /auth/staff/login | IP=127.0.0.1 | USER=7 | app.routes.auth | Failed staff login attempt | school_id=5 username=admin
+[2026-06-11 00:12:06] WARNING | POST /auth/staff/login | IP=127.0.0.1 | USER=7 | app.routes.auth | Failed staff login attempt | school_id=5 username=admin
+[2026-06-11 00:22:37] ERROR | GET /api/academics/subjects | IP=127.0.0.1 | USER=7 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /api/academics/subjects | IP=127.0.0.1 | USER=7 | OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '0bb5c3b8-4b27-4d4d-9a79-fa442470a35c', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: SSL error: unexpected eof while reading
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '0bb5c3b8-4b27-4d4d-9a79-fa442470a35c', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-06-11 00:22:37] ERROR | GET /api/academics/subjects | IP=127.0.0.1 | USER=7 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /api/academics/subjects | IP=127.0.0.1 | USER=7 | OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '0bb5c3b8-4b27-4d4d-9a79-fa442470a35c', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: SSL error: unexpected eof while reading
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL error: unexpected eof while reading
+
+[SQL: SELECT token_blocklist.id AS token_blocklist_id, token_blocklist.jti AS token_blocklist_jti, token_blocklist.created_at AS token_blocklist_created_at 
+FROM token_blocklist 
+WHERE token_blocklist.jti = %(jti_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'jti_1': '0bb5c3b8-4b27-4d4d-9a79-fa442470a35c', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-06-11 00:42:35] ERROR | POST /api/school/details | IP=127.0.0.1 | USER=7 | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/logos/school_5_logo.jpg → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-11 00:42:35] ERROR | POST /api/school/details | IP=127.0.0.1 | USER=7 | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/logos/school_5_logo.jpg → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-11 00:42:35] ERROR | POST /api/school/details | IP=127.0.0.1 | USER=7 | app.apis.reportcardgeneration | save_school_details failed | school_id=5
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 755, in save_school_details
+    logo_url = bunny_upload(data=logo_bytes, remote_path=remote_path)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/utils/bunny.py", line 91, in bunny_upload
+    raise RuntimeError(
+        f"BunnyCDN upload failed (HTTP {response.status_code}): {response.text[:200]}"
+    )
+RuntimeError: BunnyCDN upload failed (HTTP 401): {"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-11 00:42:35] ERROR | POST /api/school/details | IP=127.0.0.1 | USER=7 | app.apis.reportcardgeneration | save_school_details failed | school_id=5
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 755, in save_school_details
+    logo_url = bunny_upload(data=logo_bytes, remote_path=remote_path)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/utils/bunny.py", line 91, in bunny_upload
+    raise RuntimeError(
+        f"BunnyCDN upload failed (HTTP {response.status_code}): {response.text[:200]}"
+    )
+RuntimeError: BunnyCDN upload failed (HTTP 401): {"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-11 00:43:45] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=65 term=3: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-11 00:43:45] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=65 term=3: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-11 00:43:51] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `print-color-adjust: exact` at 47:7, unknown property.
+[2026-06-11 00:43:51] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `inset: 4px` at 62:40, unknown property.
+[2026-06-11 00:43:51] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `inset: 0` at 131:40, unknown property.
+[2026-06-11 00:43:58] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/East/student_65_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-11 00:43:58] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/East/student_65_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-11 00:43:58] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/East/student_65_bot.pdf — falling back to local URL
+[2026-06-11 00:43:58] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/East/student_65_bot.pdf — falling back to local URL

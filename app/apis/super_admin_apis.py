@@ -377,63 +377,178 @@ def update_school(id):
 @school_api.route("/api/schools/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_school(id):
-    # Enforce your custom superadmin authorization guard check
     guard = superadmin_required()
     if guard:
         return guard
 
-    # Locate the target parent record instantly, or throw an automatic 404
     school = School.query.get_or_404(id)
+    sid = school.id
 
     try:
-        # =========================================================
-        # STEP 1: LAYERED DEPENDENCY CLEANUP (REVERSE INTERCONNECTION ORDER)
-        # =========================================================
-        
-        # 1. Clear out all Student Authentication records tied to this school code/id
-        # (This matches your StudentAuth model from your login blueprint file)
-        StudentAuth.query.filter_by(school_id=school.id).delete()
-        #students
-        Student.query.filter_by(school_id=school.id).delete()
+        # Expunge everything — prevents ORM from firing
+        # relationship cleanup UPDATEs behind your back
+        db.session.expunge_all()
 
-        # 2. Clear out specialized Staff Admin table links explicitly
-        Admin.query.filter_by(school_id=school.id).delete()
+        def raw(sql, params=None):
+            db.session.execute(db.text(sql), params or {"sid": sid})
 
-        # 3. Clear out core relational User accounts (Admins, Teachers, Staff profiles)
-        User.query.filter_by(school_id=school.id).delete()
+        # ── Marks ──────────────────────────────────────────────
+        raw("DELETE FROM student_marks WHERE school_id = :sid")
 
-        # 4. Clear out financial profiles or subscription parameters securely
-        if hasattr(school, 'subscription') and school.subscription:
-            db.session.delete(school.subscription)
-        else:
-            # Fallback direct database query if relationship binding is unmapped
-            Subscription.query.filter_by(school_id=school.id).delete()
+        # ── Assessments ────────────────────────────────────────
+        raw("DELETE FROM assessments WHERE school_id = :sid")
 
-        # 5. Clear out any academic module footprints if applicable to prevent ghost references
-        # (Add execution deletions here if you have separate Academic/Module tables)
+        # ── Student attendance ─────────────────────────────────
+        raw("DELETE FROM student_attendance WHERE school_id = :sid")
 
-        # =========================================================
-        # STEP 2: PARENT DESTROY SEQUENCE & TRANSACTION COMMIT
-        # =========================================================
-        db.session.delete(school)
+        # ── Lesson sessions ────────────────────────────────────
+        raw("DELETE FROM lesson_sessions WHERE school_id = :sid")
+
+        # ── Teaching assignments ───────────────────────────────
+        raw("DELETE FROM teaching_assignments WHERE school_id = :sid")
+
+        # ── Staff attendance ───────────────────────────────────
+        raw("DELETE FROM staff_attendance WHERE school_id = :sid")
+
+        # ── Report cards & summaries ───────────────────────────
+        raw("DELETE FROM report_cards WHERE school_id = :sid")
+        raw("DELETE FROM report_summaries WHERE school_id = :sid")
+
+        # ── Receipts (no school_id — go through payments) ──────
+        raw("""
+            DELETE FROM receipts
+            WHERE payment_id IN (
+                SELECT id FROM payments WHERE school_id = :sid
+            )
+        """)
+
+        # ── Payments ───────────────────────────────────────────
+        raw("DELETE FROM payments WHERE school_id = :sid")
+
+        # ── Invoice items (go through invoices) ────────────────
+        raw("""
+            DELETE FROM invoice_items
+            WHERE invoice_id IN (
+                SELECT id FROM invoices WHERE school_id = :sid
+            )
+        """)
+
+        # ── Invoices ───────────────────────────────────────────
+        raw("DELETE FROM invoices WHERE school_id = :sid")
+
+        # ── Fee items (go through fee structures) ──────────────
+        raw("""
+            DELETE FROM fee_items
+            WHERE fee_structure_id IN (
+                SELECT id FROM fee_structures WHERE school_id = :sid
+            )
+        """)
+
+        # ── Fee structures ─────────────────────────────────────
+        raw("DELETE FROM fee_structures WHERE school_id = :sid")
+
+        # ── Expenses ───────────────────────────────────────────
+        raw("DELETE FROM expenses WHERE school_id = :sid")
+
+        # ── Student junction tables ────────────────────────────
+        raw("DELETE FROM student_streams WHERE school_id = :sid")
+        raw("DELETE FROM student_subjects WHERE school_id = :sid")
+        raw("DELETE FROM student_enrollments WHERE school_id = :sid")
+
+        # ── Student child records (no school_id — go through students) ──
+        raw("""
+            DELETE FROM guardians
+            WHERE student_id IN (
+                SELECT id FROM students WHERE school_id = :sid
+            )
+        """)
+        raw("""
+            DELETE FROM medical_records
+            WHERE student_id IN (
+                SELECT id FROM students WHERE school_id = :sid
+            )
+        """)
+        raw("""
+            DELETE FROM documents
+            WHERE student_id IN (
+                SELECT id FROM students WHERE school_id = :sid
+            )
+        """)
+        raw("""
+            DELETE FROM student_academic
+            WHERE student_id IN (
+                SELECT id FROM students WHERE school_id = :sid
+            )
+        """)
+
+        # ── Student auth ───────────────────────────────────────
+        raw("DELETE FROM student_auth WHERE school_id = :sid")
+
+        # ── Students ───────────────────────────────────────────
+        raw("DELETE FROM students WHERE school_id = :sid")
+
+        # ── User modules (go through users) ────────────────────
+        raw("""
+            DELETE FROM user_modules
+            WHERE user_id IN (
+                SELECT id FROM users WHERE school_id = :sid
+            )
+        """)
+
+        # ── Users ──────────────────────────────────────────────
+        raw("DELETE FROM users WHERE school_id = :sid")
+
+        # ── Staff junction tables ──────────────────────────────
+        raw("DELETE FROM teacher_subjects WHERE school_id = :sid")
+        raw("DELETE FROM teacher_streams WHERE school_id = :sid")
+
+        # ── Staff ──────────────────────────────────────────────
+        raw("DELETE FROM staff WHERE school_id = :sid")
+
+        # ── Academic structure ─────────────────────────────────
+        raw("DELETE FROM grade_scales WHERE school_id = :sid")
+        raw("DELETE FROM papers WHERE school_id = :sid")
+        raw("DELETE FROM subjects WHERE school_id = :sid")
+        raw("DELETE FROM academic_configs WHERE school_id = :sid")
+        raw("DELETE FROM terms WHERE school_id = :sid")
+
+        # ── Streams (before classes) ───────────────────────────
+        raw("""
+            DELETE FROM streams
+            WHERE class_id IN (
+                SELECT id FROM classes WHERE school_id = :sid
+            )
+        """)
+
+        # ── Classes ────────────────────────────────────────────
+        raw("DELETE FROM classes WHERE school_id = :sid")
+
+        # ── School details ─────────────────────────────────────
+        raw("DELETE FROM school_details WHERE school_id = :sid")
+
+        # ── Admin, subscription, blacklist, notifications ──────
+        raw("DELETE FROM admins WHERE school_id = :sid")
+        raw("DELETE FROM notifications WHERE school_id = :sid")
+        raw("DELETE FROM blacklist WHERE school_id = :sid")
+        raw("DELETE FROM subscriptions WHERE school_id = :sid")
+
+        # ── School itself ──────────────────────────────────────
+        raw("DELETE FROM schools WHERE id = :sid")
+
         db.session.commit()
 
-        print(f"🗑️ System Infrastructure: Completely scrubbed school cluster instance #{id}")
         return jsonify({
             "success": True,
-            "message": "School and all associated system records deleted successfully."
+            "message": "School deleted successfully."
         }), 200
 
     except Exception as e:
-        # Roll back changes immediately if any single deletion step crashes
         db.session.rollback()
-        print(f"❌ Structural Deletion Crash on school #{id}: {str(e)}")
+        print(f"Delete failed for school #{id}: {str(e)}")
         return jsonify({
             "success": False,
-            "message": f"Failed to delete school ecosystem parameters cleanly: {str(e)}"
+            "message": f"Failed to delete school: {str(e)}"
         }), 500
-
-
 # =========================================================
 # SEND NOTIFICATION
 # =========================================================
