@@ -464,7 +464,8 @@ def bulk_import_row():
     if guard:
         return guard
 
-    school_id   = get_jwt().get("school_id")
+    school_id = get_jwt().get("school_id")
+
     limit_error = check_student_limit(school_id)
     if limit_error:
         return jsonify({"message": limit_error}), 403
@@ -480,7 +481,9 @@ def bulk_import_row():
         guardian_name    = str(data.get("guardian_name",    "")).strip()
         guardian_contact = str(data.get("guardian_contact", "")).strip()
         student_type     = _sanitise_student_type(data.get("student_type", "day"))
+        class_name       = str(data.get("class_name",       "")).strip()
 
+        # ── Validation ──────────────────────────────────────────
         errors = []
         for field, val in [
             ("first_name",       first_name),
@@ -507,6 +510,7 @@ def bulk_import_row():
         if errors:
             return jsonify({"message": "; ".join(errors)}), 400
 
+        # ── Duplicate admission number check ────────────────────
         exists = db.session.query(Student.id).filter(
             Student.school_id        == school_id,
             Student.admission_number == admission_number
@@ -514,10 +518,21 @@ def bulk_import_row():
         if exists:
             return jsonify({"message": f"Admission number '{admission_number}' already exists"}), 400
 
-        default_class = Class.query.filter_by(school_id=school_id).first()
-        if not default_class:
+        # ── Resolve class ───────────────────────────────────────
+        target_class = None
+        if class_name:
+            target_class = Class.query.filter_by(
+                school_id=school_id,
+                name=class_name
+            ).first()
+
+        if not target_class:
+            target_class = Class.query.filter_by(school_id=school_id).first()
+
+        if not target_class:
             return jsonify({"message": "No classes configured for this school"}), 400
 
+        # ── Create student ──────────────────────────────────────
         student = Student(
             school_id=school_id,
             student_code="TEMP",
@@ -526,9 +541,8 @@ def bulk_import_row():
             last_name=last_name,
             gender=gender,
             date_of_birth=dob,
-            class_id=default_class.id,
+            class_id=target_class.id,
         )
-
         if hasattr(student, "student_type"):
             student.student_type = student_type
 
@@ -537,7 +551,7 @@ def bulk_import_row():
 
         student.student_code = generate_student_code(student.id)
 
-        db.session.add(StudentAcademic(student_id=student.id, class_id=default_class.id))
+        db.session.add(StudentAcademic(student_id=student.id, class_id=target_class.id))
         db.session.add(MedicalRecord(student_id=student.id))
         db.session.add(Guardian(
             student_id=student.id,
@@ -551,12 +565,11 @@ def bulk_import_row():
     except IntegrityError:
         db.session.rollback()
         return jsonify({"message": f"Admission number '{admission_number}' already exists"}), 400
+
     except Exception:
         db.session.rollback()
         logger.exception("bulk_import_row failed | school_id=%s", school_id)
         return jsonify({"message": "Failed to import row. Please try again."}), 500
-
-
 # ─────────────────────────────────────────────────────────────
 # DELETE STUDENT
 # ─────────────────────────────────────────────────────────────
