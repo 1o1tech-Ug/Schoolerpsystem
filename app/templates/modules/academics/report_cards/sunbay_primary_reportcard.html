@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunbay Junior School Primary level reportcard</title>
+<style>
+
+@page { size: A4 portrait; margin: 6mm; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: Arial, sans-serif;
+    background: #bbb;
+    padding: 14px;
+}
+
+.report {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: #fff;
+    border: 5px solid #cc0000;
+    position: relative;
+    overflow: hidden;
+}
+
+.watermark {
+    position: absolute;
+    inset: 0;
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}');
+    background-repeat: no-repeat;
+    background-position: center 44%;
+    background-size: 500px 500px;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+}
+.content { position: relative; z-index: 1; }
+
+.header {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px 5px;
+}
+.hdr-logo { flex: 0 0 105px; text-align: center; }
+.hdr-logo img { width: 175px; height: 175px; object-fit: contain; }
+.hdr-center { flex: 1; text-align: center; padding: 0 8px; }
+.school-name {
+    color: #006400; font-size: 22px; font-weight: 900;
+    text-transform: uppercase; line-height: 1.15;
+}
+.school-details { font-size: 10.5px; color: #111; line-height: 1.6; margin-top: 4px; }
+.hdr-right { flex: 0 0 105px; text-align: center; }
+.hdr-right img { width: 105px; height: 105px; object-fit: contain; }
+
+.line-green { height: 4px; background: #006400; }
+.line-red   { height: 4px; background: #cc0000; }
+
+.body { padding: 6px 10px 12px; }
+
+.title-bar {
+    background: #000; color: #fff;
+    text-align: center; font-weight: bold;
+    font-size: 15px; letter-spacing: 0.5px;
+    padding: 8px 6px; margin: 7px 0 10px;
+}
+
+.info-rows { font-size: 13.5px; margin-bottom: 8px; }
+
+.info-line {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    margin-bottom: 5px;
+}
+
+.lbl { font-weight: 800; white-space: nowrap; padding-right: 4px; }
+
+.uline {
+    display: inline-block;
+    border-bottom: 2px solid #222;
+    min-width: 180px;
+    height: 18px;
+    margin-right: 18px;
+    vertical-align: bottom;
+    font-weight: 600;
+    padding-left: 4px;
+}
+.uline-sm {
+    display: inline-block;
+    border-bottom: 2px solid #222;
+    min-width: 48px;
+    height: 18px;
+    margin-right: 14px;
+    vertical-align: bottom;
+    text-align: center;
+    font-weight: 600;
+}
+.uline-id {
+    display: inline-block;
+    border-bottom: 2px solid #222;
+    min-width: 90px;
+    height: 18px;
+    margin-right: 18px;
+    vertical-align: bottom;
+    font-weight: 600;
+    padding-left: 4px;
+}
+
+.marks-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+.marks-tbl thead th {
+    background: #006400; color: #fff;
+    border: 1px solid #333;
+    padding: 5px 3px;
+    text-align: center; font-size: 11px;
+    line-height: 1.25; font-weight: 800;
+}
+.marks-tbl thead th.th-subj { text-align: left; padding-left: 7px; }
+
+.marks-tbl tbody td {
+    border: 1px solid #777;
+    padding: 6px 3px;
+    text-align: center;
+    vertical-align: middle;
+    height: 28px;
+}
+.marks-tbl tbody td.td-subj {
+    text-align: left; padding-left: 7px;
+    font-weight: 700; font-size: 12.5px;
+}
+
+.tr-totals td {
+    background: #b6f0b6;
+    border: 1.5px solid #444;
+    font-weight: 900;
+    padding: 6px 3px;
+}
+.tr-totals .td-subj {
+    color: #006400; font-size: 11.5px;
+    letter-spacing: 0.4px; text-transform: uppercase;
+}
+.agg-lbl { color: #006400; font-weight: 900; font-size: 13px; }
+.agg-val  { color: #cc0000; font-weight: 900; font-size: 18px; }
+
+.avg-div {
+    display: flex;
+    border: 1.5px solid #777;
+    border-top: none;
+    font-size: 13px; font-weight: 600;
+}
+.avg-div > div { flex: 1; padding: 7px 10px; }
+.avg-div > div:first-child { border-right: 1.5px solid #777; }
+
+.grading { margin-top: 18px; border: 1.5px solid #777; }
+.grading-title {
+    font-weight: 900; font-size: 13px;
+    padding: 5px 9px; background: #f0f0f0;
+    border-bottom: 1.5px solid #777;
+}
+.grading-tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.grading-tbl th, .grading-tbl td {
+    border: 1px solid #bbb; padding: 4px 5px; text-align: center;
+}
+.grading-tbl .g-lbl {
+    text-align: left; font-weight: 800;
+    background: #f8f8f8; padding-left: 9px;
+}
+.row-marks th { color: #cc0000; font-weight: 900; background: #fff; }
+.row-grade td { color: #0044cc; font-weight: 900; }
+.row-div   td { color: #222; font-size: 11px; }
+.grading-note {
+    color: #cc0000; font-size: 11px; font-style: italic;
+    font-weight: 600; padding: 4px 9px; border-top: 1px solid #bbb;
+}
+
+.comments { margin-top: 14px; font-size: 13px; }
+.cmt-block { margin-bottom: 14px; }
+.cmt-lbl { font-weight: 800; font-size: 13px; }
+
+.cmt-uline {
+    display: inline-block;
+    border-bottom: 1px dotted #555;
+    min-width: 260px; height: 18px;
+    margin: 0 6px; vertical-align: bottom;
+}
+.cmt-line2 {
+    display: flex;
+    align-items: baseline;
+    margin-top: 5px;
+}
+.cmt-line2 .cmt-uline { min-width: 340px; }
+.sign-right {
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.next-term {
+    margin-top: 16px; padding-top: 6px;
+    border-top: 2.5px solid #004080;
+    font-size: 11.5px; color: #003366; line-height: 1.5;
+}
+.next-term b { font-weight: 900; }
+
+.pos-bar {
+    display: flex;
+    border: 1.5px solid #777;
+    border-top: none;
+    font-size: 12.5px; font-weight: 600;
+}
+.pos-bar > div { flex: 1; padding: 6px 10px; }
+.pos-bar > div:first-child { border-right: 1.5px solid #777; }
+.pos-val { color: #cc0000; font-weight: 900; }
+
+@media print {
+    body { background: #fff; padding: 0; }
+    .report { width: 100%; border: 5px solid #cc0000; box-shadow: none; margin: 0; }
+}
+</style>
+</head>
+<body>
+<div class="report">
+
+    <div class="watermark"></div>
+
+    <div class="content">
+
+        <!-- ══ HEADER ══ -->
+        <div class="header">
+
+            <div class="hdr-logo">
+                <img src="{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}" alt="School Logo">
+            </div>
+
+            <div class="hdr-center">
+                <div class="school-name">{{ school.name }}</div>
+                <div class="school-details">
+                    {{ school_detail.district or 'NAMASUBA – KIKAJJO (KABIRA) NEXT TO NAKALEMA APARTMENT' }}<br>
+                    P.O BOX {{ school_detail.po_box_number or '22061' }}, KAMPALA<br>
+                    TEL: {{ school_detail.contact_1 or '0704528731 (WhatsApp)' }}
+                    {% if school_detail.contact_2 %} / {{ school_detail.contact_2 }}{% endif %}
+                </div>
+            </div>
+
+            <div class="hdr-right">
+                <img src="{{ children_image }}" alt="Children">
+            </div>
+
+        </div>
+
+        <div class="line-green"></div>
+        <div class="line-red"></div>
+
+        <!-- ══ BODY ══ -->
+        <div class="body">
+
+            <div class="title-bar">LEARNER&#39;S {{ exam_type }} REPORT — {{ term.name if term }}{% if academic_year %}, {{ academic_year.name }}{% endif %}</div>
+
+            <!-- Info rows -->
+            <div class="info-rows">
+                <div class="info-line">
+                    <span class="lbl">NAME:</span>
+                    <span class="uline">{{ student.first_name }} {{ student.last_name }}</span>
+                    <span class="lbl">CLASS:</span>
+                    <span class="uline" style="min-width:110px; margin-right:0;">{{ class_name }} {{ stream_name }}</span>
+                </div>
+                <div class="info-line">
+                    <span class="lbl">LEARNER'S ID:</span>
+                    <span class="uline-id">{{ learner_id }}</span>
+                    <span class="lbl">DAYS ATTENDED:</span>
+                    <span class="uline-sm">{{ attendance.present }}</span>
+                    <span class="lbl">ABSENT:</span>
+                    <span class="uline-sm">{{ attendance.absent }}</span>
+                    <span class="lbl">TOT:</span>
+                    <span class="uline-sm" style="margin-right:0;">{{ attendance.total }}</span>
+                </div>
+            </div>
+
+            <!-- ══ MARKS TABLE ══ -->
+            <table class="marks-tbl">
+                <thead>
+                    <tr>
+                        <th class="th-subj" style="width:25%">SUBJECT</th>
+                        <th style="width:12%">SCORE</th>
+                        <th style="width:8%">GRADE</th>
+                        <th style="width:7%">AGG.</th>
+                        <th style="width:23%">REMARK</th>
+                        <th style="width:13%">TEACHER</th>
+                        <th style="width:12%">INITIAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in subject_rows %}
+                    <tr>
+                        <td class="td-subj">{{ row.subject_name | upper }}</td>
+                        <td>{{ row.total_score if row.total_score is not none else '—' }}</td>
+                        <td>{{ row.grade }}</td>
+                        <td></td>
+                        <td>{{ row.remark }}</td>
+                        <td>{{ row.teacher_name }}</td>
+                        <td></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
+                    {% endfor %}
+
+                    <tr class="tr-totals">
+                        <td class="td-subj">AVERAGE:</td>
+                        <td colspan="2">{{ average_mark if average_mark is not none else '—' }}</td>
+                        <td colspan="2" style="text-align:left; padding-left:8px;">
+                            <span class="agg-lbl">AGGREGATES:&nbsp;</span>
+                            <span class="agg-val">{{ aggregates if aggregates is not none else '—' }}</span>
+                        </td>
+                        <td colspan="2">{{ division or '—' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Average / Division bar -->
+            <div class="avg-div">
+                <div>OVERALL AVERAGE SCORE:&nbsp;&nbsp;<b>{{ average_mark if average_mark is not none else '—' }}</b></div>
+                <div>DIVISION:&nbsp;&nbsp;<b>{{ division or '—' }}</b></div>
+            </div>
+
+            <!-- Position bar -->
+            <div class="pos-bar">
+                <div>CLASS POSITION:&nbsp;&nbsp;<span class="pos-val">{{ position if position is not none else '—' }}</span>{% if total_students %} out of {{ total_students }}{% endif %}</div>
+                <div>AGGREGATES:&nbsp;&nbsp;<span class="pos-val">{{ aggregates if aggregates is not none else '—' }}</span></div>
+            </div>
+
+            <!-- ══ GRADING SCHEME — driven by grade_legend (school's own scale if configured) ══ -->
+            <div class="grading">
+                <div class="grading-title">GRADING SCHEME</div>
+                <table class="grading-tbl">
+                    <thead>
+                        <tr class="row-marks">
+                            <th class="g-lbl">Marks</th>
+                            {% for g in grade_legend %}
+                            <th>{{ g.min }}{% if g.max < 100 %}-{{ g.max }}{% else %}+{% endif %}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row-grade">
+                            <td class="g-lbl">Grade</td>
+                            {% for g in grade_legend %}
+                            <td>{{ g.grade }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr class="row-div">
+                            <td class="g-lbl">Remark</td>
+                            {% for g in grade_legend %}
+                            <td>{{ g.remark }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="grading-note">
+                    F9 in English or Math pushes a learner to the next Division
+                </div>
+            </div>
+
+            <!-- ══ COMMENTS ══ -->
+            <div class="comments">
+
+                <div class="cmt-block">
+                    <div class="cmt-line2">
+                        <span class="cmt-lbl">General Class Teacher's Comment:&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;</span>
+                        <span class="cmt-uline"></span>
+                    </div>
+                    <div class="cmt-line2" style="margin-top:6px;">
+                        <span class="cmt-uline" style="min-width:380px;"></span>
+                        <span class="sign-right">sign&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;</span>
+                    </div>
+                </div>
+
+                <div class="cmt-block">
+                    <div class="cmt-line2">
+                        <span class="cmt-lbl">Head Teacher's Comment:&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;</span>
+                        <span class="cmt-uline"></span>
+                    </div>
+                    <div class="cmt-line2" style="margin-top:6px;">
+                        <span class="cmt-uline" style="min-width:380px;"></span>
+                        <span class="sign-right">Sign&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ══ NEXT TERM ══ -->
+            <div class="next-term">
+                <b>Generated on:</b>
+                &nbsp; {{ generated_date }}
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <b>Next term Begins on:</b>
+                &nbsp;
+                <span style="display:inline-block;border-bottom:1.5px solid #003366;min-width:100px;">&nbsp;</span>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <b>Requirements:</b>
+                &nbsp;
+                <span style="display:inline-block;border-bottom:1.5px solid #003366;min-width:200px;">&nbsp;</span>
+            </div>
+
+        </div><!-- /.body -->
+    </div><!-- /.content -->
+</div><!-- /.report -->
+</body>
+</html>

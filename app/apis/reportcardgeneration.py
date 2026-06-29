@@ -539,8 +539,9 @@ def generate_report_card():
                     "report_id":     report.id,
                 })
 
-            except Exception:
+            except Exception as exc:
                 db.session.rollback()
+                print(exc)
                 logger.exception("generate thread failed | student_id=%s", student_id)
                 _update_job(job_id, status="error", error="Failed to generate report card. Please try again.")
 

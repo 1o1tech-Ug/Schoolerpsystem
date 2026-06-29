@@ -1585,3 +1585,2232 @@ RuntimeError: BunnyCDN upload failed (HTTP 401): {"HttpCode":401,"Message":"Unau
 [2026-06-11 00:43:58] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/East/student_65_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
 [2026-06-11 00:43:58] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/East/student_65_bot.pdf — falling back to local URL
 [2026-06-11 00:43:58] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/East/student_65_bot.pdf — falling back to local URL
+[2026-06-29 09:40:14] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:40:14] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:40:18] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:40:18] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:40:30] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-29 09:40:30] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-06-29 09:43:34] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:43:34] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:43:34] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:43:34] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:43:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:43:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:43:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:43:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:43:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:43:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:43:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:43:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:44:32] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:44:32] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:44:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:44:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:44:55] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:44:55] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:44:55] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:44:55] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:44:55] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:44:55] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 09:46:56] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:46:56] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:46:56] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 09:46:56] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 09:46:56] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 09:46:56] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 09:47:31] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:47:31] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:47:34] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:47:34] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 09:48:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:48:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 09:48:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 09:48:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 09:48:14] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 09:48:14] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:01:28] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:01:28] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:01:28] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:01:28] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:01:28] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:01:28] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:09:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:09:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:10:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:10:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:10:03] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:10:03] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:10:26] ERROR | POST /api/report-cards/generate | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | POST /api/report-cards/generate | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) could not translate host name "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" to address: No address associated with hostname
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: could not translate host name "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" to address: No address associated with hostname
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" to address: No address associated with hostname
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-06-29 10:10:26] ERROR | POST /api/report-cards/generate | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | POST /api/report-cards/generate | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) could not translate host name "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" to address: No address associated with hostname
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: could not translate host name "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" to address: No address associated with hostname
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) could not translate host name "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" to address: No address associated with hostname
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-06-29 10:12:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:12:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:12:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:12:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:12:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:12:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:13:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:13:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:13:41] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:13:41] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:13:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:13:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:14:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:14:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:14:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:14:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:14:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:14:53] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:17:40] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:17:40] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:17:40] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:17:40] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/schools/sunbay_nursery_report_card.html: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:17:40] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:17:40] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_nursery_report_card.html
+[2026-06-29 10:18:19] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:18:19] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:18:19] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:18:19] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:18:19] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:18:19] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:23:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:23:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:23:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:23:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:23:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:23:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:37:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:37:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:57] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:37:57] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:37:57] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:57] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:57] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:37:57] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:39:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:39:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:39:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:39:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:39:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:39:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 10:43:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:43:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:43:37] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:43:37] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:43:37] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:43:37] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:43:37] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:43:37] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:44:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:44:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:44:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/sunbay_nursery_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:44:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/sunbay_nursery_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:44:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_nursery_report_card.html", line 38, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:44:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_nursery_report_card.html", line 38, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:47:09] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:47:09] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 10:47:09] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:47:09] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:47:09] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:47:09] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1617, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1623, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 10:59:49] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 10:59:49] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:00:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:00:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:00:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:00:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:01:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:01:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:01:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 11:01:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/schools/sunbay_primary_report_card.html: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 11:01:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1602, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1608, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 11:01:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1602, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1608, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: modules/academics/report_cards/schools/sunbay_primary_report_card.html
+[2026-06-29 11:02:31] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:02:31] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:02:50] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:02:50] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:02:50] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:02:50] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:02:51] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1602, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1608, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:02:51] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1602, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1608, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:21:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:21:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:21:09] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:21:09] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:21:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:21:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:21:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:21:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:21:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1602, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1608, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:21:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1602, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1608, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:32:56] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:32:56] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:35:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:35:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:35:11] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:35:11] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:35:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:35:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:35:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:35:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:35:49] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:35:49] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:36:55] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:36:55] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:37:04] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:37:04] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:37:07] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:37:07] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:37:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:37:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:37:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:37:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=121 template=modules/academics/report_cards/sunbay_primary_report_card.html: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:37:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:37:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=121
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_primary_report_card.html", line 32, in top-level template code
+    background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else url_for("static", filename="images/sunbay_logo.png") }}');
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/app.py", line 1090, in url_for
+    raise RuntimeError(
+    ...<4 lines>...
+    )
+RuntimeError: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Unable to build URLs outside an active request without 'SERVER_NAME' configured. Also configure 'APPLICATION_ROOT' and 'PREFERRED_URL_SCHEME' as needed.
+[2026-06-29 11:42:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:42:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:42:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:42:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:43:10] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:43:10] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:43:17] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `inset: 0` at 25:5, unknown property.
+[2026-06-29 11:43:17] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 217:55, unknown property.
+[2026-06-29 11:43:22] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_121_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:43:22] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_121_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:43:22] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_121_bot.pdf — falling back to local URL
+[2026-06-29 11:43:22] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_121_bot.pdf — falling back to local URL
+[2026-06-29 11:44:16] WARNING | DELETE /api/report-cards/60 | IP=127.0.0.1 | USER=9 | app.utils.bunny | bunny_delete: DELETE https://storage.bunnycdn.com/school-erp/static/report_cards/2026/Term_1/unknown/student_121_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:44:16] WARNING | DELETE /api/report-cards/60 | IP=127.0.0.1 | USER=9 | app.utils.bunny | bunny_delete: DELETE https://storage.bunnycdn.com/school-erp/static/report_cards/2026/Term_1/unknown/student_121_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:46:12] WARNING | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9 | app.core.error_handlers | 404 Not Found | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9
+[2026-06-29 11:46:12] WARNING | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9 | app.core.error_handlers | 404 Not Found | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9
+[2026-06-29 11:46:16] WARNING | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9 | app.core.error_handlers | 404 Not Found | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9
+[2026-06-29 11:46:16] WARNING | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9 | app.core.error_handlers | 404 Not Found | GET /static/report_cards/2026/Term_1/unknown/student_121_bot.pdf | IP=127.0.0.1 | USER=9
+[2026-06-29 11:46:46] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:46:46] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=121 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:46:46] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `inset: 0` at 25:5, unknown property.
+[2026-06-29 11:46:46] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 217:55, unknown property.
+[2026-06-29 11:46:52] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_121_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:46:52] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_121_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:46:52] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_121_bot.pdf — falling back to local URL
+[2026-06-29 11:46:52] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_121_bot.pdf — falling back to local URL
+[2026-06-29 11:47:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:47:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:47:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/sunbay_nursery_report_card.html: Expected an expression, got 'end of statement block'
+[2026-06-29 11:47:48] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/sunbay_nursery_report_card.html: Expected an expression, got 'end of statement block'
+[2026-06-29 11:47:49] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_nursery_report_card.html", line 338, in template
+    {% for %} loops are visible in the outer scope (Jinja2 scoping).
+    ^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: Expected an expression, got 'end of statement block'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Expected an expression, got 'end of statement block'
+[2026-06-29 11:47:49] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_nursery_report_card.html", line 338, in template
+    {% for %} loops are visible in the outer scope (Jinja2 scoping).
+    ^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: Expected an expression, got 'end of statement block'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Expected an expression, got 'end of statement block'
+[2026-06-29 11:55:04] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:55:04] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:55:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:55:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-06-29 11:55:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:55:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:55:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/sunbay_nursery_report_card.html: Expected an expression, got 'end of statement block'
+[2026-06-29 11:55:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | Template rendering failed for student=135 template=modules/academics/report_cards/sunbay_nursery_report_card.html: Expected an expression, got 'end of statement block'
+[2026-06-29 11:55:27] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_nursery_report_card.html", line 338, in template
+    {% for %} loops are visible in the outer scope (Jinja2 scoping).
+    ^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: Expected an expression, got 'end of statement block'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Expected an expression, got 'end of statement block'
+[2026-06-29 11:55:27] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=135
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1610, in generate
+    html = render_template(template_name, **ctx)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/loaders.py", line 138, in load
+    code = environment.compile(source, name, filename)
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 771, in compile
+    self.handle_exception(source=source_hint)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.13/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/templates/modules/academics/report_cards/sunbay_nursery_report_card.html", line 338, in template
+    {% for %} loops are visible in the outer scope (Jinja2 scoping).
+    ^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: Expected an expression, got 'end of statement block'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 472, in _do_generate
+    result  = service.generate(
+        student=_student,
+    ...<4 lines>...
+        static_folder=static_folder,
+    )
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 1616, in generate
+    raise RuntimeError(f"Template rendering failed: {exc}") from exc
+RuntimeError: Template rendering failed: Expected an expression, got 'end of statement block'
+[2026-06-29 11:58:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:58:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=135 term=4: type object 'LessonSession' has no attribute 'term_id'
+[2026-06-29 11:58:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 266:9, unknown property.
+[2026-06-29 11:58:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_135_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:58:26] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_135_bot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-06-29 11:58:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_135_bot.pdf — falling back to local URL
+[2026-06-29 11:58:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_135_bot.pdf — falling back to local URL

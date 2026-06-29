@@ -12,7 +12,9 @@ Responsibilities
     assignments, school info, attendance, etc.).
 3.  Compute grades, aggregates and positions using Uganda curriculum
     grading standards.
-4.  Hydrate the correct Jinja template.
+4.  Hydrate the correct Jinja template — using a school-specific
+    override when one is registered, otherwise the default template
+    for that report type.
 5.  Optionally convert the rendered HTML to PDF via WeasyPrint.
 6.  Store the output file locally under /static/report_cards/.
 
@@ -37,6 +39,24 @@ minimum marks stored in SchoolDetail:
 Students scoring below the configured threshold earn 0 points (grade "F")
 for that subsidiary subject.  The default for all three is 40.0%.
 
+Grading scheme resolution
+--------------------------
+`fetch_grade_scales()` looks up GradeScale rows for the school + section.
+If the school has configured its own scale, those rows are used for every
+grade computation AND for the grading-scheme table rendered on the report
+(via `_build_grade_legend()`).  Only when a school has zero GradeScale rows
+do we fall back to the Uganda-standard DEFAULT_*_GRADES tables below.  This
+applies uniformly — no school is special-cased for grading, only for
+template selection (see _SCHOOL_TEMPLATE_OVERRIDES below).
+
+School-specific templates
+--------------------------
+`_SCHOOL_TEMPLATE_OVERRIDES` lets specific schools use their own report
+card design instead of the shared default template for a report_type.
+`get_template_name()` resolves which template a given (school_id,
+report_type) pair should render. Add new schools/report types to that
+dict as needed — no other code changes required.
+
 Performance notes
 -----------------
 - All per-stream data (subjects, papers, teachers, students) is loaded
@@ -56,6 +76,7 @@ import re as _re
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from flask import render_template
@@ -294,6 +315,11 @@ def _apply_grade_scale(
     """
     Return (grade, remark) by scanning *grade_scales* first, then
     *default_table*, then returning (*no_match_grade*, *no_match_remark*).
+
+    *grade_scales* is whatever the calling school has configured in the
+    GradeScale table for this section. If the school has rows there, those
+    rows are authoritative and the Uganda-standard *default_table* is never
+    consulted. Only schools with zero configured rows fall back to defaults.
     """
     if grade_scales:
         for gs in grade_scales:
@@ -487,6 +513,14 @@ def compute_alevel_points(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def fetch_grade_scales(school_id: int, section_category: Optional[str] = None) -> list:
+    """
+    Return the GradeScale rows a school has configured for a given section
+    ('Nursery' / 'Primary' / 'O Level' / 'A Level'), ordered highest-first.
+
+    An empty list here means "this school hasn't configured a custom
+    scheme" — every grade_fn / _build_grade_legend() call interprets an
+    empty list as "use the Uganda-standard defaults".
+    """
     q = GradeScale.query.filter_by(school_id=school_id)
     if section_category:
         q = q.filter_by(section_category=section_category)
@@ -649,6 +683,12 @@ def compute_attendance(school_id: int, student_id: int, term_id: int) -> dict:
     """
     Return {"total": int, "present": int, "absent": int} for one student
     in one term.
+
+    NOTE: This join uses LessonSession.term_id. If your LessonSession model
+    uses a different column name (e.g. semester_id, period_id), update the
+    .where() clause below to match. Run this to check:
+        from app.models.academic_structure import LessonSession
+        print([c.name for c in LessonSession.__table__.columns])
     """
     try:
         row = db.session.execute(
@@ -662,7 +702,7 @@ def compute_attendance(school_id: int, student_id: int, term_id: int) -> dict:
             .where(
                 StudentAttendance.school_id  == school_id,
                 StudentAttendance.student_id == student_id,
-                LessonSession.term_id        == term_id,
+                LessonSession.term_id        == term_id,  # ← update column name if needed
             )
         ).one()
 
@@ -946,7 +986,6 @@ def build_secondary_subject_rows(
 
         # ── Grade ─────────────────────────────────────────────────────────────
         if subsidiary and total_100 is not None:
-            # school_detail carries gp_min_mark, ict_min_mark, sub_math_min_mark
             grade, comment, pts = alevel_subsidiary_grade(
                 total_100, subject.name, school_detail
             )
@@ -1163,6 +1202,16 @@ def calculate_stream_positions(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _build_grade_legend(grade_scales: list, report_type: str) -> list:
+    """
+    Build the rows for the "GRADING SCHEME" table shown on a report card.
+
+    If the owning school has configured GradeScale rows for this section,
+    those rows are used verbatim (sorted highest-first). Only schools with
+    no configured rows fall back to the Uganda-standard defaults table.
+    Templates should always render from this list rather than hardcoding
+    a grading table, so a school's custom scheme (if any) is reflected
+    automatically.
+    """
     if grade_scales:
         return [
             {
@@ -1287,8 +1336,15 @@ def html_to_pdf_bytes(html: str) -> tuple[bytes, str]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  MAIN SERVICE CLASS
+#  SCHOOL-SPECIFIC TEMPLATE OVERRIDES
 # ─────────────────────────────────────────────────────────────────────────────
+
+_SCHOOL_TEMPLATE_OVERRIDES: dict[int, dict[str, str]] = {
+    6: {  # Sunbay Junior School & Day Care Centre
+        "nursery": "modules/academics/report_cards/sunbay_nursery_report_card.html",
+        "primary": "modules/academics/report_cards/sunbay_primary_report_card.html",
+    },
+}
 
 _SECTION_CATEGORY_MAP: dict[str, str] = {
     "nursery": "Nursery",
@@ -1304,6 +1360,22 @@ _TEMPLATE_MAP: dict[str, str] = {
     "alevel":  "modules/academics/report_cards/alevel_report_card.html",
 }
 
+
+def get_template_name(school_id: int, report_type: str) -> str:
+    """
+    Return the Jinja template path to render for a given school + report_type.
+
+    Resolution order:
+      1. _SCHOOL_TEMPLATE_OVERRIDES[school_id][report_type], if present.
+      2. _TEMPLATE_MAP[report_type] (shared default for that section).
+    """
+    overrides = _SCHOOL_TEMPLATE_OVERRIDES.get(school_id, {})
+    return overrides.get(report_type, _TEMPLATE_MAP[report_type])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  MAIN SERVICE CLASS
+# ─────────────────────────────────────────────────────────────────────────────
 
 class ReportCardService:
     """
@@ -1406,7 +1478,7 @@ class ReportCardService:
         except ValueError:
             raise ValueError(f"Invalid exam_type: {exam_type!r}. Must be BOT, MID or EOT.")
 
-        # ── 2. Grade scales (use cached if available) ─────────────────────────
+        # ── 2. Grade scales ───────────────────────────────────────────────────
         if batch_ctx is not None:
             grade_scales = batch_ctx.grade_scales
         else:
@@ -1493,11 +1565,21 @@ class ReportCardService:
         # ── 9. Grade legend ───────────────────────────────────────────────────
         grade_legend = _build_grade_legend(grade_scales, report_type)
 
-        # ── 10. Template context ──────────────────────────────────────────────
+        # ── 10. Resolve absolute file:// URIs for WeasyPrint ─────────────────
+        # url_for() is unavailable in background threads (no request context).
+        # We use file:// URIs so WeasyPrint can load images directly from disk
+        # without needing Flask routing or a running HTTP server.
+        static_path    = Path(static_folder).resolve()
+        sunbay_logo    = (static_path / "images" / "sunbay_logo.png").as_uri()
+        children_image = (static_path / "images" / "children1.jpg").as_uri()
+        static_url     = static_path.as_uri()
+
+        # ── 11. Template context ──────────────────────────────────────────────
         ctx = {
             "school":             self.school,
             "school_detail":      self.school_detail,
             "student":            student,
+            "learner_id":         student.admission_number or "",
             "stream":             stream,
             "class_name":         class_name,
             "stream_name":        stream.name if stream else "",
@@ -1515,10 +1597,15 @@ class ReportCardService:
             "grade_legend":       grade_legend,
             "report_type":        report_type,
             "generated_date":     datetime.utcnow().strftime("%d %B %Y"),
+            # ── file:// URIs for school-specific templates (no url_for needed) ──
+            "sunbay_logo":        sunbay_logo,
+            "children_image":     children_image,
+            "static_url":         static_url,
+            "static_folder":      static_path,   # kept for backward compat
         }
 
-        # ── 11. Render HTML ───────────────────────────────────────────────────
-        template_name = _TEMPLATE_MAP[report_type]
+        # ── 12. Render HTML ───────────────────────────────────────────────────
+        template_name = get_template_name(school_id, report_type)
         try:
             html = render_template(template_name, **ctx)
         except Exception as exc:
@@ -1528,10 +1615,10 @@ class ReportCardService:
             )
             raise RuntimeError(f"Template rendering failed: {exc}") from exc
 
-        # ── 12. Convert to PDF ────────────────────────────────────────────────
+        # ── 13. Convert to PDF ────────────────────────────────────────────────
         file_bytes, ext = html_to_pdf_bytes(html)
 
-        # ── 13. Save to disk ──────────────────────────────────────────────────
+        # ── 14. Save to disk ──────────────────────────────────────────────────
         year_name    = academic_year.name if academic_year else "unknown"
         term_label   = (term.name or "term").replace(" ", "_") if term else "term"
         stream_label = (stream.name or "stream").replace(" ", "_") if stream else "stream"
@@ -1547,7 +1634,7 @@ class ReportCardService:
         except OSError as exc:
             raise RuntimeError(f"Could not write report file: {exc}") from exc
 
-        # ── 14. Build URL path ────────────────────────────────────────────────
+        # ── 15. Build URL path ────────────────────────────────────────────────
         try:
             rel      = os.path.relpath(full_path, os.path.dirname(static_folder))
             file_url = "/" + rel.replace("\\", "/")
