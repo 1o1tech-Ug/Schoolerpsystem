@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sunbay Junior School nursery level reportcard</title>
+<title>Sunbay Junior School Nursery Report Card</title>
 <style>
 @page {
     size: A4 portrait;
@@ -25,12 +25,11 @@ body {
     min-height: 297mm;
     margin: auto;
     background: white;
-    border: 4px solid navy;
+    border: 4px solid #cc0000;
     padding: 10px;
     position: relative;
 }
 
-/* ── Watermark ── */
 .watermark-logo {
     position: absolute;
     top: 0; left: 0;
@@ -49,7 +48,6 @@ body {
     z-index: 1;
 }
 
-/* ── Header ── */
 .header-table {
     width: 100%;
     border-collapse: collapse;
@@ -93,7 +91,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* ── Info row ── */
 .info-table {
     width: 100%;
     border-collapse: collapse;
@@ -108,10 +105,8 @@ body {
 .info-table td:nth-child(2) { width: 20%; }
 .info-table td:nth-child(3) { width: 30%; }
 .info-table td:nth-child(4) { width: 20%; }
-
 .info-row2 td { border-bottom: none; }
 
-/* ── Main two-column table ── */
 .main-table {
     width: 100%;
     border-collapse: collapse;
@@ -131,7 +126,6 @@ body {
     vertical-align: top;
 }
 
-/* ── Score table (left column) ── */
 .score-table {
     width: 100%;
     border-collapse: collapse;
@@ -182,7 +176,6 @@ body {
     height: 30px;
 }
 
-/* ── Activity grid (right column) ── */
 .activity-grid {
     width: 100%;
     border-collapse: collapse;
@@ -229,7 +222,6 @@ body {
     min-height: 16px;
 }
 
-/* ── Comment / signature section ── */
 .comments-section {
     margin-top: 14px;
     font-size: 12px;
@@ -263,12 +255,11 @@ body {
     height: 22px;
 }
 
-/* ── Print ── */
 @media print {
     body { background: white; padding: 0; }
     .report {
         width: 100%;
-        border: 4px solid navy;
+        border: 4px solid #cc0000;
         box-shadow: none;
         margin: 0;
         min-height: auto;
@@ -283,13 +274,11 @@ body {
 
     <div class="content-layer">
 
-        <!-- ══ HEADER ══ -->
         <table class="header-table">
             <tr>
                 <td class="logo-cell">
                     <img src="{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}" alt="School Logo">
                 </td>
-
                 <td>
                     <div class="school-name">{{ school.name | upper }}</div>
                     <div class="school-details">
@@ -299,7 +288,6 @@ body {
                         {% if school_detail.contact_2 %} / {{ school_detail.contact_2 }}{% endif %}
                     </div>
                 </td>
-
                 <td class="children-right-cell">
                     <img src="{{ children_image }}" alt="Children">
                 </td>
@@ -311,7 +299,6 @@ body {
 
         <div class="title">LEARNER&#39;S {{ exam_type }} REPORT — {{ term.name if term }}{% if academic_year %}, {{ academic_year.name }}{% endif %}</div>
 
-        <!-- ══ INFO ROW ══ -->
         <table class="info-table">
             <tr>
                 <td>NAME: {{ student.first_name }} {{ student.last_name }}</td>
@@ -326,23 +313,20 @@ body {
             </tr>
         </table>
 
-
         {% set la_keys = [
-            ('social',                'Social Development'),
-            ('language development i','Language Development I'),
-            ('health',                'Health Habits'),
-            ('math',                  'Mathematical Concepts'),
+            ('social',                 'Social Development'),
+            ('language development i', 'Language Development I'),
+            ('health',                 'Health Habits'),
+            ('math',                   'Mathematical Concepts'),
             ('language development ii','Language Development II'),
         ] %}
 
-        <!-- ══ MAIN TABLE ══ -->
         <table class="main-table">
             <tr>
                 <th width="52%">ACHIEVEMENT SCORES IN THE 5 LEARNING AREAS</th>
                 <th width="48%">PERFORMANCE IN THE LEARNING ACTIVITIES</th>
             </tr>
             <tr>
-                <!-- LEFT: Score table -->
                 <td>
                     <table class="score-table">
                         <tr>
@@ -350,7 +334,6 @@ body {
                             <th style="width:14%">Score /100</th>
                             <th>Comment</th>
                         </tr>
-
                         {% for key, label in la_keys %}
                         {% set ns = namespace(la_row=none) %}
                         {% for row in subject_rows %}
@@ -366,21 +349,17 @@ body {
                                 </div>
                             </td>
                             <td class="score-cell">{{ ns.la_row.total_score if ns.la_row and ns.la_row.total_score is not none else '' }}</td>
-                            <td class="comment-cell">{{ ns.la_row.remark if ns.la_row else '' }}</td>
+                            <td class="comment-cell"></td>
                         </tr>
                         {% endfor %}
-
-                        <!-- Total row -->
-                        <tr>
-                            <td class="total-row" style="padding:5px 6px; font-weight:bold;">Total:</td>
-                            <td class="total-row" colspan="2" style="padding:5px 6px; font-weight:bold;">
-                                Average: {{ average_mark if average_mark is not none else '—' }}
-                            </td>
+                        <tr class="total-row">
+                            <td style="padding:5px 6px; font-weight:bold;">Total:</td>
+                            <td style="padding:5px 6px;"></td>
+                            <td style="padding:5px 6px; font-weight:bold;">Scored:</td>
                         </tr>
                     </table>
                 </td>
 
-                <!-- RIGHT: Activity grid -->
                 <td>
                     <table class="activity-grid">
                         {% set activities = [
@@ -421,7 +400,6 @@ body {
             </tr>
         </table>
 
-        <!-- ══ COMMENTS / SIGNATURES ══ -->
         <div class="comments-section">
 
             <div class="comment-block">
@@ -452,7 +430,7 @@ body {
 
         </div>
 
-    </div><!-- end content-layer -->
-</div><!-- end report -->
+    </div>
+</div>
 </body>
 </html>
