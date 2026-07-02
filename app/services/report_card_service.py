@@ -35,7 +35,7 @@ All three subsidiary types (GP, ICT/Computer, Sub Math) use school-specific
 minimum marks stored in SchoolDetail:
   - gp_min_mark       → General Paper / GP
   - ict_min_mark      → ICT / Computer Studies
-  - sub_math_min_mark → Subsidiary Mathematics / Sub Math
+  - sub_math_min_mark → Subsidiary Mathematics
 Students scoring below the configured threshold earn 0 points (grade "F")
 for that subsidiary subject.  The default for all three is 40.0%.
 
@@ -69,11 +69,26 @@ Performance notes
 - `calculate_stream_positions()` fetches only the columns it needs (no
   full ORM object construction) and accepts pre-loaded data to avoid
   redundant DB calls.
+
+Error-logging notes
+--------------------
+- Every `except` block in the generation pipeline now logs via
+  `logger.exception(...)` (or `logger.error(..., exc_info=True)`), so the
+  full Python traceback — not just the exception message — is written to
+  stdout/stderr. On Render's free tier this is what shows up in the
+  "Logs" tab, since there's no separate error-tracking service wired up.
+- `ReportCardService.generate()` wraps its entire body in a top-level
+  try/except. Whatever step fails (marks fetch, subject-row building,
+  aggregate computation, template rendering, PDF conversion, disk write),
+  the full traceback is logged with the student/stream/exam context
+  *before* the error propagates, so a generic "failed to render" caught
+  further up the call stack no longer hides where it came from.
 """
 
 import os
 import re as _re
 import logging
+import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -710,10 +725,12 @@ def compute_attendance(school_id: int, student_id: int, term_id: int) -> dict:
         present = int(row.present or 0)
         return {"total": total, "present": present, "absent": total - present}
 
-    except Exception as exc:
-        logger.error(
-            "compute_attendance failed for student=%s term=%s: %s",
-            student_id, term_id, exc,
+    except Exception:
+        # logger.exception() automatically appends the full traceback to the
+        # log record — this is what will show up in the Render "Logs" tab.
+        logger.exception(
+            "compute_attendance failed for student=%s term=%s",
+            student_id, term_id,
         )
         return {"total": 0, "present": 0, "absent": 0}
 
@@ -1330,8 +1347,11 @@ def html_to_pdf_bytes(html: str) -> tuple[bytes, str]:
     except ImportError:
         logger.warning("WeasyPrint not installed — storing HTML file instead of PDF.")
         return html.encode("utf-8"), "html"
-    except Exception as exc:
-        logger.error("WeasyPrint PDF conversion failed: %s", exc)
+    except Exception:
+        # Full traceback (e.g. missing system libs like libpango/libcairo,
+        # which is a common failure mode on Render's free tier where those
+        # aren't pre-installed) goes to the log here.
+        logger.exception("WeasyPrint PDF conversion failed")
         return html.encode("utf-8"), "html"
 
 
@@ -1462,6 +1482,15 @@ class ReportCardService:
           "report_type": str,   # 'nursery' | 'primary' | 'olevel' | 'alevel'
           "extension":   str,   # 'pdf' | 'html'
         }
+
+        Raises
+        ------
+        Whatever the underlying failure was (ValueError for a bad exam_type,
+        RuntimeError for template/file failures, or any unexpected exception
+        from the DB/computation steps). Before re-raising, the full
+        traceback plus student/stream/exam context is written to the log
+        via logger.error(..., exc_info=True), so it appears in Render logs
+        even though the caller ultimately just sees "failed to render".
         """
         school_id   = self.school.id
         class_name  = stream.class_.name if stream and stream.class_ else ""
@@ -1472,186 +1501,226 @@ class ReportCardService:
             student.id, class_name, report_type, exam_type,
         )
 
-        # ── 1. Exam enum ─────────────────────────────────────────────────────
         try:
-            exam_enum = AssessmentType(exam_type.upper())
-        except ValueError:
-            raise ValueError(f"Invalid exam_type: {exam_type!r}. Must be BOT, MID or EOT.")
+            # ── 1. Exam enum ─────────────────────────────────────────────────
+            try:
+                exam_enum = AssessmentType(exam_type.upper())
+            except ValueError:
+                raise ValueError(f"Invalid exam_type: {exam_type!r}. Must be BOT, MID or EOT.")
 
-        # ── 2. Grade scales ───────────────────────────────────────────────────
-        if batch_ctx is not None:
-            grade_scales = batch_ctx.grade_scales
-        else:
-            grade_scales = fetch_grade_scales(school_id, _SECTION_CATEGORY_MAP.get(report_type))
+            # ── 2. Grade scales ───────────────────────────────────────────────
+            if batch_ctx is not None:
+                grade_scales = batch_ctx.grade_scales
+            else:
+                grade_scales = fetch_grade_scales(school_id, _SECTION_CATEGORY_MAP.get(report_type))
 
-        # ── 3. Fetch marks ────────────────────────────────────────────────────
-        marks_data = fetch_student_marks(
-            school_id=school_id,
-            student_id=student.id,
-            term_id=term.id,
-            exam_enum=exam_enum,
-            stream_id=stream.id,
-        )
-
-        if not marks_data:
-            logger.warning(
-                "No marks for student=%s term=%s exam=%s — empty report will be generated.",
-                student.id, term.id, exam_type,
+            # ── 3. Fetch marks ────────────────────────────────────────────────
+            marks_data = fetch_student_marks(
+                school_id=school_id,
+                student_id=student.id,
+                term_id=term.id,
+                exam_enum=exam_enum,
+                stream_id=stream.id,
             )
 
-        # ── 4. Build subject rows ─────────────────────────────────────────────
-        bulk_kwargs = {}
-        if batch_ctx is not None:
-            bulk_kwargs = {
-                "subjects_map": batch_ctx.subjects_map,
-                "papers_map":   batch_ctx.papers_map,
-                "teacher_map":  batch_ctx.teacher_map,
+            if not marks_data:
+                logger.warning(
+                    "No marks for student=%s term=%s exam=%s — empty report will be generated.",
+                    student.id, term.id, exam_type,
+                )
+
+            # ── 4. Build subject rows ─────────────────────────────────────────
+            bulk_kwargs = {}
+            if batch_ctx is not None:
+                bulk_kwargs = {
+                    "subjects_map": batch_ctx.subjects_map,
+                    "papers_map":   batch_ctx.papers_map,
+                    "teacher_map":  batch_ctx.teacher_map,
+                }
+
+            if report_type in ("olevel", "alevel"):
+                subject_rows = build_secondary_subject_rows(
+                    school_id=school_id,
+                    stream_id=stream.id,
+                    student_id=student.id,
+                    marks_data=marks_data,
+                    grade_scales=grade_scales,
+                    report_type=report_type,
+                    school_detail=self.school_detail,
+                    **bulk_kwargs,
+                )
+            else:
+                subject_rows = build_subject_rows(
+                    school_id=school_id,
+                    stream_id=stream.id,
+                    student_id=student.id,
+                    marks_data=marks_data,
+                    grade_scales=grade_scales,
+                    report_type=report_type,
+                    **bulk_kwargs,
+                )
+
+            # ── 5. Aggregates / division / points ─────────────────────────────
+            aggregates        = None
+            division          = None
+            subsidiary_points = None
+
+            if report_type == "primary":
+                aggregates, division = compute_primary_aggregates(subject_rows, grade_scales)
+            elif report_type == "olevel":
+                aggregates, division = compute_olevel_aggregates(subject_rows, grade_scales)
+            elif report_type == "alevel":
+                aggregates, subsidiary_points = compute_alevel_points(subject_rows, grade_scales)
+
+            # ── 6. Average mark ─────────────────────────────────────────────
+            score_key = "total_100" if report_type in ("olevel", "alevel") else "total_score"
+            totals    = [r[score_key] for r in subject_rows if r.get(score_key) is not None]
+            average_mark = round(sum(totals) / len(totals), 1) if totals else None
+
+            # ── 7. Position ───────────────────────────────────────────────────
+            if batch_ctx is not None:
+                position       = batch_ctx.positions.get(student.id)
+                total_students = batch_ctx.total_students
+            else:
+                pos_map        = calculate_stream_positions(
+                    school_id, stream.id, term.id, exam_enum,
+                    grade_scales=grade_scales,
+                )
+                position       = pos_map.get(student.id)
+                total_students = len(pos_map)
+
+            # ── 8. Attendance ─────────────────────────────────────────────────
+            attendance = compute_attendance(school_id, student.id, term.id)
+
+            # ── 9. Grade legend ───────────────────────────────────────────────
+            grade_legend = _build_grade_legend(grade_scales, report_type)
+
+            # ── 10. Resolve absolute file:// URIs for WeasyPrint ───────────────
+            # url_for() is unavailable in background threads (no request context).
+            # We use file:// URIs so WeasyPrint can load images directly from disk
+            # without needing Flask routing or a running HTTP server.
+            static_path    = Path(static_folder).resolve()
+            sunbay_logo    = (static_path / "images" / "sunbay_logo.png").as_uri()
+            children_image = (static_path / "images" / "children1.jpg").as_uri()
+            static_url     = static_path.as_uri()
+
+            # ── 11. Template context ────────────────────────────────────────
+            ctx = {
+                "school":             self.school,
+                "school_detail":      self.school_detail,
+                "student":            student,
+                "learner_id":         student.admission_number or "",
+                "stream":             stream,
+                "class_name":         class_name,
+                "stream_name":        stream.name if stream else "",
+                "term":               term,
+                "academic_year":      academic_year,
+                "exam_type":          exam_type,
+                "subject_rows":       subject_rows,
+                "average_mark":       average_mark,
+                "position":           position,
+                "total_students":     total_students,
+                "aggregates":         aggregates,
+                "division":           division,
+                "subsidiary_points":  subsidiary_points,
+                "attendance":         attendance,
+                "grade_legend":       grade_legend,
+                "report_type":        report_type,
+                "generated_date":     datetime.utcnow().strftime("%d %B %Y"),
+                # ── file:// URIs for school-specific templates (no url_for needed) ──
+                "sunbay_logo":        sunbay_logo,
+                "children_image":     children_image,
+                "static_url":         static_url,
+                "static_folder":      static_path,   # kept for backward compat
             }
 
-        if report_type in ("olevel", "alevel"):
-            subject_rows = build_secondary_subject_rows(
-                school_id=school_id,
-                stream_id=stream.id,
-                student_id=student.id,
-                marks_data=marks_data,
-                grade_scales=grade_scales,
-                report_type=report_type,
-                school_detail=self.school_detail,
-                **bulk_kwargs,
-            )
-        else:
-            subject_rows = build_subject_rows(
-                school_id=school_id,
-                stream_id=stream.id,
-                student_id=student.id,
-                marks_data=marks_data,
-                grade_scales=grade_scales,
-                report_type=report_type,
-                **bulk_kwargs,
-            )
+            # ── 12. Render HTML ─────────────────────────────────────────────
+            template_name = get_template_name(school_id, report_type)
+            try:
+                html = render_template(template_name, **ctx)
+            except Exception as exc:
+                # exc_info=True writes the full traceback (including which
+                # Jinja file/line raised, e.g. a missing/renamed variable)
+                # to the log — this is almost certainly where your nursery
+                # failure is coming from, since Sunbay has a custom
+                # nursery template that may reference a context key that
+                # doesn't exist or differs from the default template.
+                logger.error(
+                    "Template rendering failed for student=%s school=%s "
+                    "report_type=%s template=%s",
+                    student.id, school_id, report_type, template_name,
+                    exc_info=True,
+                )
+                raise RuntimeError(f"Template rendering failed: {exc}") from exc
 
-        # ── 5. Aggregates / division / points ─────────────────────────────────
-        aggregates        = None
-        division          = None
-        subsidiary_points = None
+            # ── 13. Convert to PDF ───────────────────────────────────────────
+            file_bytes, ext = html_to_pdf_bytes(html)
 
-        if report_type == "primary":
-            aggregates, division = compute_primary_aggregates(subject_rows, grade_scales)
-        elif report_type == "olevel":
-            aggregates, division = compute_olevel_aggregates(subject_rows, grade_scales)
-        elif report_type == "alevel":
-            aggregates, subsidiary_points = compute_alevel_points(subject_rows, grade_scales)
+            # ── 14. Save to disk ──────────────────────────────────────────────
+            year_name    = academic_year.name if academic_year else "unknown"
+            term_label   = (term.name or "term").replace(" ", "_") if term else "term"
+            stream_label = (stream.name or "stream").replace(" ", "_") if stream else "stream"
 
-        # ── 6. Average mark ───────────────────────────────────────────────────
-        score_key = "total_100" if report_type in ("olevel", "alevel") else "total_score"
-        totals    = [r[score_key] for r in subject_rows if r.get(score_key) is not None]
-        average_mark = round(sum(totals) / len(totals), 1) if totals else None
+            directory = ensure_report_dir(static_folder, year_name, term_label, stream_label)
+            filename  = f"student_{student.id}_{exam_type.lower()}.{ext}"
+            full_path = os.path.join(directory, filename)
 
-        # ── 7. Position ───────────────────────────────────────────────────────
-        if batch_ctx is not None:
-            position       = batch_ctx.positions.get(student.id)
-            total_students = batch_ctx.total_students
-        else:
-            pos_map        = calculate_stream_positions(
-                school_id, stream.id, term.id, exam_enum,
-                grade_scales=grade_scales,
-            )
-            position       = pos_map.get(student.id)
-            total_students = len(pos_map)
+            try:
+                with open(full_path, "wb") as fh:
+                    fh.write(file_bytes)
+                logger.info("Report written: %s (%d bytes)", full_path, len(file_bytes))
+            except OSError as exc:
+                logger.error(
+                    "Could not write report file for student=%s path=%s",
+                    student.id, full_path, exc_info=True,
+                )
+                raise RuntimeError(f"Could not write report file: {exc}") from exc
 
-        # ── 8. Attendance ─────────────────────────────────────────────────────
-        attendance = compute_attendance(school_id, student.id, term.id)
+            # ── 15. Build URL path ────────────────────────────────────────────
+            try:
+                rel      = os.path.relpath(full_path, os.path.dirname(static_folder))
+                file_url = "/" + rel.replace("\\", "/")
+            except ValueError:
+                file_url = (
+                    f"/static/report_cards/{year_name}/{term_label}/{stream_label}/{filename}"
+                )
 
-        # ── 9. Grade legend ───────────────────────────────────────────────────
-        grade_legend = _build_grade_legend(grade_scales, report_type)
+            if not file_url.startswith("/static"):
+                file_url = (
+                    f"/static/report_cards/{year_name}/{term_label}/{stream_label}/{filename}"
+                )
 
-        # ── 10. Resolve absolute file:// URIs for WeasyPrint ─────────────────
-        # url_for() is unavailable in background threads (no request context).
-        # We use file:// URIs so WeasyPrint can load images directly from disk
-        # without needing Flask routing or a running HTTP server.
-        static_path    = Path(static_folder).resolve()
-        sunbay_logo    = (static_path / "images" / "sunbay_logo.png").as_uri()
-        children_image = (static_path / "images" / "children1.jpg").as_uri()
-        static_url     = static_path.as_uri()
+            return {
+                "local_path":  full_path,
+                "file_url":    file_url,
+                "report_type": report_type,
+                "extension":   ext,
+            }
 
-        # ── 11. Template context ──────────────────────────────────────────────
-        ctx = {
-            "school":             self.school,
-            "school_detail":      self.school_detail,
-            "student":            student,
-            "learner_id":         student.admission_number or "",
-            "stream":             stream,
-            "class_name":         class_name,
-            "stream_name":        stream.name if stream else "",
-            "term":               term,
-            "academic_year":      academic_year,
-            "exam_type":          exam_type,
-            "subject_rows":       subject_rows,
-            "average_mark":       average_mark,
-            "position":           position,
-            "total_students":     total_students,
-            "aggregates":         aggregates,
-            "division":           division,
-            "subsidiary_points":  subsidiary_points,
-            "attendance":         attendance,
-            "grade_legend":       grade_legend,
-            "report_type":        report_type,
-            "generated_date":     datetime.utcnow().strftime("%d %B %Y"),
-            # ── file:// URIs for school-specific templates (no url_for needed) ──
-            "sunbay_logo":        sunbay_logo,
-            "children_image":     children_image,
-            "static_url":         static_url,
-            "static_folder":      static_path,   # kept for backward compat
-        }
-
-        # ── 12. Render HTML ───────────────────────────────────────────────────
-        template_name = get_template_name(school_id, report_type)
-        try:
-            html = render_template(template_name, **ctx)
-        except Exception as exc:
-           
+        except Exception:
+            # ── Top-level safety net ──────────────────────────────────────────
+            # Whatever step above failed (marks fetch, aggregate math, grading,
+            # template render, PDF conversion, disk write) — this guarantees
+            # the FULL traceback lands in the log, with enough context to
+            # locate it, *before* the exception propagates up to whatever
+            # route/view catches it and shows the generic "failed to render"
+            # message to the user.
+            #
+            # traceback.format_exc() is captured explicitly (in addition to
+            # exc_info=True) so you have a plain string version too, in case
+            # your logging handler/formatter on Render doesn't render
+            # exc_info nicely.
+            tb_str = traceback.format_exc()
             logger.error(
-                "Template rendering failed for student=%s template=%s: %s",
-                student.id, template_name, exc,
+                "generate() failed: student=%s school=%s stream=%s term=%s "
+                "exam=%s report_type=%s\n%s",
+                getattr(student, "id", None),
+                school_id,
+                getattr(stream, "id", None),
+                getattr(term, "id", None),
+                exam_type,
+                report_type,
+                tb_str,
+                exc_info=True,
             )
-            raise RuntimeError(f"Template rendering failed: {exc}") from exc
-
-        # ── 13. Convert to PDF ────────────────────────────────────────────────
-        file_bytes, ext = html_to_pdf_bytes(html)
-
-        # ── 14. Save to disk ──────────────────────────────────────────────────
-        year_name    = academic_year.name if academic_year else "unknown"
-        term_label   = (term.name or "term").replace(" ", "_") if term else "term"
-        stream_label = (stream.name or "stream").replace(" ", "_") if stream else "stream"
-
-        directory = ensure_report_dir(static_folder, year_name, term_label, stream_label)
-        filename  = f"student_{student.id}_{exam_type.lower()}.{ext}"
-        full_path = os.path.join(directory, filename)
-
-        try:
-            with open(full_path, "wb") as fh:
-                fh.write(file_bytes)
-            logger.info("Report written: %s (%d bytes)", full_path, len(file_bytes))
-        except OSError as exc:
-            raise RuntimeError(f"Could not write report file: {exc}") from exc
-
-        # ── 15. Build URL path ────────────────────────────────────────────────
-        try:
-            rel      = os.path.relpath(full_path, os.path.dirname(static_folder))
-            file_url = "/" + rel.replace("\\", "/")
-        except ValueError:
-            file_url = (
-                f"/static/report_cards/{year_name}/{term_label}/{stream_label}/{filename}"
-            )
-
-        if not file_url.startswith("/static"):
-            file_url = (
-                f"/static/report_cards/{year_name}/{term_label}/{stream_label}/{filename}"
-            )
-
-        return {
-            "local_path":  full_path,
-            "file_url":    file_url,
-            "report_type": report_type,
-            "extension":   ext,
-        }
+            raise
