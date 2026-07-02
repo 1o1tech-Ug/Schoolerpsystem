@@ -361,41 +361,7 @@ body {
                 </td>
 
                 <td>
-                    <table class="activity-grid">
-                        {% set activities = [
-                            ('Writing',          'writing',  'images/writing.jpg'),
-                            ('Listening',        'listening','images/listening.jpg'),
-                            ('Reading',          'reading',  'images/reading.jpg'),
-                            ('Speaking',         'speaking', 'images/speaking.jpg'),
-                            ('Drawing',          'drawing',  'images/drawing.jpg'),
-                            ('Games',            'games',    'images/games.jpg'),
-                            ('Health Habits',    'health',   'images/health.jpg'),
-                            ('Toilet Habits',    'toilet',   'images/toilet.jpg'),
-                            ('Rhymes / Stories', 'rhymes',   'images/rhymes.jpg'),
-                            ('Religion',         'religion', 'images/religion.jpg'),
-                        ] %}
-                        {% for i in range(0, activities|length, 2) %}
-                        <tr>
-                            {% for label, key, img in activities[i:i+2] %}
-                            {% set ns = namespace(act_row=none) %}
-                            {% for row in subject_rows %}
-                                {% if key in (row.subject_name | lower) and ns.act_row is none %}
-                                    {% set ns.act_row = row %}
-                                {% endif %}
-                            {% endfor %}
-                            <td>
-                                <div class="act-cell">
-                                    <div class="act-top">
-                                        <span class="act-label">{{ label }}</span>
-                                        <img class="act-img" src="{{ static_url }}/{{ img }}" alt="{{ label }}">
-                                    </div>
-                                    <div class="act-score">{{ ns.act_row.total_score if ns.act_row and ns.act_row.total_score is not none else '' }}</div>
-                                </div>
-                            </td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </table>
+                    
                 </td>
             </tr>
         </table>
