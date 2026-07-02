@@ -7092,3 +7092,49 @@ WHERE token_blocklist.jti = %(jti_1)s
 [2026-07-02 14:48:05] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_117_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
 [2026-07-02 14:48:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_117_eot.pdf — falling back to local URL
 [2026-07-02 14:48:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_117_eot.pdf — falling back to local URL
+[2026-07-02 17:26:37] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-02 17:26:37] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-02 17:26:41] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-02 17:26:41] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-02 17:27:12] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-02 17:27:12] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-02 17:28:06] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=117 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 720, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-02 17:28:06] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=117 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 720, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-02 17:28:12] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 257:9, unknown property.
+[2026-07-02 17:28:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_117_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-07-02 17:28:17] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_117_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-07-02 17:28:17] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_117_eot.pdf — falling back to local URL
+[2026-07-02 17:28:17] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_117_eot.pdf — falling back to local URL
+[2026-07-02 17:29:18] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | No marks for student=136 term=4 exam=EOT — empty report will be generated.
+[2026-07-02 17:29:18] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | No marks for student=136 term=4 exam=EOT — empty report will be generated.
+[2026-07-02 17:29:20] WARNING | DELETE /api/report-cards/68 | IP=127.0.0.1 | USER=9 | app.utils.bunny | bunny_delete: DELETE https://storage.bunnycdn.com/school-erp/static/report_cards/2026/Term_1/unknown/student_117_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-07-02 17:29:20] WARNING | DELETE /api/report-cards/68 | IP=127.0.0.1 | USER=9 | app.utils.bunny | bunny_delete: DELETE https://storage.bunnycdn.com/school-erp/static/report_cards/2026/Term_1/unknown/student_117_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-07-02 17:29:20] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=136 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 720, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-02 17:29:20] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=136 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 720, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-02 17:29:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 257:9, unknown property.
+[2026-07-02 17:29:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_136_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-07-02 17:29:23] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://storage.bunnycdn.com/school-erp/uploads/report_cards/2026/Term_1/./student_136_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-07-02 17:29:23] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_136_eot.pdf — falling back to local URL
+[2026-07-02 17:29:23] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_1/unknown/student_136_eot.pdf — falling back to local URL
+[2026-07-02 17:29:37] WARNING | DELETE /api/report-cards/69 | IP=127.0.0.1 | USER=9 | app.utils.bunny | bunny_delete: DELETE https://storage.bunnycdn.com/school-erp/static/report_cards/2026/Term_1/unknown/student_136_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
+[2026-07-02 17:29:37] WARNING | DELETE /api/report-cards/69 | IP=127.0.0.1 | USER=9 | app.utils.bunny | bunny_delete: DELETE https://storage.bunnycdn.com/school-erp/static/report_cards/2026/Term_1/unknown/student_136_eot.pdf → HTTP 401  body={"HttpCode":401,"Message":"Unauthorized"}
