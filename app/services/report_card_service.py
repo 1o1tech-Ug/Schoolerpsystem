@@ -1609,7 +1609,7 @@ class ReportCardService:
         try:
             html = render_template(template_name, **ctx)
         except Exception as exc:
-            print(exc)
+           
             logger.error(
                 "Template rendering failed for student=%s template=%s: %s",
                 student.id, template_name, exc,

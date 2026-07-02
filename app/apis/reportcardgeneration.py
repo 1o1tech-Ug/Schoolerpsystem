@@ -541,9 +541,9 @@ def generate_report_card():
 
             except Exception as exc:
                 db.session.rollback()
-                print(exc)
+               
                 logger.exception("generate thread failed | student_id=%s", student_id)
-                _update_job(job_id, status="error", error="Failed to generate report card. Please try again.")
+                _update_job(job_id, status="error", error=f"Failed to generate report card. Please try again.{exc}")
 
     thread = threading.Thread(target=_do_generate, daemon=True, name=f"gen-{job_id[:8]}")
     thread.start()
