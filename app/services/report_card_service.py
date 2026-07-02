@@ -1361,7 +1361,7 @@ def html_to_pdf_bytes(html: str) -> tuple[bytes, str]:
 
 _SCHOOL_TEMPLATE_OVERRIDES: dict[int, dict[str, str]] = {
     6: {  # Sunbay Junior School & Day Care Centre
-        "nursery": "modules/academics/report_cards/sunbay_nursery_report_card.html",
+        "nursery": "modules/academics/report_cards/Sunbay_nursery_report_card.html",
         "primary": "modules/academics/report_cards/sunbay_primary_report_card.html",
     },
 }
