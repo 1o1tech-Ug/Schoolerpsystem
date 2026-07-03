@@ -32,9 +32,9 @@ body {
     width: 100%; height: 100%;
     background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}');
     background-repeat: no-repeat;
-    background-position: center 280px;
-    background-size: 480px 480px;
-    opacity: 0.08;
+    background-position: center center;
+    background-size: 420px 420px;
+    opacity: 0.06;
     z-index: 0;
     pointer-events: none;
 }
@@ -199,7 +199,7 @@ body {
 
 /* ══ COMMENTS — clean line style, float-based (no flex-grow, no literal dots) ══ */
 .comments { margin-top: 14px; font-size: 13px; }
-.cmt-block { margin-bottom: 20px; }
+.cmt-block { margin-bottom: 26px; }
 .cmt-lbl {
     display: block;
     font-weight: 800;
@@ -211,20 +211,21 @@ body {
     width: 100%;
     height: 18px;
     border-bottom: 1.5px solid #555;
+    margin-bottom: 10px;
 }
 .cmt-row-2 {
     margin-top: 12px;
-    overflow: hidden; /* clearfix for the floated children below */
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
 }
 .cmt-row-2 .cmt-line-70 {
-    float: left;
-    width: 62%;
+    flex: 0 0 62%;
     height: 18px;
     border-bottom: 1.5px solid #555;
 }
 .cmt-row-2 .sign-box {
-    float: right;
-    width: 34%;
+    flex: 0 0 34%;
     text-align: right;
     font-weight: 700;
     font-size: 12px;
