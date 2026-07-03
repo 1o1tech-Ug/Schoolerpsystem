@@ -28,14 +28,15 @@ body {
 
 .watermark {
     position: absolute;
-    inset: 0;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}');
     background-repeat: no-repeat;
-    background-position: center 44%;
-    background-size: 500px 500px;
-    opacity: 0.07;
-    pointer-events: none;
+    background-position: center 280px;
+    background-size: 480px 480px;
+    opacity: 0.08;
     z-index: 0;
+    pointer-events: none;
 }
 .content { position: relative; z-index: 1; }
 
@@ -196,45 +197,45 @@ body {
     font-weight: 600; padding: 4px 9px; border-top: 1px solid #bbb;
 }
 
-/* ══ COMMENTS — clean line style (no literal dot characters) ══ */
+/* ══ COMMENTS — clean line style, float-based (no flex-grow, no literal dots) ══ */
 .comments { margin-top: 14px; font-size: 13px; }
-.cmt-block { margin-bottom: 16px; }
+.cmt-block { margin-bottom: 20px; }
 .cmt-lbl {
+    display: block;
     font-weight: 800;
     font-size: 13px;
-    white-space: nowrap;
+    margin-bottom: 6px;
 }
-.cmt-line2 {
-    display: flex;
-    align-items: baseline;
-}
-.cmt-uline {
-    display: inline-block;
+.cmt-line {
+    display: block;
+    width: 100%;
+    height: 18px;
     border-bottom: 1.5px solid #555;
-    height: 16px;
-    margin-left: 8px;
 }
-.sign-line {
-    display: flex;
-    align-items: baseline;
-    margin-top: 10px;
+.cmt-row-2 {
+    margin-top: 12px;
+    overflow: hidden; /* clearfix for the floated children below */
 }
-.sign-line .cmt-uline {
-    flex: 1;
-    margin-left: 8px;
-    margin-right: 24px;
+.cmt-row-2 .cmt-line-70 {
+    float: left;
+    width: 62%;
+    height: 18px;
+    border-bottom: 1.5px solid #555;
 }
-.sign-line .sign-lbl {
+.cmt-row-2 .sign-box {
+    float: right;
+    width: 34%;
+    text-align: right;
     font-weight: 700;
     font-size: 12px;
-    white-space: nowrap;
 }
-.sign-line .sign-uline {
+.sign-uline {
     display: inline-block;
-    border-bottom: 1.5px solid #555;
+    width: 110px;
     height: 16px;
-    width: 140px;
     margin-left: 6px;
+    border-bottom: 1.5px solid #555;
+    vertical-align: bottom;
 }
 
 .next-term {
@@ -411,26 +412,20 @@ body {
             <div class="comments">
 
                 <div class="cmt-block">
-                    <div class="cmt-line2">
-                        <span class="cmt-lbl">General Class Teacher's Comment:</span>
-                        <span class="cmt-uline" style="flex:1;"></span>
-                    </div>
-                    <div class="sign-line">
-                        <span class="cmt-uline" style="flex:2;"></span>
-                        <span class="sign-lbl">Sign</span>
-                        <span class="sign-uline"></span>
+                    <span class="cmt-lbl">General Class Teacher's Comment:</span>
+                    <div class="cmt-line"></div>
+                    <div class="cmt-row-2">
+                        <div class="cmt-line-70"></div>
+                        <div class="sign-box">Sign:<span class="sign-uline"></span></div>
                     </div>
                 </div>
 
                 <div class="cmt-block">
-                    <div class="cmt-line2">
-                        <span class="cmt-lbl">Head Teacher's Comment:</span>
-                        <span class="cmt-uline" style="flex:1;"></span>
-                    </div>
-                    <div class="sign-line">
-                        <span class="cmt-uline" style="flex:2;"></span>
-                        <span class="sign-lbl">Sign</span>
-                        <span class="sign-uline"></span>
+                    <span class="cmt-lbl">Head Teacher's Comment:</span>
+                    <div class="cmt-line"></div>
+                    <div class="cmt-row-2">
+                        <div class="cmt-line-70"></div>
+                        <div class="sign-box">Sign:<span class="sign-uline"></span></div>
                     </div>
                 </div>
 
