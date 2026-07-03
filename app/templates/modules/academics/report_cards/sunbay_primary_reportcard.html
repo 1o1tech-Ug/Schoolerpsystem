@@ -67,46 +67,54 @@ body {
     padding: 8px 6px; margin: 7px 0 10px;
 }
 
-.info-rows { font-size: 13.5px; margin-bottom: 8px; }
+.info-rows { font-size: 14px; margin-bottom: 10px; }
 
 .info-line {
     display: flex;
     align-items: baseline;
     flex-wrap: nowrap;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .lbl { font-weight: 800; white-space: nowrap; padding-right: 4px; }
 
-.uline {
+/* ── Coloured underlined value fields (matches Nursery-style report) ── */
+.val-blue {
     display: inline-block;
-    border-bottom: 2px solid #222;
-    min-width: 180px;
-    height: 18px;
+    color: #0044cc;
+    font-weight: 800;
+    font-size: 15px;
+    border-bottom: 1.5px solid #0044cc;
+    min-width: 110px;
+    height: 20px;
+    padding: 0 4px 2px;
     margin-right: 18px;
     vertical-align: bottom;
-    font-weight: 600;
-    padding-left: 4px;
 }
-.uline-sm {
+.val-red {
     display: inline-block;
-    border-bottom: 2px solid #222;
-    min-width: 48px;
-    height: 18px;
-    margin-right: 14px;
-    vertical-align: bottom;
-    text-align: center;
-    font-weight: 600;
-}
-.uline-id {
-    display: inline-block;
-    border-bottom: 2px solid #222;
+    color: #cc0000;
+    font-weight: 800;
+    font-size: 15px;
+    border-bottom: 1.5px solid #cc0000;
     min-width: 90px;
-    height: 18px;
+    height: 20px;
+    padding: 0 4px 2px;
     margin-right: 18px;
     vertical-align: bottom;
-    font-weight: 600;
-    padding-left: 4px;
+}
+.val-red-sm {
+    display: inline-block;
+    color: #cc0000;
+    font-weight: 800;
+    font-size: 15px;
+    border-bottom: 1.5px solid #cc0000;
+    min-width: 48px;
+    height: 20px;
+    padding: 0 4px 2px;
+    margin-right: 14px;
+    text-align: center;
+    vertical-align: bottom;
 }
 
 .marks-tbl {
@@ -134,6 +142,15 @@ body {
     text-align: left; padding-left: 7px;
     font-weight: 700; font-size: 12.5px;
 }
+
+/* ── Coloured mark-table cells ── */
+.score-num   { color: #0044cc; font-weight: 800; }
+.outof-red   { color: #cc0000; font-weight: 700; }
+.grade-blue  { color: #0044cc; font-weight: 800; }
+.agg-num     { color: #cc0000; font-weight: 900; }
+.remark-good { color: #0044cc; font-weight: 700; }
+.initial-red { color: #cc0000; font-weight: 800; }
+.final-num   { color: #0044cc; font-weight: 900; }
 
 .tr-totals td {
     background: #b6f0b6;
@@ -266,19 +283,19 @@ body {
             <div class="info-rows">
                 <div class="info-line">
                     <span class="lbl">NAME:</span>
-                    <span class="uline">{{ student.first_name }} {{ student.last_name }}</span>
+                    <span class="val-red">{{ student.first_name }} {{ student.last_name }}</span>
                     <span class="lbl">CLASS:</span>
-                    <span class="uline" style="min-width:110px; margin-right:0;">{{ class_name }} {{ stream_name }}</span>
+                    <span class="val-blue" style="margin-right:0;">{{ class_name }} {{ stream_name }}</span>
                 </div>
                 <div class="info-line">
                     <span class="lbl">LEARNER'S ID:</span>
-                    <span class="uline-id">{{ learner_id }}</span>
+                    <span class="val-red">{{ learner_id }}</span>
                     <span class="lbl">DAYS ATTENDED:</span>
-                    <span class="uline-sm">{{ attendance.present }}</span>
+                    <span class="val-red-sm">{{ attendance.present }}</span>
                     <span class="lbl">ABSENT:</span>
-                    <span class="uline-sm">{{ attendance.absent }}</span>
+                    <span class="val-red-sm">{{ attendance.absent }}</span>
                     <span class="lbl">TOT:</span>
-                    <span class="uline-sm" style="margin-right:0;">{{ attendance.total }}</span>
+                    <span class="val-red-sm" style="margin-right:0;">{{ attendance.total }}</span>
                 </div>
             </div>
 
@@ -286,29 +303,45 @@ body {
             <table class="marks-tbl">
                 <thead>
                     <tr>
-                        <th class="th-subj" style="width:25%">SUBJECT</th>
-                        <th style="width:12%">SCORE</th>
+                        <th class="th-subj" style="width:22%">SUBJECT</th>
+                        <th style="width:10%">SCORE</th>
+                        <th style="width:9%">OUT OF</th>
                         <th style="width:8%">GRADE</th>
                         <th style="width:7%">AGG.</th>
-                        <th style="width:23%">REMARK</th>
+                        <th style="width:20%">REMARK</th>
                         <th style="width:13%">TEACHER</th>
-                        <th style="width:12%">INITIAL</th>
+                        <th style="width:11%">INITIAL</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% set ns = namespace(total_score=0.0, subj_count=0) %}
                     {% for row in subject_rows %}
+                    {% if row.total_score is not none %}
+                        {% set ns.total_score = ns.total_score + row.total_score %}
+                    {% endif %}
+                    {% set ns.subj_count = ns.subj_count + 1 %}
                     <tr>
                         <td class="td-subj">{{ row.subject_name | upper }}</td>
-                        <td>{{ row.total_score if row.total_score is not none else '—' }}</td>
-                        <td>{{ row.grade }}</td>
-                        <td></td>
-                        <td>{{ row.remark }}</td>
+                        <td class="score-num">{{ row.total_score if row.total_score is not none else '—' }}</td>
+                        <td class="outof-red">100</td>
+                        <td class="grade-blue">{{ row.grade }}</td>
+                        <td class="agg-num"></td>
+                        <td class="remark-good">{{ row.remark }}</td>
                         <td>{{ row.teacher_name }}</td>
-                        <td></td>
+                        <td class="initial-red"></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="7" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
+                    <tr><td colspan="8" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
                     {% endfor %}
+
+                    {% if subject_rows %}
+                    <tr class="tr-totals">
+                        <td class="td-subj">TOTAL MARKS:</td>
+                        <td class="final-num">{{ ns.total_score | round(1) }}</td>
+                        <td class="outof-red">{{ ns.subj_count * 100 }}</td>
+                        <td colspan="5"></td>
+                    </tr>
+                    {% endif %}
 
                     <tr class="tr-totals">
                         <td class="td-subj">AVERAGE:</td>
@@ -317,7 +350,7 @@ body {
                             <span class="agg-lbl">AGGREGATES:&nbsp;</span>
                             <span class="agg-val">{{ aggregates if aggregates is not none else '—' }}</span>
                         </td>
-                        <td colspan="2">{{ division or '—' }}</td>
+                        <td colspan="3">{{ division or '—' }}</td>
                     </tr>
                 </tbody>
             </table>
