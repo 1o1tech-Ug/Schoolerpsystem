@@ -306,11 +306,10 @@ body {
                         <th class="th-subj" style="width:22%">SUBJECT</th>
                         <th style="width:10%">SCORE</th>
                         <th style="width:9%">OUT OF</th>
-                        <th style="width:8%">GRADE</th>
-                        <th style="width:7%">AGG.</th>
-                        <th style="width:20%">REMARK</th>
-                        <th style="width:13%">TEACHER</th>
-                        <th style="width:11%">INITIAL</th>
+                        <th style="width:8%">AGG.</th>
+
+                        <th style="width:28%">REMARK</th>
+                        <th style="width:14%">INITIAL</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -325,13 +324,12 @@ body {
                         <td class="score-num">{{ row.total_score if row.total_score is not none else '—' }}</td>
                         <td class="outof-red">100</td>
                         <td class="grade-blue">{{ row.grade }}</td>
-                        <td class="agg-num"></td>
+
                         <td class="remark-good">{{ row.remark }}</td>
-                        <td>{{ row.teacher_name }}</td>
                         <td class="initial-red"></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="8" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
+                    <tr><td colspan="6" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
                     {% endfor %}
 
                     {% if subject_rows %}
@@ -339,33 +337,24 @@ body {
                         <td class="td-subj">TOTAL MARKS:</td>
                         <td class="final-num">{{ ns.total_score | round(1) }}</td>
                         <td class="outof-red">{{ ns.subj_count * 100 }}</td>
-                        <td colspan="5"></td>
-                    </tr>
-                    {% endif %}
-
-                    <tr class="tr-totals">
-                        <td class="td-subj">AVERAGE:</td>
-                        <td colspan="2">{{ average_mark if average_mark is not none else '—' }}</td>
-                        <td colspan="2" style="text-align:left; padding-left:8px;">
+                        <td colspan="3" style="text-align:left; padding-left:8px;">
                             <span class="agg-lbl">AGGREGATES:&nbsp;</span>
                             <span class="agg-val">{{ aggregates if aggregates is not none else '—' }}</span>
                         </td>
-                        <td colspan="3">{{ division or '—' }}</td>
                     </tr>
+                    {% endif %}
+
+
                 </tbody>
             </table>
 
             <!-- Average / Division bar -->
             <div class="avg-div">
                 <div>OVERALL AVERAGE SCORE:&nbsp;&nbsp;<b>{{ average_mark if average_mark is not none else '—' }}</b></div>
-                <div>DIVISION:&nbsp;&nbsp;<b>{{ division or '—' }}</b></div>
+                <div>DIVISION:&nbsp;&nbsp;<b>{{ division if division is not none else '—' }}</b></div>
             </div>
 
-            <!-- Position bar -->
-            <div class="pos-bar">
-                <div>CLASS POSITION:&nbsp;&nbsp;<span class="pos-val">{{ position if position is not none else '—' }}</span>{% if total_students %} out of {{ total_students }}{% endif %}</div>
-                <div>AGGREGATES:&nbsp;&nbsp;<span class="pos-val">{{ aggregates if aggregates is not none else '—' }}</span></div>
-            </div>
+
 
             <!-- ══ GRADING SCHEME — driven by grade_legend (school's own scale if configured) ══ -->
             <div class="grading">
