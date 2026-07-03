@@ -196,31 +196,45 @@ body {
     font-weight: 600; padding: 4px 9px; border-top: 1px solid #bbb;
 }
 
+/* ══ COMMENTS — clean line style (no literal dot characters) ══ */
 .comments { margin-top: 14px; font-size: 13px; }
-.cmt-block { margin-bottom: 14px; }
-.cmt-lbl { font-weight: 800; font-size: 13px; }
-.cmt-dots {
-    font-weight: 900;
-    color: #000;
-    letter-spacing: 2px;
-}
-
-.cmt-uline {
-    display: inline-block;
-    border-bottom: 1px dotted #555;
-    min-width: 260px; height: 18px;
-    margin: 0 6px; vertical-align: bottom;
+.cmt-block { margin-bottom: 16px; }
+.cmt-lbl {
+    font-weight: 800;
+    font-size: 13px;
+    white-space: nowrap;
 }
 .cmt-line2 {
     display: flex;
     align-items: baseline;
-    margin-top: 5px;
 }
-.cmt-line2 .cmt-uline { min-width: 340px; }
-.sign-right {
-    margin-left: auto;
-    white-space: nowrap;
+.cmt-uline {
+    display: inline-block;
+    border-bottom: 1.5px solid #555;
+    height: 16px;
+    margin-left: 8px;
+}
+.sign-line {
+    display: flex;
+    align-items: baseline;
+    margin-top: 10px;
+}
+.sign-line .cmt-uline {
+    flex: 1;
+    margin-left: 8px;
+    margin-right: 24px;
+}
+.sign-line .sign-lbl {
+    font-weight: 700;
     font-size: 12px;
+    white-space: nowrap;
+}
+.sign-line .sign-uline {
+    display: inline-block;
+    border-bottom: 1.5px solid #555;
+    height: 16px;
+    width: 140px;
+    margin-left: 6px;
 }
 
 .next-term {
@@ -398,23 +412,25 @@ body {
 
                 <div class="cmt-block">
                     <div class="cmt-line2">
-                        <span class="cmt-lbl">General Class Teacher's Comment:</span><span >..................................................................................................................................................................................................</span>
-                        <span class="cmt-uline"></span>
+                        <span class="cmt-lbl">General Class Teacher's Comment:</span>
+                        <span class="cmt-uline" style="flex:1;"></span>
                     </div>
-                    <div class="cmt-line2" style="margin-top:6px;">
-                        <span class="cmt-uline" style="min-width:380px;">...............................................................................................................</span>
-                        <span class="sign-right">sign&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;........ ...........</span>
+                    <div class="sign-line">
+                        <span class="cmt-uline" style="flex:2;"></span>
+                        <span class="sign-lbl">Sign</span>
+                        <span class="sign-uline"></span>
                     </div>
                 </div>
 
                 <div class="cmt-block">
                     <div class="cmt-line2">
-                        <span class="cmt-lbl">Head Teacher's Comment:</span><span class="cmt-dots">...............................................................................................................................................................................</span>
-                        <span class="cmt-uline">..........................................................................</span>
+                        <span class="cmt-lbl">Head Teacher's Comment:</span>
+                        <span class="cmt-uline" style="flex:1;"></span>
                     </div>
-                    <div class="cmt-line2" style="margin-top:6px;">
-                        <span class="cmt-uline" style="min-width:380px;">....................................................................................................</span>
-                        <span class="sign-right">Sign&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;&hellip;....................</span>
+                    <div class="sign-line">
+                        <span class="cmt-uline" style="flex:2;"></span>
+                        <span class="sign-lbl">Sign</span>
+                        <span class="sign-uline"></span>
                     </div>
                 </div>
 
