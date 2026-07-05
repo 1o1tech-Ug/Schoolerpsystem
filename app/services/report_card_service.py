@@ -49,13 +49,47 @@ do we fall back to the Uganda-standard DEFAULT_*_GRADES tables below.  This
 applies uniformly — no school is special-cased for grading, only for
 template selection (see _SCHOOL_TEMPLATE_OVERRIDES below).
 
+Primary aggregate-subject restriction
+---------------------------------------
+Per the Uganda primary curriculum, only a fixed set of "core" subjects
+counts toward a primary learner's aggregates/division — every other
+subject is still graded and shown on the report, but excluded from the
+aggregate sum:
+
+  P1 – P3  →  Literacy I, Literacy II, Mathematics, English
+  P4 – P7  →  Mathematics, English, Social Studies, Science
+
+This filtering is applied via `filter_rows_for_primary_aggregates()`
+before `compute_primary_aggregates()` is called, both in the per-student
+report pipeline (`ReportCardService.generate()`) and in stream-wide
+ranking (`calculate_stream_positions()`), so aggregates and class
+positions stay consistent with each other.
+
+Primary EOT reports (MID + EOT averaging)
+--------------------------------------------
+For Primary, the End-of-Term (EOT) report shows MID marks, EOT marks,
+and a FINAL MARKS value per subject, where FINAL MARKS is the rounded
+average of the two (if only one of the two exists for a subject, that
+score is used directly as the final mark). This is handled by
+`build_eot_subject_rows()`, which is used instead of `build_subject_rows()`
+whenever `report_type == "primary"` and `exam_type == "EOT"`. Grading,
+aggregates, and the grading-legend table all key off this rounded final
+mark exactly as they would off a normal single-exam score.
+
 School-specific templates
 --------------------------
 `_SCHOOL_TEMPLATE_OVERRIDES` lets specific schools use their own report
 card design instead of the shared default template for a report_type.
-`get_template_name()` resolves which template a given (school_id,
-report_type) pair should render. Add new schools/report types to that
-dict as needed — no other code changes required.
+An override entry can be either:
+  - a plain template path string (used for every exam type), or
+  - a dict keyed by exam type ("BOT" / "MID" / "EOT") mapping to a
+    template path, letting a school use a different layout for its
+    EOT report than for its BOT/MID reports (e.g. Sunbay's primary
+    section, which shows MID+EOT+FINAL columns only on the EOT report).
+`get_template_name()` resolves which template a given
+(school_id, report_type, exam_type) combination should render. Add new
+schools/report types to that dict as needed — no other code changes
+required.
 
 Performance notes
 -----------------
@@ -92,7 +126,7 @@ import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from flask import render_template
 from sqlalchemy import func, case, select
@@ -249,6 +283,136 @@ NURSERY_QUALITATIVE_MAP: dict[str, str] = {
     "A": "Excellent", "B": "Very Good", "C": "Good",
     "D": "Fair",      "E": "Needs Improvement",
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PRIMARY AGGREGATE-SUBJECT RESTRICTION  (P1-P3 vs P4-P7)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_LOWER_PRIMARY_CLASS_PREFIXES = ("p1", "p2", "p3")
+_UPPER_PRIMARY_CLASS_PREFIXES = ("p4", "p5", "p6", "p7")
+
+# Normalised subject "keys" — see _primary_aggregate_subject_key() below.
+_LOWER_PRIMARY_AGG_KEYS = frozenset({"english", "mathematics", "literacy_1", "literacy_2"})
+_UPPER_PRIMARY_AGG_KEYS = frozenset({"english", "mathematics", "social_studies", "science"})
+
+_LIT1_PAT = _re.compile(r'^literacy\s*(1|i)\b', _re.IGNORECASE)
+_LIT2_PAT = _re.compile(r'^literacy\s*(2|ii)\b', _re.IGNORECASE)
+
+
+def _primary_aggregate_subject_key(subject_name: str) -> Optional[str]:
+    """
+    Normalise a subject name into one of the fixed keys used to decide
+    whether it counts toward a primary learner's aggregate/division:
+
+        'english', 'mathematics', 'literacy_1', 'literacy_2',
+        'social_studies', 'science'
+
+    Returns None for any subject that doesn't match one of these —
+    such subjects are still graded and shown on the report card, they
+    just don't contribute to the aggregate sum.
+    """
+    name = (subject_name or "").strip().lower()
+
+    if _LIT2_PAT.match(name):
+        return "literacy_2"
+    if _LIT1_PAT.match(name):
+        return "literacy_1"
+    if name.startswith("english"):
+        return "english"
+    if name.startswith("math"):
+        return "mathematics"
+    if name.startswith("social studies") or name.startswith("social_studies"):
+        return "social_studies"
+    if name.startswith("science"):
+        return "science"
+    return None
+
+
+def _primary_aggregate_keys_for_class(class_name: str) -> frozenset:
+    """
+    Return the set of aggregate-subject keys applicable to *class_name*:
+      P1–P3 → English, Mathematics, Literacy I, Literacy II
+      P4–P7 → English, Mathematics, Social Studies, Science
+    Unrecognised primary class names fall back to the upper-primary set
+    (with a warning logged) rather than silently including every subject.
+    """
+    normalised = (class_name or "").strip().lower()
+
+    for prefix in _LOWER_PRIMARY_CLASS_PREFIXES:
+        if normalised.startswith(prefix):
+            return _LOWER_PRIMARY_AGG_KEYS
+
+    for prefix in _UPPER_PRIMARY_CLASS_PREFIXES:
+        if normalised.startswith(prefix):
+            return _UPPER_PRIMARY_AGG_KEYS
+
+    logger.warning(
+        "Unrecognised primary class name '%s' for aggregate-subject "
+        "filtering; defaulting to the P4-P7 subject set.", class_name,
+    )
+    return _UPPER_PRIMARY_AGG_KEYS
+
+
+def filter_rows_for_primary_aggregates(subject_rows: list, class_name: str) -> list:
+    """
+    Return the subset of *subject_rows* that should count toward a
+    primary learner's aggregate/division, based on their specific class:
+
+      P1–P3  →  Literacy I, Literacy II, Mathematics, English
+      P4–P7  →  Mathematics, English, Social Studies, Science
+
+    Used by calculate_stream_positions() (ranking only needs the filtered
+    list, not display ordering). For the report card itself, use
+    _finalize_primary_subject_rows() instead, which both filters *and*
+    reorders/blanks the display rows.
+    """
+    allowed_keys = _primary_aggregate_keys_for_class(class_name)
+    filtered = []
+    for row in subject_rows:
+        key = _primary_aggregate_subject_key(row.get("subject_name", ""))
+        if key is not None and key in allowed_keys:
+            filtered.append(row)
+    return filtered
+
+
+def _finalize_primary_subject_rows(subject_rows: list, class_name: str) -> list:
+    """
+    Prepare a primary report's subject rows for display and aggregation:
+
+      - Every row is tagged with "is_aggregate_subject" (True/False).
+      - Rows for subjects OUTSIDE the class's core aggregate set (see
+        filter_rows_for_primary_aggregates()) have their "grade" and
+        "remark" cleared to "" — these subjects are still shown with
+        their score, but curriculum convention doesn't assign them a
+        formal grade/remark on this report.
+      - Core aggregate-subject rows are listed first (alphabetically),
+        followed by non-core rows (also alphabetically) at the bottom
+        of the table.
+
+    Pass the *core* rows (subject_rows where is_aggregate_subject is
+    True) into compute_primary_aggregates() — this function itself only
+    reorders and adjusts display fields, it doesn't compute grades.
+    """
+    allowed_keys = _primary_aggregate_keys_for_class(class_name)
+
+    core_rows: list = []
+    other_rows: list = []
+
+    for row in subject_rows:
+        key = _primary_aggregate_subject_key(row.get("subject_name", ""))
+        if key is not None and key in allowed_keys:
+            row["is_aggregate_subject"] = True
+            core_rows.append(row)
+        else:
+            row["is_aggregate_subject"] = False
+            row["grade"]  = ""
+            row["remark"] = ""
+            other_rows.append(row)
+
+    core_rows.sort(key=lambda r: r["subject_name"])
+    other_rows.sort(key=lambda r: r["subject_name"])
+    return core_rows + other_rows
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  SUBSIDIARY SUBJECT DETECTION  (A-Level)
@@ -433,22 +597,75 @@ def alevel_subsidiary_grade(
 #  AGGREGATE / DIVISION / POINTS CALCULATIONS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def compute_primary_division(aggregates: int) -> str:
+# Ordered worst-ward so a "push to next division" is just "move one step
+# to the right", capping at Ungraded (U) — an already-ungraded learner
+# can't be pushed any further.
+_PRIMARY_DIVISION_ORDER = [
+    "Division 1", "Division 2", "Division 3", "Division 4", "Ungraded (U)",
+]
+
+
+def compute_primary_division(aggregates: int, force_next_division: bool = False) -> str:
+    """
+    Return the Primary division for *aggregates*.
+
+    If *force_next_division* is True (an F9 in English or Mathematics —
+    see _has_f9_in_english_or_math()), the learner is pushed one division
+    worse than their aggregate alone would indicate, per the standard
+    Uganda primary-leaving rule. A learner already at "Ungraded (U)"
+    stays there.
+    """
     if aggregates <= _PRIMARY_DIV1_MAX:
-        return "Division 1"
+        division = "Division 1"
     elif aggregates <= _PRIMARY_DIV2_MAX:
-        return "Division 2"
+        division = "Division 2"
     elif aggregates <= _PRIMARY_DIV3_MAX:
-        return "Division 3"
+        division = "Division 3"
     elif aggregates <= _PRIMARY_DIV4_MAX:
-        return "Division 4"
-    return "Ungraded (U)"
+        division = "Division 4"
+    else:
+        division = "Ungraded (U)"
+
+    if force_next_division and division != "Ungraded (U)":
+        idx = _PRIMARY_DIVISION_ORDER.index(division)
+        division = _PRIMARY_DIVISION_ORDER[idx + 1]
+
+    return division
+
+
+def _has_f9_in_english_or_math(aggregate_rows: list) -> bool:
+    """
+    Return True if English or Mathematics graded F9 among *aggregate_rows*
+    (the core-subject rows used for aggregation). An F9 in either subject
+    automatically pushes a Primary learner to the next Division, per
+    curriculum convention, regardless of what their aggregate total
+    alone would otherwise give them.
+    """
+    for row in aggregate_rows:
+        key = _primary_aggregate_subject_key(row.get("subject_name", ""))
+        if key in ("english", "mathematics") and (row.get("grade") or "").strip().upper() == "F9":
+            return True
+    return False
 
 
 def compute_primary_aggregates(
     subject_rows: list,
     grade_scales: list,
+    force_next_division: bool = False,
 ) -> tuple[Optional[int], Optional[str]]:
+    """
+    Compute Primary aggregates/division from *subject_rows*.
+
+    IMPORTANT: callers must pass in only the subjects that should count
+    toward the aggregate — i.e. the core-subject rows produced by
+    _finalize_primary_subject_rows() / filter_rows_for_primary_aggregates()
+    — not every subject on the report card. This function itself just
+    sums the grade points of whatever rows it's given (best 4, in case
+    more than 4 are passed in for a school with an unusual subject list).
+
+    Pass force_next_division=True (see _has_f9_in_english_or_math()) to
+    apply the "F9 in English or Math pushes you to the next Division" rule.
+    """
     if not subject_rows:
         return None, None
     grade_point_list = [
@@ -458,7 +675,7 @@ def compute_primary_aggregates(
     if not grade_point_list:
         return None, None
     aggregates = sum(sorted(grade_point_list)[:4])
-    return aggregates, compute_primary_division(aggregates)
+    return aggregates, compute_primary_division(aggregates, force_next_division=force_next_division)
 
 
 def compute_olevel_aggregates(
@@ -736,6 +953,38 @@ def compute_attendance(school_id: int, student_id: int, term_id: int) -> dict:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  SHARED PER-SUBJECT PERCENTAGE HELPER
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _compute_subject_pct(paper_scores: dict, papers: list) -> Optional[float]:
+    """
+    Normalise one subject's raw marks into a 0-100 percentage.
+
+    If the subject has registered papers, sums score/max across all
+    papers that have a recorded score and returns the percentage of the
+    total. If the subject has no papers, treats the single stored score
+    (keyed by None) as already being out of 100.
+
+    Returns None if there's no recorded score at all.
+    """
+    if papers:
+        total_score = 0.0
+        total_max   = 0.0
+        for paper in papers:
+            score = paper_scores.get(paper.id)
+            max_m = float(paper.max_marks) if paper.max_marks else 100.0
+            if score is not None:
+                total_score += score
+                total_max   += max_m
+        if total_max > 0:
+            return (total_score / total_max) * 100.0
+        return None
+    else:
+        score = paper_scores.get(None)
+        return float(score) if score is not None else None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  PRIMARY / NURSERY SUBJECT ROWS BUILDER
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -751,7 +1000,9 @@ def build_subject_rows(
     teacher_map:  Optional[dict] = None,
 ) -> list:
     """
-    Build subject row dicts for primary / nursery templates.
+    Build subject row dicts for primary / nursery templates (single-exam
+    report: BOT or MID). For the primary EOT report, use
+    build_eot_subject_rows() instead.
 
     *subjects_map*, *papers_map*, and *teacher_map* are optional pre-loaded
     dicts. When omitted the function falls back to individual DB queries
@@ -842,6 +1093,86 @@ def build_subject_rows(
                 "papers":       [],
                 "has_papers":   False,
             })
+
+    rows.sort(key=lambda x: x["subject_name"])
+    return rows
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PRIMARY EOT SUBJECT ROWS BUILDER  (MID + EOT → averaged FINAL MARKS)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def build_eot_subject_rows(
+    school_id:      int,
+    stream_id:      int,
+    student_id:     int,
+    mid_marks_data: dict,
+    eot_marks_data: dict,
+    grade_scales:   list,
+    report_type:    str,
+    subjects_map: Optional[dict] = None,
+    papers_map:   Optional[dict] = None,
+    teacher_map:  Optional[dict] = None,
+) -> list:
+    """
+    Build subject row dicts for the Primary End-of-Term (EOT) report,
+    which shows MID marks, EOT marks, and a FINAL MARKS value per subject.
+
+    FINAL MARKS = round(average of whichever of {mid %, eot %} are
+    recorded). If only one of the two is recorded for a subject, that
+    score alone is used as the final mark (nothing to average against).
+    If neither is recorded, the subject is listed with '—' placeholders
+    and excluded from grading (grade "—").
+
+    Grading, aggregates, and the grading-legend table all key off the
+    resulting "total_score" field exactly as they would for a normal
+    single-exam report, so this row list is a drop-in replacement for
+    build_subject_rows()'s output wherever a primary EOT report is
+    being generated.
+    """
+    subject_ids = sorted(set(mid_marks_data.keys()) | set(eot_marks_data.keys()))
+
+    if subjects_map is None:
+        subjects_map = _load_subjects_map(subject_ids)
+    if papers_map is None:
+        papers_map = _load_papers_map(subject_ids, school_id)
+    if teacher_map is None:
+        teacher_map = _load_teacher_map(school_id, stream_id, subject_ids)
+
+    grade_fn = nursery_grade if report_type == "nursery" else primary_grade
+
+    rows = []
+    for subj_id in subject_ids:
+        subject = subjects_map.get(subj_id)
+        if not subject:
+            continue
+
+        teacher_name = teacher_map.get(subj_id, "")
+        papers       = papers_map.get(subj_id, [])
+
+        mid_pct = _compute_subject_pct(mid_marks_data.get(subj_id, {}), papers)
+        eot_pct = _compute_subject_pct(eot_marks_data.get(subj_id, {}), papers)
+
+        available = [p for p in (mid_pct, eot_pct) if p is not None]
+        final_pct = round(sum(available) / len(available)) if available else None
+
+        if final_pct is not None:
+            grade, remark = grade_fn(final_pct, grade_scales)
+        else:
+            grade, remark = "—", "—"
+
+        rows.append({
+            "subject_name": subject.name,
+            "teacher_name": teacher_name,
+            "mid_score":    round(mid_pct, 1) if mid_pct is not None else None,
+            "eot_score":    round(eot_pct, 1) if eot_pct is not None else None,
+            # Kept as "total_score" (not "final_score") so that
+            # compute_primary_aggregates(), the average-mark calculation,
+            # and the grade legend all work unchanged for EOT rows.
+            "total_score":  final_pct,
+            "grade":        grade,
+            "remark":       remark,
+        })
 
     rows.sort(key=lambda x: x["subject_name"])
     return rows
@@ -1090,6 +1421,12 @@ def calculate_stream_positions(
     asmt_map            = {a.id: a for a in assessments}
     subject_ids_in_play = list({a.subject_id for a in assessments if a.subject_id})
 
+    # Needed only so that primary aggregate filtering can match rows by
+    # subject name (see filter_rows_for_primary_aggregates() below).
+    subjects_map_local = (
+        _load_subjects_map(subject_ids_in_play) if report_type == "primary" else {}
+    )
+
     if grade_scales is None:
         grade_scales = (
             GradeScale.query
@@ -1145,6 +1482,10 @@ def calculate_stream_positions(
 
         for subj_id, paper_scores in subj_data.items():
             papers_for_subj = subject_papers.get(subj_id)
+            subject_name    = (
+                subjects_map_local.get(subj_id).name
+                if subjects_map_local.get(subj_id) else ""
+            )
 
             if papers_for_subj:
                 total_score = 0.0
@@ -1159,16 +1500,25 @@ def calculate_stream_positions(
                 if total_max > 0:
                     pct   = (total_score / total_max) * 100.0
                     grade, _ = grade_fn(pct, grade_scales)
-                    subject_rows_local.append({"total_score": round(pct, 1), "grade": grade})
+                    subject_rows_local.append({
+                        "total_score": round(pct, 1),
+                        "grade": grade,
+                        "subject_name": subject_name,
+                    })
             else:
                 sc = paper_scores.get(None)
                 if sc is not None:
                     grade, _ = grade_fn(float(sc), grade_scales)
-                    subject_rows_local.append({"total_score": round(float(sc), 1), "grade": grade})
+                    subject_rows_local.append({
+                        "total_score": round(float(sc), 1),
+                        "grade": grade,
+                        "subject_name": subject_name,
+                    })
                     raw_totals.append(sc)
 
         if report_type == "primary" and subject_rows_local:
-            agg, _ = compute_primary_aggregates(subject_rows_local, grade_scales)
+            aggregate_rows = filter_rows_for_primary_aggregates(subject_rows_local, class_name)
+            agg, _ = compute_primary_aggregates(aggregate_rows, grade_scales)
         elif report_type == "olevel" and subject_rows_local:
             agg, _ = compute_olevel_aggregates(subject_rows_local, grade_scales)
         elif report_type == "alevel" and subject_rows_local:
@@ -1359,10 +1709,19 @@ def html_to_pdf_bytes(html: str) -> tuple[bytes, str]:
 #  SCHOOL-SPECIFIC TEMPLATE OVERRIDES
 # ─────────────────────────────────────────────────────────────────────────────
 
-_SCHOOL_TEMPLATE_OVERRIDES: dict[int, dict[str, str]] = {
+# Each override value is either:
+#   - a plain template path string (used for every exam type), or
+#   - a dict keyed by exam type ("BOT" / "MID" / "EOT") mapping to a
+#     template path, for schools whose EOT layout differs from their
+#     BOT/MID layout (e.g. Sunbay's primary section).
+_SCHOOL_TEMPLATE_OVERRIDES: dict[int, dict[str, Union[str, dict[str, str]]]] = {
     6: {  # Sunbay Junior School & Day Care Centre
         "nursery": "modules/academics/report_cards/Sunbay_nursery_report_card.html",
-        "primary": "modules/academics/report_cards/sunbay_primary_report_card.html",
+        "primary": {
+            "BOT": "modules/academics/report_cards/sunbay_primary_report_card.html",
+            "MID": "modules/academics/report_cards/sunbay_primary_report_card.html",
+            "EOT": "modules/academics/report_cards/sunbay_primary_eot_report_card.html",
+        },
     },
 }
 
@@ -1381,16 +1740,29 @@ _TEMPLATE_MAP: dict[str, str] = {
 }
 
 
-def get_template_name(school_id: int, report_type: str) -> str:
+def get_template_name(school_id: int, report_type: str, exam_type: Optional[str] = None) -> str:
     """
-    Return the Jinja template path to render for a given school + report_type.
+    Return the Jinja template path to render for a given
+    (school_id, report_type, exam_type) combination.
 
     Resolution order:
-      1. _SCHOOL_TEMPLATE_OVERRIDES[school_id][report_type], if present.
-      2. _TEMPLATE_MAP[report_type] (shared default for that section).
+      1. _SCHOOL_TEMPLATE_OVERRIDES[school_id][report_type]:
+           - if that's a dict (keyed by exam type), look up exam_type
+             there, falling back to the shared default template for that
+             section if the exam type isn't listed;
+           - if that's a plain string, it's used regardless of exam_type
+             (the school hasn't split its templates by exam type).
+      2. _TEMPLATE_MAP[report_type] (system default for that section).
     """
     overrides = _SCHOOL_TEMPLATE_OVERRIDES.get(school_id, {})
-    return overrides.get(report_type, _TEMPLATE_MAP[report_type])
+    override  = overrides.get(report_type)
+
+    if isinstance(override, dict):
+        exam_key = (exam_type or "").upper()
+        return override.get(exam_key, _TEMPLATE_MAP[report_type])
+    if override:
+        return override
+    return _TEMPLATE_MAP[report_type]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1515,19 +1887,48 @@ class ReportCardService:
                 grade_scales = fetch_grade_scales(school_id, _SECTION_CATEGORY_MAP.get(report_type))
 
             # ── 3. Fetch marks ────────────────────────────────────────────────
-            marks_data = fetch_student_marks(
-                school_id=school_id,
-                student_id=student.id,
-                term_id=term.id,
-                exam_enum=exam_enum,
-                stream_id=stream.id,
-            )
+            # Primary EOT reports need BOTH the MID and EOT marks, since the
+            # report averages them into a FINAL MARKS column.
+            is_primary_eot = (report_type == "primary" and exam_type.upper() == "EOT")
 
-            if not marks_data:
-                logger.warning(
-                    "No marks for student=%s term=%s exam=%s — empty report will be generated.",
-                    student.id, term.id, exam_type,
+            mid_marks_data: dict = {}
+            eot_marks_data: dict = {}
+
+            if is_primary_eot:
+                mid_marks_data = fetch_student_marks(
+                    school_id=school_id,
+                    student_id=student.id,
+                    term_id=term.id,
+                    exam_enum=AssessmentType("MID"),
+                    stream_id=stream.id,
                 )
+                eot_marks_data = fetch_student_marks(
+                    school_id=school_id,
+                    student_id=student.id,
+                    term_id=term.id,
+                    exam_enum=exam_enum,
+                    stream_id=stream.id,
+                )
+                marks_data = eot_marks_data  # used only for the "no marks" check below
+
+                if not mid_marks_data and not eot_marks_data:
+                    logger.warning(
+                        "No MID or EOT marks for student=%s term=%s — empty report will be generated.",
+                        student.id, term.id,
+                    )
+            else:
+                marks_data = fetch_student_marks(
+                    school_id=school_id,
+                    student_id=student.id,
+                    term_id=term.id,
+                    exam_enum=exam_enum,
+                    stream_id=stream.id,
+                )
+                if not marks_data:
+                    logger.warning(
+                        "No marks for student=%s term=%s exam=%s — empty report will be generated.",
+                        student.id, term.id, exam_type,
+                    )
 
             # ── 4. Build subject rows ─────────────────────────────────────────
             bulk_kwargs = {}
@@ -1538,7 +1939,18 @@ class ReportCardService:
                     "teacher_map":  batch_ctx.teacher_map,
                 }
 
-            if report_type in ("olevel", "alevel"):
+            if is_primary_eot:
+                subject_rows = build_eot_subject_rows(
+                    school_id=school_id,
+                    stream_id=stream.id,
+                    student_id=student.id,
+                    mid_marks_data=mid_marks_data,
+                    eot_marks_data=eot_marks_data,
+                    grade_scales=grade_scales,
+                    report_type=report_type,
+                    **bulk_kwargs,
+                )
+            elif report_type in ("olevel", "alevel"):
                 subject_rows = build_secondary_subject_rows(
                     school_id=school_id,
                     stream_id=stream.id,
@@ -1566,7 +1978,21 @@ class ReportCardService:
             subsidiary_points = None
 
             if report_type == "primary":
-                aggregates, division = compute_primary_aggregates(subject_rows, grade_scales)
+                # Reorder so the core aggregate subjects (P1-P3: Literacy
+                # I/II, Math, English — P4-P7: Math, English, Social
+                # Studies, Science) come first, non-core subjects last
+                # with their grade/remark blanked out. See
+                # _finalize_primary_subject_rows() docstring for detail.
+                subject_rows = _finalize_primary_subject_rows(subject_rows, class_name)
+                aggregate_rows = [r for r in subject_rows if r["is_aggregate_subject"]]
+
+                # An F9 in English or Mathematics pushes the learner to
+                # the next Division regardless of their aggregate total.
+                force_next_division = _has_f9_in_english_or_math(aggregate_rows)
+                aggregates, division = compute_primary_aggregates(
+                    aggregate_rows, grade_scales,
+                    force_next_division=force_next_division,
+                )
             elif report_type == "olevel":
                 aggregates, division = compute_olevel_aggregates(subject_rows, grade_scales)
             elif report_type == "alevel":
@@ -1635,7 +2061,7 @@ class ReportCardService:
             }
 
             # ── 12. Render HTML ─────────────────────────────────────────────
-            template_name = get_template_name(school_id, report_type)
+            template_name = get_template_name(school_id, report_type, exam_type)
             try:
                 html = render_template(template_name, **ctx)
             except Exception as exc:
@@ -1647,8 +2073,8 @@ class ReportCardService:
                 # doesn't exist or differs from the default template.
                 logger.error(
                     "Template rendering failed for student=%s school=%s "
-                    "report_type=%s template=%s",
-                    student.id, school_id, report_type, template_name,
+                    "report_type=%s exam_type=%s template=%s",
+                    student.id, school_id, report_type, exam_type, template_name,
                     exc_info=True,
                 )
                 raise RuntimeError(f"Template rendering failed: {exc}") from exc

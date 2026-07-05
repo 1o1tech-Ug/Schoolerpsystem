@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sunbay Junior School Primary level reportcard</title>
+<title>Sunbay Junior School EOT Report Card</title>
 <style>
 
 @page { size: A4 portrait; margin: 6mm; }
@@ -86,7 +86,6 @@ body {
 
 .lbl { font-weight: 800; white-space: nowrap; padding-right: 4px; }
 
-/* ── Coloured underlined value fields (matches Nursery-style report) ── */
 .val-blue {
     display: inline-block;
     color: #0044cc;
@@ -128,13 +127,13 @@ body {
 .marks-tbl {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12.5px;
+    font-size: 11.5px;
 }
 .marks-tbl thead th {
     background: #006400; color: #fff;
     border: 1px solid #333;
     padding: 5px 3px;
-    text-align: center; font-size: 11px;
+    text-align: center; font-size: 10.5px;
     line-height: 1.25; font-weight: 800;
 }
 .marks-tbl thead th.th-subj { text-align: left; padding-left: 7px; }
@@ -148,10 +147,9 @@ body {
 }
 .marks-tbl tbody td.td-subj {
     text-align: left; padding-left: 7px;
-    font-weight: 700; font-size: 12.5px;
+    font-weight: 700; font-size: 12px;
 }
 
-/* ── Coloured mark-table cells ── */
 .score-num   { color: #0044cc; font-weight: 800; }
 .outof-red   { color: #cc0000; font-weight: 700; }
 .grade-blue  { color: #0044cc; font-weight: 800; }
@@ -204,7 +202,6 @@ body {
     font-weight: 600; padding: 4px 9px; border-top: 1px solid #bbb;
 }
 
-/* ══ COMMENTS — clean line style, float-based (no flex-grow, no literal dots) ══ */
 .comments { margin-top: 14px; font-size: 13px; }
 .cmt-block { margin-bottom: 26px; }
 .cmt-lbl {
@@ -252,16 +249,6 @@ body {
     font-size: 11.5px; color: #003366; line-height: 1.5;
 }
 .next-term b { font-weight: 900; }
-
-.pos-bar {
-    display: flex;
-    border: 1.5px solid #777;
-    border-top: none;
-    font-size: 12.5px; font-weight: 600;
-}
-.pos-bar > div { flex: 1; padding: 6px 10px; }
-.pos-bar > div:first-child { border-right: 1.5px solid #777; }
-.pos-val { color: #cc0000; font-weight: 900; }
 
 @media print {
     body { background: #fff; padding: 0; }
@@ -340,47 +327,59 @@ body {
             <table class="marks-tbl">
                 <thead>
                     <tr>
-                        <th class="th-subj" style="width:22%">SUBJECT</th>
-                        <th style="width:10%">SCORE</th>
-                        <th style="width:9%">OUT OF</th>
-                        <th style="width:8%">AGG.</th>
-
-                        <th style="width:28%">REMARK</th>
-                        <th style="width:14%">INITIAL</th>
+                        <th class="th-subj" style="width:17%">SUBJECT</th>
+                        <th style="width:9%">MID</th>
+                        <th style="width:8%">OUT OF</th>
+                        <th style="width:9%">EOT</th>
+                        <th style="width:8%">OUT OF</th>
+                        <th style="width:11%">FINAL MARKS</th>
+                        <th style="width:7%">AGG.</th>
+                        <th style="width:20%">REMARK</th>
+                        <th style="width:11%">INITIAL</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% set ns = namespace(total_score=0.0, subj_count=0) %}
+                    {% set ns = namespace(total_mid=0.0, total_eot=0.0, total_final=0.0, subj_count=0) %}
                     {% for row in subject_rows %}
+                    {% if row.mid_score is not none %}
+                        {% set ns.total_mid = ns.total_mid + row.mid_score %}
+                    {% endif %}
+                    {% if row.eot_score is not none %}
+                        {% set ns.total_eot = ns.total_eot + row.eot_score %}
+                    {% endif %}
                     {% if row.total_score is not none %}
-                        {% set ns.total_score = ns.total_score + row.total_score %}
+                        {% set ns.total_final = ns.total_final + row.total_score %}
                     {% endif %}
                     {% set ns.subj_count = ns.subj_count + 1 %}
                     <tr>
                         <td class="td-subj">{{ row.subject_name | upper }}</td>
-                        <td class="score-num">{{ row.total_score if row.total_score is not none else '—' }}</td>
+                        <td class="score-num">{{ row.mid_score if row.mid_score is not none else '—' }}</td>
                         <td class="outof-red">100</td>
+                        <td class="score-num">{{ row.eot_score if row.eot_score is not none else '—' }}</td>
+                        <td class="outof-red">100</td>
+                        <td class="final-num">{{ row.total_score if row.total_score is not none else '—' }}</td>
                         <td class="grade-blue">{{ row.grade }}</td>
-
                         <td class="remark-good">{{ row.remark }}</td>
                         <td class="initial-red"></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="6" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
+                    <tr><td colspan="9" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
                     {% endfor %}
 
                     {% if subject_rows %}
                     <tr class="tr-totals">
                         <td class="td-subj">TOTAL MARKS:</td>
-                        <td class="final-num">{{ ns.total_score | round(1) }}</td>
+                        <td class="final-num">{{ ns.total_mid | round(1) }}</td>
                         <td class="outof-red">{{ ns.subj_count * 100 }}</td>
+                        <td class="final-num">{{ ns.total_eot | round(1) }}</td>
+                        <td class="outof-red">{{ ns.subj_count * 100 }}</td>
+                        <td class="final-num">{{ ns.total_final | round(1) }}</td>
                         <td colspan="3" style="text-align:left; padding-left:8px;">
                             <span class="agg-lbl">AGGREGATES:&nbsp;</span>
                             <span class="agg-val">{{ aggregates if aggregates is not none else '—' }}</span>
                         </td>
                     </tr>
                     {% endif %}
-
 
                 </tbody>
             </table>
@@ -391,9 +390,7 @@ body {
                 <div>DIVISION:&nbsp;&nbsp;<b>{{ division if division is not none else '—' }}</b></div>
             </div>
 
-
-
-            <!-- ══ GRADING SCHEME — driven by grade_legend (school's own scale if configured) ══ -->
+            <!-- ══ GRADING SCHEME ══ -->
             <div class="grading">
                 <div class="grading-title">GRADING SCHEME</div>
                 <table class="grading-tbl">
