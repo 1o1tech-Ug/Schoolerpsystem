@@ -48,33 +48,33 @@ body {
     z-index: 1;
 }
 
-.header-table {
-    width: 100%;
-    border-collapse: collapse;
+.header {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px 5px;
 }
-.header-table td {
-    vertical-align: middle;
-    border: none;
-    padding: 2px 4px;
-}
+.hdr-logo { flex: 0 0 160px; text-align: center; }
+.hdr-logo img { width: 150px; height: 150px; object-fit: contain; }
 
-.logo-cell { width: 280px; text-align: center; }
-.logo-cell img { width: 240px; height: 200px; object-fit: contain; }
+.hdr-center { flex: 1; text-align: center; padding: 0 10px; }
 
-.children-right-cell { width: 90px; text-align: center; }
-.children-right-cell img { width: 80px; height: 90px; object-fit: contain; }
+.hdr-right { flex: 0 0 100px; text-align: center; }
+.hdr-right img { width: 88px; height: 98px; object-fit: contain; }
 
 .school-name {
     color: green;
-    font-size: 26px;
-    font-weight: bold;
+    font-size: 25px;
+    font-weight: 900;
+    text-transform: uppercase;
     line-height: 1.2;
     text-align: center;
 }
 .school-details {
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 12.5px;
+    line-height: 1.6;
     text-align: center;
+    margin-top: 4px;
+    color: #111;
 }
 
 .line-green { border-bottom: 4px solid green; margin-top: 6px; }
@@ -91,22 +91,68 @@ body {
     letter-spacing: 0.5px;
 }
 
-.info-table {
-    width: 100%;
-    border-collapse: collapse;
+/* --- info-rows: matches the Primary report's coloured value-field
+   layout (val-red / val-blue underlines) with proper grid spacing,
+   instead of the old plain-black table cells. --- */
+.info-rows {
     font-size: 14px;
     margin-top: 8px;
+    margin-bottom: 4px;
+    display: grid;
+    grid-template-columns: 1.5fr 1.1fr 0.7fr 0.6fr;
+    column-gap: 10px;
+    row-gap: 8px;
+    align-items: baseline;
 }
-.info-table td {
-    padding: 4px 6px;
-    border-bottom: 1px solid #000;
+.info-cell {
+    display: flex;
+    align-items: baseline;
+    white-space: nowrap;
 }
-.info-table td:first-child { width: 30%; }
-.info-table td:nth-child(2) { width: 20%; }
-.info-table td:nth-child(3) { width: 30%; }
-.info-table td:nth-child(4) { width: 20%; }
-.info-row2 td { border-bottom: none; }
+.lbl { font-weight: 800; white-space: nowrap; padding-right: 4px; }
 
+.val-blue {
+    display: inline-block;
+    color: #0044cc;
+    font-weight: 800;
+    font-size: 15px;
+    border-bottom: 1.5px solid #0044cc;
+    min-width: 110px;
+    height: 20px;
+    padding: 0 4px 2px;
+    margin-right: 18px;
+    vertical-align: bottom;
+}
+.val-red {
+    display: inline-block;
+    color: #cc0000;
+    font-weight: 800;
+    font-size: 15px;
+    border-bottom: 1.5px solid #cc0000;
+    min-width: 90px;
+    height: 20px;
+    padding: 0 4px 2px;
+    margin-right: 18px;
+    vertical-align: bottom;
+}
+.val-red-sm {
+    display: inline-block;
+    color: #cc0000;
+    font-weight: 800;
+    font-size: 15px;
+    border-bottom: 1.5px solid #cc0000;
+    min-width: 48px;
+    height: 20px;
+    padding: 0 4px 2px;
+    margin-right: 14px;
+    text-align: center;
+    vertical-align: bottom;
+}
+
+/* --- main-table: holds the two side-by-side sub-tables.
+   height:1px on the td is the classic trick that lets a
+   height:100% child table actually resolve against the
+   row's real (stretched) height instead of collapsing. --- */
 .main-table {
     width: 100%;
     border-collapse: collapse;
@@ -124,6 +170,7 @@ body {
     border: 1px solid black;
     padding: 0;
     vertical-align: top;
+    height: 1px; /* NEW: lets height:100% children fill the true row height */
 }
 
 .score-table {
@@ -176,14 +223,20 @@ body {
     height: 30px;
 }
 
+/* --- activity-grid: now stretches to fill the height of its
+   parent td (which matches the left/score table's height),
+   and its rows no longer have a fixed height so they can grow
+   or shrink evenly to stay level with however many Learning
+   Areas end up on the left. --- */
 .activity-grid {
     width: 100%;
+    height: 100%;              /* NEW: fill the td, matching left column height */
     border-collapse: collapse;
 }
 .activity-grid td {
     border: 1px solid black;
     width: 50%;
-    height: 78px;
+    /* height removed (was fixed 78px) so rows flex to match left table */
     vertical-align: top;
     padding: 4px 5px;
     position: relative;
@@ -193,6 +246,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    justify-content: space-between; /* NEW: balances content when row grows */
 }
 .act-top {
     display: flex;
@@ -274,44 +328,60 @@ body {
 
     <div class="content-layer">
 
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell">
-                    <img src="{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}" alt="School Logo">
-                </td>
-                <td>
-                    <div class="school-name">{{ school.name | upper }}</div>
-                    <div class="school-details">
-                        NAMASUBA – KIKAJJO (KABIRA) NEXT TO NAKALEMA APARTMENT<br>
-                        PLOT NO 5172 – 5173 KIKAJJO ROAD P.O.BOX 22061, KAMPALA<br>
-                        sunbaynurseryschool@gmail.com<br>
-                        <b>TEL: 0704528731 (WhatsApp) / 0778418701</b>
-                    </div>
-                </td>
-                <td class="children-right-cell">
-                    <img src="{{ children_image }}" alt="Children">
-                </td>
-            </tr>
-        </table>
+        <div class="header">
+
+            <div class="hdr-logo">
+                <img src="{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}" alt="School Logo">
+            </div>
+
+            <div class="hdr-center">
+                <div class="school-name">{{ school.name }}</div>
+                <div class="school-details">
+                    NAMASUBA – KIKAJJO (KABIRA) NEXT TO NAKALEMA APARTMENT<br>
+                    PLOT NO 5172 – 5173 KIKAJJO ROAD P.O.BOX 22061, KAMPALA<br>
+                    sunbaynurseryschool@gmail.com<br>
+                    <b>TEL: 0704528731 (WhatsApp) / 0778418701</b>
+                </div>
+            </div>
+
+            <div class="hdr-right">
+                <img src="{{ children_image }}" alt="Children">
+            </div>
+
+        </div>
 
         <div class="line-green"></div>
         <div class="line-red"></div>
 
         <div class="title">LEARNER&#39;S {{ exam_type }} REPORT — {{ term.name if term }}{% if academic_year %}, {{ academic_year.name }}{% endif %}</div>
 
-        <table class="info-table">
-            <tr>
-                <td>NAME: {{ student.first_name }} {{ student.last_name }}</td>
-                <td colspan="2">CLASS: {{ class_name }} {{ stream_name }}</td>
-                <td></td>
-            </tr>
-            <tr class="info-row2">
-                <td>LEARNER'S ID: {{ learner_id }}</td>
-                <td>DAYS ATTENDED: {{ attendance.present }}</td>
-                <td>ABSENT: {{ attendance.absent }}</td>
-                <td>TOT: {{ attendance.total }}</td>
-            </tr>
-        </table>
+        <div class="info-rows">
+            <div class="info-cell" style="grid-column: 1 / 3;">
+                <span class="lbl">NAME:</span>
+                <span class="val-red" style="flex: 1; margin-right: 0; text-align: center; font-size: 19px;">{{ student.first_name | upper }} {{ student.last_name | upper }}</span>
+            </div>
+            <div class="info-cell" style="grid-column: 3 / 4;">
+                <span class="lbl">CLASS:</span>
+                <span class="val-blue" style="margin-right:0; min-width:0; width:auto; padding-right: 40px;">{{ class_name }} {{ stream_name }}</span>
+            </div>
+
+            <div class="info-cell" style="grid-column: 1 / 2;">
+                <span class="lbl">LEARNER'S ID:</span>
+                <span class="val-red" style="margin-right:0;">{{ learner_id }}</span>
+            </div>
+            <div class="info-cell" style="grid-column: 2 / 3;">
+                <span class="lbl">DAYS ATTENDED:</span>
+                <span class="val-red-sm" style="margin-right:0;">{{ attendance.present }}</span>
+            </div>
+            <div class="info-cell" style="grid-column: 3 / 4;">
+                <span class="lbl">ABSENT:</span>
+                <span class="val-red-sm" style="margin-right:0;">{{ attendance.absent }}</span>
+            </div>
+            <div class="info-cell" style="grid-column: 4 / 5;">
+                <span class="lbl">TOT:</span>
+                <span class="val-red-sm" style="margin-right:0;">{{ attendance.total }}</span>
+            </div>
+        </div>
 
         {% set la_keys = [
             ('social',                 'Social Development'),
@@ -391,6 +461,20 @@ body {
                             <td class="comment-cell"></td>
                         </tr>
                         {% endfor %}
+
+                        {% for row in ns_extra.rows %}
+                        <tr>
+                            <td>
+                                <div class="la-cell">
+                                    <div class="la-label">Learning Area {{ la_keys | length + loop.index }}:</div>
+                                    <div class="la-sub">{{ row.subject_name }}</div>
+                                </div>
+                            </td>
+                            <td class="score-cell">{{ row.total_score if row.total_score is not none else '' }}</td>
+                            <td class="comment-cell"></td>
+                        </tr>
+                        {% endfor %}
+
                         <tr class="total-row">
                             <td style="padding:5px 6px; font-weight:bold;">Total:</td>
                             <td style="padding:5px 6px;"></td>
@@ -422,26 +506,6 @@ body {
                             {% endfor %}
                         </tr>
                         {% endfor %}
-
-                        {% if ns_extra.rows %}
-                        {% for i in range(0, ns_extra.rows|length, 2) %}
-                        <tr>
-                            {% for row in ns_extra.rows[i:i+2] %}
-                            <td>
-                                <div class="act-cell">
-                                    <div class="act-top">
-                                        <span class="act-label">{{ row.subject_name }}</span>
-                                    </div>
-                                    <div class="act-score">{{ row.total_score if row.total_score is not none else '' }}</div>
-                                </div>
-                            </td>
-                            {% endfor %}
-                            {% if ns_extra.rows[i:i+2] | length == 1 %}
-                            <td></td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                        {% endif %}
                     </table>
                 </td>
             </tr>

@@ -543,7 +543,7 @@ def generate_report_card():
                 db.session.rollback()
                
                 logger.exception("generate thread failed | student_id=%s", student_id)
-                _update_job(job_id, status="error", error=f"Failed to generate report card. Please try again.{exc}")
+                _update_job(job_id, status="error", error=f"Failed to generate report card. Please try again.")
 
     thread = threading.Thread(target=_do_generate, daemon=True, name=f"gen-{job_id[:8]}")
     thread.start()
