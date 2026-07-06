@@ -321,6 +321,45 @@ body {
             ('language development ii','Language Development II'),
         ] %}
 
+        {% set activities = [
+            ('Writing',          'writing',  'images/writing.jpg'),
+            ('Listening',        'listening','images/listening.jpg'),
+            ('Reading',          'reading',  'images/reading.jpg'),
+            ('Speaking',         'speaking', 'images/speaking.jpg'),
+            ('Drawing',          'drawing',  'images/drawing.jpg'),
+            ('Games',            'games',    'images/games.jpg'),
+            ('Health Habits',    'health',   'images/health.jpg'),
+            ('Toilet Habits',    'toilet',   'images/toilet.jpg'),
+            ('Rhymes / Stories', 'rhymes',   'images/rhymes.jpg'),
+            ('Religion',         'religion', 'images/religion.jpg'),
+        ] %}
+
+        {# --- Build a list of every "known" key so we can detect which
+             subject_rows are NOT one of the 5 learning areas or 10 fixed
+             activities. Anything left over (Project 1, Shading, Building,
+             etc.) is rendered automatically as an "extra" activity below,
+             so new subjects never need to be hardcoded here. --- #}
+        {% set ns_keys = namespace(known=[]) %}
+        {% for k, l in la_keys %}
+            {% set ns_keys.known = ns_keys.known + [k] %}
+        {% endfor %}
+        {% for l, k, i in activities %}
+            {% set ns_keys.known = ns_keys.known + [k] %}
+        {% endfor %}
+
+        {% set ns_extra = namespace(rows=[]) %}
+        {% for row in subject_rows %}
+            {% set ns_match = namespace(found=false) %}
+            {% for k in ns_keys.known %}
+                {% if k in (row.subject_name | lower) %}
+                    {% set ns_match.found = true %}
+                {% endif %}
+            {% endfor %}
+            {% if not ns_match.found %}
+                {% set ns_extra.rows = ns_extra.rows + [row] %}
+            {% endif %}
+        {% endfor %}
+
         <table class="main-table">
             <tr>
                 <th width="52%">ACHIEVEMENT SCORES IN THE 5 LEARNING AREAS</th>
@@ -362,18 +401,6 @@ body {
 
                 <td>
                     <table class="activity-grid">
-                        {% set activities = [
-                            ('Writing',          'writing',  'images/writing.jpg'),
-                            ('Listening',        'listening','images/listening.jpg'),
-                            ('Reading',          'reading',  'images/reading.jpg'),
-                            ('Speaking',         'speaking', 'images/speaking.jpg'),
-                            ('Drawing',          'drawing',  'images/drawing.jpg'),
-                            ('Games',            'games',    'images/games.jpg'),
-                            ('Health Habits',    'health',   'images/health.jpg'),
-                            ('Toilet Habits',    'toilet',   'images/toilet.jpg'),
-                            ('Rhymes / Stories', 'rhymes',   'images/rhymes.jpg'),
-                            ('Religion',         'religion', 'images/religion.jpg'),
-                        ] %}
                         {% for i in range(0, activities|length, 2) %}
                         <tr>
                             {% for label, key, img in activities[i:i+2] %}
@@ -395,6 +422,26 @@ body {
                             {% endfor %}
                         </tr>
                         {% endfor %}
+
+                        {% if ns_extra.rows %}
+                        {% for i in range(0, ns_extra.rows|length, 2) %}
+                        <tr>
+                            {% for row in ns_extra.rows[i:i+2] %}
+                            <td>
+                                <div class="act-cell">
+                                    <div class="act-top">
+                                        <span class="act-label">{{ row.subject_name }}</span>
+                                    </div>
+                                    <div class="act-score">{{ row.total_score if row.total_score is not none else '' }}</div>
+                                </div>
+                            </td>
+                            {% endfor %}
+                            {% if ns_extra.rows[i:i+2] | length == 1 %}
+                            <td></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
                     </table>
                 </td>
             </tr>
