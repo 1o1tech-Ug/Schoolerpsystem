@@ -49,6 +49,18 @@ do we fall back to the Uganda-standard DEFAULT_*_GRADES tables below.  This
 applies uniformly — no school is special-cased for grading, only for
 template selection (see _SCHOOL_TEMPLATE_OVERRIDES below).
 
+Section-category resolution (Nursery / Lower-Upper Primary / O-Level / A-Level)
+----------------------------------------------------------------------------------
+GradeScale rows are saved against a `section_category` string. For Primary,
+schools configure separate scales for "Lower Primary" (P1-P3) and "Upper
+Primary" (P4-P7) rather than a single "Primary" bucket. `resolve_section_category()`
+maps a (report_type, class_name) pair to the exact category string to query,
+and `fetch_grade_scales_for()` wraps `fetch_grade_scales()` with that
+resolution (plus a fallback to a generic "Primary" bucket for schools that
+haven't split their scale). All call sites that need a school's grade scale
+should go through `fetch_grade_scales_for()` rather than calling
+`fetch_grade_scales()` directly with a hardcoded/guessed category string.
+
 Primary aggregate-subject restriction
 ---------------------------------------
 Per the Uganda primary curriculum, only a fixed set of "core" subjects
@@ -747,16 +759,61 @@ def compute_alevel_points(
 def fetch_grade_scales(school_id: int, section_category: Optional[str] = None) -> list:
     """
     Return the GradeScale rows a school has configured for a given section
-    ('Nursery' / 'Primary' / 'O Level' / 'A Level'), ordered highest-first.
+    category string (exact match), ordered highest-first.
 
-    An empty list here means "this school hasn't configured a custom
-    scheme" — every grade_fn / _build_grade_legend() call interprets an
-    empty list as "use the Uganda-standard defaults".
+    An empty list here means "no GradeScale rows exist for that exact
+    section_category" — every grade_fn / _build_grade_legend() call
+    interprets an empty list as "use the Uganda-standard defaults".
+
+    NOTE: section_category must match the DB value exactly (e.g.
+    "Lower Primary", "Upper Primary", "Nursery", "O Level", "A Level").
+    Most callers should go through fetch_grade_scales_for() instead of
+    calling this directly, since that function resolves the correct
+    category string (including the Lower/Upper Primary split) for you.
     """
     q = GradeScale.query.filter_by(school_id=school_id)
     if section_category:
         q = q.filter_by(section_category=section_category)
     return q.order_by(GradeScale.min_score.desc()).all()
+
+
+def resolve_section_category(report_type: str, class_name: str = "") -> str:
+    """
+    Map (report_type, class_name) to the exact GradeScale.section_category
+    string used in the database.
+
+        'nursery' -> 'Nursery'
+        'primary' -> 'Lower Primary' (P1-P3) or 'Upper Primary' (P4-P7),
+                     based on the same class-name split already used for
+                     aggregate-subject filtering
+        'olevel'  -> 'O Level'
+        'alevel'  -> 'A Level'
+
+    Any other/unrecognised report_type falls back to 'Primary', matching
+    the historical (pre-split) behaviour.
+    """
+    if report_type == "primary":
+        keys = _primary_aggregate_keys_for_class(class_name)
+        return "Lower Primary" if keys is _LOWER_PRIMARY_AGG_KEYS else "Upper Primary"
+    return _SECTION_CATEGORY_MAP.get(report_type, "Primary")
+
+
+def fetch_grade_scales_for(school_id: int, report_type: str, class_name: str = "") -> list:
+    """
+    Resolve the correct section_category for (report_type, class_name) via
+    resolve_section_category(), then fetch that school's GradeScale rows.
+
+    For primary, if no "Lower Primary"/"Upper Primary"-specific rows exist,
+    falls back to a generic "Primary" category — so schools that haven't
+    split their scale into lower/upper bands yet keep working exactly as
+    before. This is the entry point every call site should use instead of
+    calling fetch_grade_scales() directly with a guessed category string.
+    """
+    category = resolve_section_category(report_type, class_name)
+    scales = fetch_grade_scales(school_id, category)
+    if not scales and report_type == "primary":
+        scales = fetch_grade_scales(school_id, "Primary")
+    return scales
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1428,12 +1485,11 @@ def calculate_stream_positions(
     )
 
     if grade_scales is None:
-        grade_scales = (
-            GradeScale.query
-            .filter_by(school_id=school_id)
-            .order_by(GradeScale.min_score.desc())
-            .all()
-        )
+        # Resolve the correct section_category for this stream's report
+        # type (and, for primary, its Lower/Upper split) instead of
+        # pulling every GradeScale row the school has configured across
+        # all sections.
+        grade_scales = fetch_grade_scales_for(school_id, report_type, class_name)
 
     mark_rows = db.session.execute(
         select(
@@ -1725,9 +1781,12 @@ _SCHOOL_TEMPLATE_OVERRIDES: dict[int, dict[str, Union[str, dict[str, str]]]] = {
     },
 }
 
+# Base section-category strings for sections that are NOT split by
+# lower/upper (Nursery, O Level, A Level). Primary is handled separately
+# by resolve_section_category() since it's split into "Lower Primary" /
+# "Upper Primary".
 _SECTION_CATEGORY_MAP: dict[str, str] = {
     "nursery": "Nursery",
-    "primary": "Primary",
     "olevel":  "O Level",
     "alevel":  "A Level",
 }
@@ -1815,7 +1874,7 @@ class ReportCardService:
         except ValueError:
             raise ValueError(f"Invalid exam_type: {exam_type!r}. Must be BOT, MID or EOT.")
 
-        grade_scales = fetch_grade_scales(school_id, _SECTION_CATEGORY_MAP.get(report_type))
+        grade_scales = fetch_grade_scales_for(school_id, report_type, class_name)
 
         return BatchContext.build(
             school_id=school_id,
@@ -1884,7 +1943,7 @@ class ReportCardService:
             if batch_ctx is not None:
                 grade_scales = batch_ctx.grade_scales
             else:
-                grade_scales = fetch_grade_scales(school_id, _SECTION_CATEGORY_MAP.get(report_type))
+                grade_scales = fetch_grade_scales_for(school_id, report_type, class_name)
 
             # ── 3. Fetch marks ────────────────────────────────────────────────
             # Primary EOT reports need BOTH the MID and EOT marks, since the
