@@ -140,7 +140,7 @@ body{
     
     {% if student.photo_url %}
 <img
-  src="{{ url_for('static', filename=student.photo_url.replace('app/static/', '')) }}"
+  src="{{ student.photo_url }}"
   class="avatar"
 > {% else %}
       <div class="avatar" style="background:#ddd;"></div>

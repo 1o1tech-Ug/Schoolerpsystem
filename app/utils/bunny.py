@@ -34,7 +34,7 @@ _ZONE     = os.getenv("BUNNY_STORAGE_ZONE",     "")
 _PASSWORD = os.getenv("BUNNY_STORAGE_PASSWORD", "")
 _BASE_URL = os.getenv("BUNNY_BASE_URL",         "").rstrip("/")
 
-_STORAGE_ENDPOINT = "https://storage.bunnycdn.com"
+_STORAGE_ENDPOINT = "https://jh.storage.bunnycdn.com/schoolerp"
 
 
 # ─────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ def bunny_public_url(remote_path: str) -> str:
     return f"{_BASE_URL}/{remote_path.lstrip('/')}"
 
 
-def bunny_upload(data: bytes, remote_path: str) -> str:
+def bunny_upload(data: bytes, remote_path: str, cache_control: str | None = None) -> str:
     """
     Upload *data* (bytes) to BunnyCDN at *remote_path*.
 
@@ -62,8 +62,17 @@ def bunny_upload(data: bytes, remote_path: str) -> str:
 
     Parameters
     ----------
-    data        : raw file bytes
-    remote_path : path inside the storage zone, e.g. "uploads/images/foo.png"
+    data          : raw file bytes
+    remote_path   : path inside the storage zone, e.g. "uploads/images/foo.png"
+    cache_control : optional Cache-Control value to store as file metadata.
+                    BunnyCDN's Pull Zone serves this header back to clients
+                    and edge nodes on every request for the file, so it
+                    controls both browser and CDN-edge caching behaviour.
+                    e.g. "no-cache, no-store, must-revalidate" for files
+                    that get regenerated/overwritten at the same path
+                    (report cards), or "public, max-age=2592000, immutable"
+                    for files that never change once uploaded (logos).
+                    Leave as None to fall back to BunnyCDN's zone default.
     """
     if not _ZONE or not _PASSWORD:
         raise RuntimeError(
@@ -73,12 +82,16 @@ def bunny_upload(data: bytes, remote_path: str) -> str:
 
     url = f"{_STORAGE_ENDPOINT}/{_ZONE}/{remote_path.lstrip('/')}"
 
+    headers = {
+        "AccessKey":    _PASSWORD,
+        "Content-Type": "application/octet-stream",
+    }
+    if cache_control:
+        headers["Cache-Control"] = cache_control
+
     response = requests.put(
         url,
-        headers={
-            "AccessKey":     _PASSWORD,
-            "Content-Type":  "application/octet-stream",
-        },
+        headers=headers,
         data=data,
         timeout=60,
     )
@@ -93,7 +106,7 @@ def bunny_upload(data: bytes, remote_path: str) -> str:
         )
 
     public_url = bunny_public_url(remote_path)
-    logger.info("bunny_upload: uploaded → %s", public_url)
+    logger.info("bunny_upload: uploaded → %s (cache_control=%s)", public_url, cache_control)
     return public_url
 
 

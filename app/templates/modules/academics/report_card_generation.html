@@ -942,6 +942,31 @@ function toast(msg, type = "info", ms = 4000) {
 }
 
 /* ─────────────────────────────────────
+   VIEW REPORT
+   [FIX] Routed through the Flask server (/api/report-cards/<id>/view)
+   instead of a raw <a href="CDN_URL"> link. A direct browser hit on the
+   BunnyCDN URL can be served from a stale local edge PoP cache even
+   after regenerating the report — fetching it as a blob through our
+   own server (same pattern as downloadReport below) sidesteps that
+   entirely, since every request always resolves the CURRENT file for
+   this report_id fresh from the DB + origin.
+───────────────────────────────────── */
+async function viewReport(reportId) {
+  if (!reportId) { toast("No file available to view", "warning"); return; }
+  toast("Opening report…", "info", 1500);
+  try {
+    const res = await fetch(`/api/report-cards/${reportId}/view`, { headers: _auth(false) });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || `Server returned ${res.status}`); }
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const win     = window.open(blobUrl, "_blank", "noopener");
+    if (!win) toast("Pop-up blocked — please allow pop-ups to view reports", "warning");
+    // Revoke after a while once the new tab has had time to load it.
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  } catch (e) { toast(e.message || "Could not open report", "error"); }
+}
+
+/* ─────────────────────────────────────
    DOWNLOAD REPORT
 ───────────────────────────────────── */
 async function downloadReport(reportId, label) {
@@ -1018,15 +1043,16 @@ function _buildStatusBadge(generated, generating = false) {
 
 /* ─────────────────────────────────────
    BUILD ACTIONS CELL
+   [FIX] View is now a button calling viewReport(reportId) instead of
+   an <a href> pointing straight at the (possibly edge-cached) CDN URL.
 ───────────────────────────────────── */
 function _buildGenActions(s, generating = false) {
   if (generating)
     return `<span style="font-size:12px;color:var(--slate-400);">⏳ Please wait…</span>`;
   if (s.report_generated) {
-    const viewUrl = _esc(s.report_url || "");
-    const label   = _esc(s.student_code || s.name || "");
+    const label = _esc(s.student_code || s.name || "");
     return `<div class="actions-cell">
-      <a href="${viewUrl}" target="_blank" rel="noopener" class="btn btn-view btn-sm">👁 View</a>
+      <button class="btn btn-view btn-sm" onclick="viewReport(${s.report_id})">👁 View</button>
       <button class="btn btn-download btn-sm" onclick="downloadReport(${s.report_id},'${label}')">⬇ Download</button>
       <button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${s.report_id},'gen')">🗑 Delete</button>
     </div>`;
@@ -1229,6 +1255,8 @@ async function loadSavedReports() {
 
 /* ─────────────────────────────────────
    RENDER SAVED REPORTS
+   [FIX] View button now calls viewReport(reportId) — same reasoning
+   as the Generate-section table above.
 ───────────────────────────────────── */
 function _renderSaved(reports) {
   const wrap  = document.getElementById("saved-table-wrap");
@@ -1241,12 +1269,11 @@ function _renderSaved(reports) {
   const examCls = { BOT:"badge-blue", MID:"badge-amber", EOT:"badge-green" };
 
   tbody.innerHTML = reports.map(r => {
-    const cls     = examCls[r.exam_type] || "badge-slate";
-    const date    = r.generated_at
+    const cls  = examCls[r.exam_type] || "badge-slate";
+    const date = r.generated_at
       ? new Date(r.generated_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})
       : "—";
-    const viewUrl = _esc(r.file_url || "");
-    const label   = _esc(r.student_code || r.student_name || "");
+    const label = _esc(r.student_code || r.student_name || "");
     return `<tr id="saved-row-${r.id}">
       <td><span class="cell-code">${_esc(r.student_code)}</span></td>
       <td><div class="cell-name">${_esc(r.student_name)}</div></td>
@@ -1255,7 +1282,7 @@ function _renderSaved(reports) {
       <td>${_esc(r.academic_year||"—")}</td>
       <td>${date}</td>
       <td><div class="actions-cell">
-        <a href="${viewUrl}" target="_blank" rel="noopener" class="btn btn-view btn-sm">👁 View</a>
+        <button class="btn btn-view btn-sm" onclick="viewReport(${r.id})">👁 View</button>
         <button class="btn btn-download btn-sm" onclick="downloadReport(${r.id},'${label}')">⬇ Download</button>
         <button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${r.id},'saved')">🗑 Delete</button>
       </div></td>

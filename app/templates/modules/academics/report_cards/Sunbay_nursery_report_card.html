@@ -58,8 +58,17 @@ body {
 
 .hdr-center { flex: 1; text-align: center; padding: 0 10px; }
 
-.hdr-right { flex: 0 0 100px; text-align: center; }
-.hdr-right img { width: 88px; height: 98px; object-fit: contain; }
+.hdr-right { flex: 0 0 145px; text-align: center; }
+.hdr-right img {
+    width: 125px;
+    height: 145px;
+    object-fit: cover;
+    border: 4px solid green;
+    border-radius: 4px;
+    padding: 2px;
+    background: #fff;
+    box-sizing: border-box;
+}
 
 .school-name {
     color: green;
@@ -221,6 +230,7 @@ body {
     font-weight: bold;
     padding: 5px 6px;
     height: 30px;
+    color: #cc0000;
 }
 
 /* --- activity-grid: now stretches to fill the height of its
@@ -345,7 +355,7 @@ body {
             </div>
 
             <div class="hdr-right">
-                <img src="{{ children_image }}" alt="Children">
+                <img src="{{ student.photo_url }}" alt="Student Photo">
             </div>
 
         </div>
@@ -443,6 +453,7 @@ body {
                             <th style="width:14%">Score /100</th>
                             <th>Comment</th>
                         </tr>
+                        {% set ns_sum = namespace(total=0.0, count=0) %}
                         {% for key, label in la_keys %}
                         {% set ns = namespace(la_row=none) %}
                         {% for row in subject_rows %}
@@ -450,11 +461,15 @@ body {
                                 {% set ns.la_row = row %}
                             {% endif %}
                         {% endfor %}
+                        {% if ns.la_row and ns.la_row.total_score is not none %}
+                            {% set ns_sum.total = ns_sum.total + ns.la_row.total_score %}
+                            {% set ns_sum.count = ns_sum.count + 1 %}
+                        {% endif %}
                         <tr>
                             <td>
                                 <div class="la-cell">
                                     <div class="la-label">Learning Area {{ loop.index }}:</div>
-                                    <div class="la-sub">{{ label }}</div>
+                                    <div class="la-sub">{{ ns.la_row.subject_name if ns.la_row else label }}</div>
                                 </div>
                             </td>
                             <td class="score-cell">{{ ns.la_row.total_score if ns.la_row and ns.la_row.total_score is not none else '' }}</td>
@@ -463,11 +478,14 @@ body {
                         {% endfor %}
 
                         {% for row in ns_extra.rows %}
+                        {% if row.total_score is not none %}
+                            {% set ns_sum.total = ns_sum.total + row.total_score %}
+                            {% set ns_sum.count = ns_sum.count + 1 %}
+                        {% endif %}
                         <tr>
                             <td>
                                 <div class="la-cell">
-                                    <div class="la-label">Learning Area {{ la_keys | length + loop.index }}:</div>
-                                    <div class="la-sub">{{ row.subject_name }}</div>
+                                    <div class="la-label">{{ row.subject_name }}</div>
                                 </div>
                             </td>
                             <td class="score-cell">{{ row.total_score if row.total_score is not none else '' }}</td>
@@ -477,8 +495,13 @@ body {
 
                         <tr class="total-row">
                             <td style="padding:5px 6px; font-weight:bold;">Total:</td>
-                            <td style="padding:5px 6px;"></td>
+                            <td style="padding:5px 6px; text-align:center;">{{ ns_sum.total | round(1) if ns_sum.count > 0 else '' }}</td>
                             <td style="padding:5px 6px; font-weight:bold;">Scored:</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td style="padding:5px 6px; font-weight:bold;">Average:</td>
+                            <td style="padding:5px 6px; text-align:center;">{{ (ns_sum.total / ns_sum.count) | round(1) if ns_sum.count > 0 else '' }}</td>
+                            <td style="padding:5px 6px;"></td>
                         </tr>
                     </table>
                 </td>
@@ -488,19 +511,13 @@ body {
                         {% for i in range(0, activities|length, 2) %}
                         <tr>
                             {% for label, key, img in activities[i:i+2] %}
-                            {% set ns = namespace(act_row=none) %}
-                            {% for row in subject_rows %}
-                                {% if key in (row.subject_name | lower) and ns.act_row is none %}
-                                    {% set ns.act_row = row %}
-                                {% endif %}
-                            {% endfor %}
                             <td>
                                 <div class="act-cell">
                                     <div class="act-top">
                                         <span class="act-label">{{ label }}</span>
                                         <img class="act-img" src="{{ static_url }}/{{ img }}" alt="{{ label }}">
                                     </div>
-                                    <div class="act-score">{{ ns.act_row.total_score if ns.act_row and ns.act_row.total_score is not none else '' }}</div>
+                                    <div class="act-score">&nbsp;</div>
                                 </div>
                             </td>
                             {% endfor %}

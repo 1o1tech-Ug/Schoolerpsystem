@@ -549,7 +549,7 @@ textarea { resize: vertical; min-height: 90px; }
             {% if edit_mode and student.photo_url %}
             <div style="margin-top:10px;">
               <img
-                src="{{ url_for('static', filename=student.photo_url.replace('app/static/', '')) }}"
+                src="{{ student.photo_url }}"
                 style="width:90px;height:90px;object-fit:cover;border-radius:12px;border:2px solid var(--gray-200);"
               >
             </div>

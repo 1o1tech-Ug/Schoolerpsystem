@@ -16,6 +16,11 @@ CHANGES vs original:
   - [FIX] App context captured before thread starts to avoid
     RuntimeError: Working outside of application context.
   - [REMOVED] generate_all_report_cards endpoint.
+  - [FIX] Report PDFs are now uploaded to BunnyCDN with
+    Cache-Control: no-cache, no-store, must-revalidate so the CDN edge
+    never serves a stale copy after a report is regenerated at the same
+    remote path. Combined with the existing _bust() query-string
+    versioning, this fixes the "browser/CDN shows old report" issue.
 """
 
 import requests as http_requests
@@ -69,6 +74,13 @@ report_cards_api = Blueprint("report_cards_api", __name__)
 ALLOWED_LOGO_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 MAX_LOGO_SIZE_BYTES     = 5 * 1024 * 1024
 VALID_EXAM_TYPES        = {"BOT", "MID", "EOT"}
+
+# [NEW] Cache-Control sent to BunnyCDN when uploading report card PDFs.
+# Report files are regenerated and re-uploaded at the SAME remote path
+# (see _upload_report_pdf below), so the CDN edge and browsers must
+# always revalidate rather than serve a cached copy from a previous
+# generation.
+_REPORT_CACHE_CONTROL = "no-cache, no-store, must-revalidate"
 
 _SECTION_LABELS = {
     "nursery": "Nursery",
@@ -216,7 +228,15 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream) -> str | No
             f"uploads/report_cards/{ay_slug}/{term_slug}/{stream_slug}/{filename}"
         )
 
-        cdn_url = bunny_upload(data=pdf_bytes, remote_path=remote_path)
+        # [FIX] Explicit no-cache Cache-Control on upload — this is what
+        # BunnyCDN's Pull Zone forwards back to the browser/edge on every
+        # request for this file, so a regenerated report at the same
+        # remote_path is never served stale from cache.
+        cdn_url = bunny_upload(
+            data=pdf_bytes,
+            remote_path=remote_path,
+            cache_control=_REPORT_CACHE_CONTROL,
+        )
         logger.info("_upload_report_pdf: uploaded %s → %s", filename, cdn_url)
         return cdn_url
 
@@ -753,7 +773,14 @@ def save_school_details():
             if detail_check and detail_check.school_logo_url:
                 _delete_cdn_file(detail_check.school_logo_url)
 
-            logo_url = bunny_upload(data=logo_bytes, remote_path=remote_path)
+            # School logos rarely change once uploaded and each new logo
+            # gets its own filename via school_id, so a long-lived cache
+            # is safe (and desirable) here — unlike report card PDFs.
+            logo_url = bunny_upload(
+                data=logo_bytes,
+                remote_path=remote_path,
+                cache_control="public, max-age=2592000",
+            )
             logger.info("save_school_details: logo uploaded to CDN → %s", logo_url)
 
         po_box_number  = (request.form.get("po_box_number",  "") or "").strip() or None
@@ -829,6 +856,94 @@ def save_school_details():
 
 
 # ═══════════════════════════════════════════════════════════════
+#  SHARED: RESOLVE REPORT FILE BYTES (used by both /view and /download)
+# ═══════════════════════════════════════════════════════════════
+
+def _resolve_report_source(report):
+    """
+    Returns either:
+      ("local", directory, fname)   — file exists on local disk, or
+      ("remote", cdn_url, None)     — must be fetched from BunnyCDN
+
+    Raises FileNotFoundError if no source is available at all.
+    """
+    local_path = report.local_path or report.firebase_path
+    if local_path and os.path.exists(local_path):
+        directory, fname = os.path.split(local_path)
+        return "local", directory, fname
+
+    cdn_url = report.firebase_url
+    if not cdn_url:
+        raise FileNotFoundError("No file available for this report")
+
+    # [FIX] Strip any existing querystring and add a fresh cache-busting
+    # timestamp on every request. This is a server-side outbound request
+    # (not the user's browser hitting the CDN edge directly), so it
+    # naturally avoids the stale-edge-cache problem that direct CDN links
+    # in the browser can hit — but we still bust the query string in case
+    # this server process's own outbound requests get routed through a
+    # caching proxy at some point.
+    cdn_url = cdn_url.split("?")[0]
+    cdn_url = f"{cdn_url}?v={int(datetime.utcnow().timestamp())}"
+    return "remote", cdn_url, None
+
+
+# ═══════════════════════════════════════════════════════════════
+#  VIEW REPORT CARD (INLINE)  —  GET /api/report-cards/<id>/view
+#  [NEW] Always resolves through the Flask server rather than letting
+#  the browser hit the BunnyCDN URL directly. This exists because
+#  direct CDN links can get served from a stale local edge PoP cache
+#  even after regeneration + our Cache-Control fix at upload time —
+#  routing through the server sidesteps that entirely, the same way
+#  download_report_card already does for downloads.
+# ═══════════════════════════════════════════════════════════════
+
+@report_cards_api.route("/report-cards/<int:report_id>/view", methods=["GET"])
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def view_report_card(report_id: int):
+    claims    = get_jwt()
+    school_id = claims.get("school_id")
+
+    report = ReportCard.query.filter_by(id=report_id, school_id=school_id).first()
+    if not report:
+        return jsonify({"message": "Report card not found"}), 404
+
+    try:
+        source, a, b = _resolve_report_source(report)
+
+        if source == "local":
+            directory, fname = a, b
+            response = send_from_directory(
+                directory, fname,
+                as_attachment=False,
+                mimetype="application/pdf",
+            )
+            response.headers["Cache-Control"] = "no-store"
+            return response
+
+        cdn_url  = a
+        upstream = http_requests.get(cdn_url, stream=True, timeout=30)
+        upstream.raise_for_status()
+
+        return Response(
+            stream_with_context(upstream.iter_content(chunk_size=8192)),
+            status=200,
+            content_type="application/pdf",
+            headers={
+                "Content-Disposition": "inline",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    except FileNotFoundError:
+        return jsonify({"message": "No file available for this report"}), 404
+    except Exception:
+        logger.exception("view_report_card failed | report_id=%s", report_id)
+        return jsonify({"message": "Could not retrieve the report file. Please try again."}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
 #  DOWNLOAD REPORT CARD  —  GET /api/report-cards/<id>/download
 # ═══════════════════════════════════════════════════════════════
 
@@ -844,9 +959,10 @@ def download_report_card(report_id: int):
         return jsonify({"message": "Report card not found"}), 404
 
     try:
-        local_path = report.local_path or report.firebase_path
-        if local_path and os.path.exists(local_path):
-            directory, fname = os.path.split(local_path)
+        source, a, b = _resolve_report_source(report)
+
+        if source == "local":
+            directory, fname = a, b
             return send_from_directory(
                 directory, fname,
                 as_attachment=True,
@@ -854,11 +970,7 @@ def download_report_card(report_id: int):
                 mimetype="application/pdf",
             )
 
-        cdn_url = report.firebase_url
-        if not cdn_url:
-            return jsonify({"message": "No file available for this report"}), 404
-
-        cdn_url  = cdn_url.split("?")[0]
+        cdn_url  = a
         upstream = http_requests.get(cdn_url, stream=True, timeout=30)
         upstream.raise_for_status()
 
@@ -876,6 +988,8 @@ def download_report_card(report_id: int):
             },
         )
 
+    except FileNotFoundError:
+        return jsonify({"message": "No file available for this report"}), 404
     except Exception:
         logger.exception("download_report_card failed | report_id=%s", report_id)
         return jsonify({"message": "Could not retrieve the report file. Please try again."}), 500
