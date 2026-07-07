@@ -21,6 +21,23 @@ CHANGES vs original:
     never serves a stale copy after a report is regenerated at the same
     remote path. Combined with the existing _bust() query-string
     versioning, this fixes the "browser/CDN shows old report" issue.
+  - [FIX][STORAGE] Report card PDFs are now stored STRICTLY on BunnyCDN.
+    There is no local-disk fallback or persistence of any kind:
+      * _upload_report_pdf() no longer swallows upload failures and
+        falls back to a local URL — it raises, and the generation job
+        is marked "error". A report card is never recorded as
+        "generated" unless it actually made it to Bunny.
+      * The local temp file produced by the PDF renderer is deleted
+        immediately after the Bunny upload attempt (success or
+        failure) inside the generation thread and on delete.
+      * ReportCard.local_path is no longer populated/used. Only
+        firebase_url (CDN URL) and firebase_path (CDN remote path)
+        are stored.
+      * _resolve_report_source(), view_report_card() and
+        download_report_card() only ever read from Bunny — the local
+        source branch has been removed.
+      * serve_report_file() (local static file serving) has been
+        removed since report cards are never persisted on local disk.
 """
 
 import requests as http_requests
@@ -75,7 +92,7 @@ ALLOWED_LOGO_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 MAX_LOGO_SIZE_BYTES     = 5 * 1024 * 1024
 VALID_EXAM_TYPES        = {"BOT", "MID", "EOT"}
 
-# [NEW] Cache-Control sent to BunnyCDN when uploading report card PDFs.
+# Cache-Control sent to BunnyCDN when uploading report card PDFs.
 # Report files are regenerated and re-uploaded at the SAME remote path
 # (see _upload_report_pdf below), so the CDN edge and browsers must
 # always revalidate rather than serve a cached copy from a previous
@@ -209,26 +226,46 @@ def _delete_cdn_file(url):
             logger.warning("CDN delete failed for URL: %s", url)
 
 
+def _delete_local_file(path):
+    """Best-effort removal of a local temp file. Local disk is never a
+    storage location for report cards — this only ever cleans up the
+    ephemeral file produced by the PDF renderer before/after upload."""
+    if path and os.path.exists(path):
+        try:
+            os.remove(path)
+        except OSError as rm_err:
+            logger.warning("_delete_local_file: could not remove %s — %s", path, rm_err)
+
+
 def _stream_report_type(stream) -> str:
     class_name = stream.class_.name if (stream and stream.class_) else ""
     return classify_class(class_name)
 
 
-def _upload_report_pdf(local_path: str, academic_year, term, stream) -> str | None:
+def _upload_report_pdf(local_path: str, academic_year, term, stream) -> tuple[str, str]:
+    """
+    Uploads the generated PDF to BunnyCDN. This is the ONLY persistence
+    layer for report card files — there is intentionally no local-disk
+    fallback. If the upload fails, this raises RuntimeError and the
+    caller MUST treat the whole generation as failed (never record a
+    report card whose file only exists locally).
+
+    Returns (cdn_url, remote_path).
+    """
+    with open(local_path, "rb") as fh:
+        pdf_bytes = fh.read()
+
+    filename    = os.path.basename(local_path)
+    ay_slug     = (academic_year.name if academic_year else "unknown").replace(" ", "_")
+    term_slug   = (term.name          if term          else "unknown").replace(" ", "_")
+    stream_slug = (stream.name        if stream        else "unknown").replace(" ", "_")
+
+    remote_path = (
+        f"uploads/report_cards/{ay_slug}/{term_slug}/{stream_slug}/{filename}"
+    )
+
     try:
-        with open(local_path, "rb") as fh:
-            pdf_bytes = fh.read()
-
-        filename    = os.path.basename(local_path)
-        ay_slug     = (academic_year.name if academic_year else "unknown").replace(" ", "_")
-        term_slug   = (term.name          if term          else "unknown").replace(" ", "_")
-        stream_slug = (stream.name        if stream        else "unknown").replace(" ", "_")
-
-        remote_path = (
-            f"uploads/report_cards/{ay_slug}/{term_slug}/{stream_slug}/{filename}"
-        )
-
-        # [FIX] Explicit no-cache Cache-Control on upload — this is what
+        # Explicit no-cache Cache-Control on upload — this is what
         # BunnyCDN's Pull Zone forwards back to the browser/edge on every
         # request for this file, so a regenerated report at the same
         # remote_path is never served stale from cache.
@@ -237,15 +274,16 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream) -> str | No
             remote_path=remote_path,
             cache_control=_REPORT_CACHE_CONTROL,
         )
-        logger.info("_upload_report_pdf: uploaded %s → %s", filename, cdn_url)
-        return cdn_url
+    except Exception as exc:
+        logger.warning("_upload_report_pdf: upload failed for %s", local_path)
+        raise RuntimeError("Failed to upload report card to storage") from exc
 
-    except Exception:
-        logger.warning(
-            "_upload_report_pdf: upload failed for %s — falling back to local URL",
-            local_path,
-        )
-        return None
+    if not cdn_url:
+        logger.warning("_upload_report_pdf: bunny_upload returned no URL for %s", local_path)
+        raise RuntimeError("Failed to upload report card to storage")
+
+    logger.info("_upload_report_pdf: uploaded %s → %s", filename, cdn_url)
+    return cdn_url, remote_path
 
 
 def _get_academic_year_for_term(term: Term):
@@ -421,6 +459,12 @@ def get_job_status(job_id: str):
 #  GENERATE ONE REPORT  —  POST /api/report-cards/generate
 #  Returns immediately with a job_id.
 #  Poll GET /api/report-cards/job/<job_id> until status == done | error
+#
+#  [STORAGE] BunnyCDN is the sole storage location. If the upload to
+#  Bunny fails for any reason, the job is marked "error" and NOTHING
+#  is written to the database — a report card row only ever exists
+#  once its file is confirmed to live on Bunny. The local temp file
+#  produced by the renderer is always deleted before the thread ends.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/generate", methods=["POST"])
@@ -480,6 +524,7 @@ def generate_report_card():
     def _do_generate():
         _update_job(job_id, status="running")
         with _flask_app.app_context():
+            local_path = None
             try:
                 _school  = School.query.get(school_id)
                 _detail  = SchoolDetail.query.filter_by(school_id=school_id).first()
@@ -499,7 +544,6 @@ def generate_report_card():
                 )
 
                 local_path  = result["local_path"]
-                file_url    = result["file_url"]
                 report_type = result["report_type"]
                 now         = datetime.utcnow()
 
@@ -510,23 +554,21 @@ def generate_report_card():
                     exam_type=exam_type,
                 ).first()
 
+                # Upload to Bunny FIRST. If this raises, we fall straight
+                # into the except block below — no DB row is touched and
+                # the previous report card (if any) stays untouched.
+                cdn_url, remote_path = _upload_report_pdf(local_path, _ay, _term, _stream)
+
+                # Only now that the new file is safely on Bunny do we
+                # remove the previous CDN file, so a failed re-generation
+                # never leaves a report card with no file at all.
                 if existing_report and existing_report.firebase_url:
                     _delete_cdn_file(existing_report.firebase_url)
 
-                cdn_url    = _upload_report_pdf(local_path, _ay, _term, _stream)
-                public_url = cdn_url or file_url
-
                 if existing_report:
-                    old_path = existing_report.local_path
-                    if old_path and old_path != local_path and os.path.exists(old_path):
-                        try:
-                            os.remove(old_path)
-                        except OSError as rm_err:
-                            logger.warning("generate thread: could not remove old file %s — %s", old_path, rm_err)
-
-                    existing_report.firebase_url  = public_url
-                    existing_report.firebase_path = local_path
-                    existing_report.local_path    = local_path
+                    existing_report.firebase_url  = cdn_url
+                    existing_report.firebase_path = remote_path
+                    existing_report.local_path    = None
                     existing_report.generated_at  = now
                     existing_report.generated_by  = int(user_id) if user_id else None
                     existing_report.status        = "generated"
@@ -541,9 +583,9 @@ def generate_report_card():
                         academic_year=_ay.name if _ay else None,
                         generated_at=now,
                         generated_by=int(user_id) if user_id else None,
-                        firebase_url=public_url,
-                        firebase_path=local_path,
-                        local_path=local_path,
+                        firebase_url=cdn_url,
+                        firebase_path=remote_path,
+                        local_path=None,
                         status="generated",
                     )
                     db.session.add(report)
@@ -555,15 +597,20 @@ def generate_report_card():
                     "student_name":  f"{_student.first_name} {_student.last_name}",
                     "report_type":   report_type,
                     "section_label": _SECTION_LABELS.get(report_type, report_type.title()),
-                    "file_url":      _bust(public_url, now),
+                    "file_url":      _bust(cdn_url, now),
                     "report_id":     report.id,
                 })
 
-            except Exception as exc:
+            except Exception:
                 db.session.rollback()
-               
                 logger.exception("generate thread failed | student_id=%s", student_id)
-                _update_job(job_id, status="error", error=f"Failed to generate report card. Please try again.")
+                _update_job(job_id, status="error", error="Failed to generate report card. Please try again.")
+
+            finally:
+                # Report cards are stored strictly on Bunny — the local
+                # temp file produced by the renderer is never kept
+                # around, whether the upload above succeeded or failed.
+                _delete_local_file(local_path)
 
     thread = threading.Thread(target=_do_generate, daemon=True, name=f"gen-{job_id[:8]}")
     thread.start()
@@ -678,14 +725,8 @@ def delete_report_card(report_id: int):
         if not report:
             return jsonify({"message": "Report card not found"}), 404
 
+        # Bunny is the sole storage location — nothing else to clean up.
         _delete_cdn_file(report.firebase_url)
-
-        local_path = report.local_path or report.firebase_path
-        if local_path and os.path.exists(local_path):
-            try:
-                os.remove(local_path)
-            except OSError as rm_err:
-                logger.warning("delete_report_card: could not remove file %s — %s", local_path, rm_err)
 
         db.session.delete(report)
         db.session.commit()
@@ -703,29 +744,9 @@ def delete_report_card(report_id: int):
 
 
 # ═══════════════════════════════════════════════════════════════
-#  SERVE LOCAL REPORT FILES
-# ═══════════════════════════════════════════════════════════════
-
-@report_cards_api.route("/static/report_cards/<path:filename>", methods=["GET"])
-@jwt_required()
-@limiter.limit(READ_LIMIT)
-def serve_report_file(filename: str):
-    static_folder = current_app.static_folder
-    report_dir    = os.path.join(static_folder, "report_cards")
-
-    safe_path = os.path.realpath(os.path.join(report_dir, filename))
-    if not safe_path.startswith(os.path.realpath(report_dir)):
-        return jsonify({"message": "Forbidden"}), 403
-
-    if not os.path.exists(safe_path):
-        return jsonify({"message": "Report file not found"}), 404
-
-    directory, fname = os.path.split(safe_path)
-    return send_from_directory(directory, fname)
-
-
-# ═══════════════════════════════════════════════════════════════
 #  SAVE SCHOOL CONFIGURATION  —  POST /api/school/details
+#  (Logos are a separate concern from report cards, but they too are
+#  stored solely on BunnyCDN — no local disk copy is kept here either.)
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/school/details", methods=["POST"])
@@ -776,11 +797,26 @@ def save_school_details():
             # School logos rarely change once uploaded and each new logo
             # gets its own filename via school_id, so a long-lived cache
             # is safe (and desirable) here — unlike report card PDFs.
-            logo_url = bunny_upload(
-                data=logo_bytes,
-                remote_path=remote_path,
-                cache_control="public, max-age=2592000",
-            )
+            try:
+                logo_url = bunny_upload(
+                    data=logo_bytes,
+                    remote_path=remote_path,
+                    cache_control="public, max-age=2592000",
+                )
+            except Exception as exc:
+                logger.exception("save_school_details: logo upload failed | school_id=%s", school_id)
+                return jsonify({
+                    "success": False,
+                    "message": "Failed to upload logo. Please try again.",
+                }), 502
+
+            if not logo_url:
+                logger.warning("save_school_details: logo upload returned no URL | school_id=%s", school_id)
+                return jsonify({
+                    "success": False,
+                    "message": "Failed to upload logo. Please try again.",
+                }), 502
+
             logger.info("save_school_details: logo uploaded to CDN → %s", logo_url)
 
         po_box_number  = (request.form.get("po_box_number",  "") or "").strip() or None
@@ -856,27 +892,21 @@ def save_school_details():
 
 
 # ═══════════════════════════════════════════════════════════════
-#  SHARED: RESOLVE REPORT FILE BYTES (used by both /view and /download)
+#  SHARED: RESOLVE REPORT FILE (used by both /view and /download)
+#  [STORAGE] Bunny is the ONLY source of truth. There is no local-disk
+#  branch — if firebase_url is missing, the report simply has no file.
 # ═══════════════════════════════════════════════════════════════
 
-def _resolve_report_source(report):
+def _resolve_report_source(report) -> str:
     """
-    Returns either:
-      ("local", directory, fname)   — file exists on local disk, or
-      ("remote", cdn_url, None)     — must be fetched from BunnyCDN
-
-    Raises FileNotFoundError if no source is available at all.
+    Returns a fresh, cache-busted CDN URL for the report's PDF.
+    Raises FileNotFoundError if no file is on record.
     """
-    local_path = report.local_path or report.firebase_path
-    if local_path and os.path.exists(local_path):
-        directory, fname = os.path.split(local_path)
-        return "local", directory, fname
-
     cdn_url = report.firebase_url
     if not cdn_url:
         raise FileNotFoundError("No file available for this report")
 
-    # [FIX] Strip any existing querystring and add a fresh cache-busting
+    # Strip any existing querystring and add a fresh cache-busting
     # timestamp on every request. This is a server-side outbound request
     # (not the user's browser hitting the CDN edge directly), so it
     # naturally avoids the stale-edge-cache problem that direct CDN links
@@ -885,15 +915,15 @@ def _resolve_report_source(report):
     # caching proxy at some point.
     cdn_url = cdn_url.split("?")[0]
     cdn_url = f"{cdn_url}?v={int(datetime.utcnow().timestamp())}"
-    return "remote", cdn_url, None
+    return cdn_url
 
 
 # ═══════════════════════════════════════════════════════════════
 #  VIEW REPORT CARD (INLINE)  —  GET /api/report-cards/<id>/view
-#  [NEW] Always resolves through the Flask server rather than letting
-#  the browser hit the BunnyCDN URL directly. This exists because
-#  direct CDN links can get served from a stale local edge PoP cache
-#  even after regeneration + our Cache-Control fix at upload time —
+#  Always resolves through the Flask server rather than letting the
+#  browser hit the BunnyCDN URL directly. This exists because direct
+#  CDN links can get served from a stale local edge PoP cache even
+#  after regeneration + our Cache-Control fix at upload time —
 #  routing through the server sidesteps that entirely, the same way
 #  download_report_card already does for downloads.
 # ═══════════════════════════════════════════════════════════════
@@ -910,19 +940,7 @@ def view_report_card(report_id: int):
         return jsonify({"message": "Report card not found"}), 404
 
     try:
-        source, a, b = _resolve_report_source(report)
-
-        if source == "local":
-            directory, fname = a, b
-            response = send_from_directory(
-                directory, fname,
-                as_attachment=False,
-                mimetype="application/pdf",
-            )
-            response.headers["Cache-Control"] = "no-store"
-            return response
-
-        cdn_url  = a
+        cdn_url  = _resolve_report_source(report)
         upstream = http_requests.get(cdn_url, stream=True, timeout=30)
         upstream.raise_for_status()
 
@@ -959,18 +977,7 @@ def download_report_card(report_id: int):
         return jsonify({"message": "Report card not found"}), 404
 
     try:
-        source, a, b = _resolve_report_source(report)
-
-        if source == "local":
-            directory, fname = a, b
-            return send_from_directory(
-                directory, fname,
-                as_attachment=True,
-                download_name=fname,
-                mimetype="application/pdf",
-            )
-
-        cdn_url  = a
+        cdn_url  = _resolve_report_source(report)
         upstream = http_requests.get(cdn_url, stream=True, timeout=30)
         upstream.raise_for_status()
 
