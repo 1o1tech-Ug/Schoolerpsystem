@@ -127,6 +127,24 @@
 }
 
 /* ════════════════════════════════════════════
+   GENERATION LOCK NOTICE
+════════════════════════════════════════════ */
+.gen-lock-notice {
+  display: none;
+  background: var(--amber-light);
+  border: 1px solid #fbbf24;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #92400e;
+  font-weight: 600;
+  margin-top: 16px;
+}
+.gen-lock-notice.visible { display: flex; }
+
+/* ════════════════════════════════════════════
    FILTER GRIDS
 ════════════════════════════════════════════ */
 .filters-grid {
@@ -226,6 +244,7 @@
 
 .btn-generate  { background: var(--green); color: #fff; }
 .btn-generate:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,.35); }
+.btn-generate:disabled { background: var(--slate-300); color: var(--slate-500); transform: none; box-shadow: none; }
 
 .btn-view      { background: var(--blue-light);  color: var(--blue-dark); }
 .btn-view:hover { background: #bfdbfe; }
@@ -583,6 +602,11 @@
         </button>
       </div>
 
+      <!-- Generation-in-progress notice -->
+      <div class="gen-lock-notice" id="gen-lock-notice">
+        ⏳ &nbsp;A report is currently being generated. Other Generate buttons are disabled until it finishes.
+      </div>
+
       <!-- Student table -->
       <div id="gen-table-wrap" style="display:none; margin-top:24px;">
         <div class="table-header-bar">
@@ -906,6 +930,16 @@ let _pendingDeleteId  = null;
 let _pendingDeleteSrc = null;
 let _reqInFlight      = false;
 
+// [NEW] Whole-school generation lock (client-side mirror of the
+// server's per-school lock). While a generation job is in flight for
+// THIS school, every other "Generate" button on the page is disabled
+// so a staff member can't fire off a second heavy PDF job — matching
+// the backend, which would reject it with 409 anyway. Tracking the
+// active student id lets us leave that one row showing "Generating…"
+// while disabling all the others.
+let _generationInFlight     = false;
+let _activeGenStudentId     = null;
+
 /* ─────────────────────────────────────
    AUTH HEADERS
 ───────────────────────────────────── */
@@ -1045,6 +1079,10 @@ function _buildStatusBadge(generated, generating = false) {
    BUILD ACTIONS CELL
    [FIX] View is now a button calling viewReport(reportId) instead of
    an <a href> pointing straight at the (possibly edge-cached) CDN URL.
+   [NEW] While ANY generation job is in flight for this school, every
+   Generate button other than the one actively running is rendered
+   disabled — mirrors the server's per-school lock so staff get
+   immediate visual feedback instead of only finding out via a 409.
 ───────────────────────────────────── */
 function _buildGenActions(s, generating = false) {
   if (generating)
@@ -1057,7 +1095,36 @@ function _buildGenActions(s, generating = false) {
       <button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${s.report_id},'gen')">🗑 Delete</button>
     </div>`;
   }
-  return `<button class="btn btn-generate btn-sm" id="gen-btn-${s.id}" onclick="generateOne(${s.id})">⚡ Generate</button>`;
+  const blockedByOther = _generationInFlight && _activeGenStudentId !== s.id;
+  const disabledAttr   = blockedByOther ? "disabled" : "";
+  return `<button class="btn btn-generate btn-sm" id="gen-btn-${s.id}" onclick="generateOne(${s.id})" ${disabledAttr}>⚡ Generate</button>`;
+}
+
+/* ─────────────────────────────────────
+   SCHOOL-WIDE GENERATION LOCK (UI)
+   Disables/enables every rendered "Generate" button on the page
+   except the one for `exceptStudentId` (the job actually running),
+   and toggles the banner above the table. This is purely a UX guard
+   — the server's per-school lock (409 on conflict) is the real
+   source of truth and is handled in generateOne() below.
+───────────────────────────────────── */
+function _setGenerationLock(active, exceptStudentId = null) {
+  _generationInFlight = active;
+  _activeGenStudentId = active ? exceptStudentId : null;
+
+  document.querySelectorAll('[id^="gen-btn-"]').forEach(btn => {
+    const id = btn.id.replace("gen-btn-", "");
+    if (active && String(id) !== String(exceptStudentId)) {
+      btn.disabled = true;
+      btn.classList.add("is-loading");
+    } else if (!active) {
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+    }
+  });
+
+  const banner = document.getElementById("gen-lock-notice");
+  if (banner) banner.classList.toggle("visible", active);
 }
 
 /* ─────────────────────────────────────
@@ -1169,9 +1236,24 @@ function _pollJob(jobId, onDone, onError) {
 
 /* ─────────────────────────────────────
    GENERATE ONE  (non-blocking)
+   [NEW] Guarded by the whole-school generation lock:
+     - Blocks client-side if another generation is already tracked as
+       in flight (fast feedback, no round trip).
+     - Still handles a 409 from the server (e.g. another staff member
+       started one a split second earlier, or in another tab/device)
+       by resetting the UI and showing the server's message — the
+       server lock is always the real source of truth.
+     - Releases the lock in every exit path: success, job error,
+       network/request error, and 409.
 ───────────────────────────────────── */
 async function generateOne(studentId) {
-  // Optimistically mark as "generating"
+  if (_generationInFlight) {
+    toast("A report is already being generated for your school. Please wait for it to finish.", "warning");
+    return;
+  }
+
+  // Optimistically mark as "generating" and lock out every other button.
+  _setGenerationLock(true, studentId);
   _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, true);
 
   try {
@@ -1186,6 +1268,15 @@ async function generateOne(studentId) {
       }),
     });
     const d = await res.json();
+
+    if (res.status === 409) {
+      // Another job is already running for this school (server-side
+      // source of truth) — release the lock and inform the user.
+      _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
+      _setGenerationLock(false);
+      toast(d.message || "A report card is already being generated for your school.", "warning");
+      return;
+    }
     if (!res.ok) throw new Error(d.message || "Generation failed");
 
     const jobId = d.job_id;
@@ -1204,17 +1295,20 @@ async function generateOne(studentId) {
           report_type:      reportType,
         };
         _patchStudentRow(studentId, updated, false);
+        _setGenerationLock(false);
         toast(`Report generated (${_esc(result.section_label || reportType)})`, "success");
       },
       // onError
       (errMsg) => {
         _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
+        _setGenerationLock(false);
         toast(errMsg, "error");
       }
     );
 
   } catch (e) {
     _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
+    _setGenerationLock(false);
     toast(e.message, "error");
   }
 }

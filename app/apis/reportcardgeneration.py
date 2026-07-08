@@ -38,6 +38,16 @@ CHANGES vs original:
         source branch has been removed.
       * serve_report_file() (local static file serving) has been
         removed since report cards are never persisted on local disk.
+  - [NEW][CONCURRENCY] Per-school generation lock. Report card
+    generation is CPU/IO heavy (HTML→PDF render + CDN upload) and the
+    server is resource-constrained, so only ONE report card may be
+    generated at a time PER SCHOOL — regardless of which staff member,
+    student, stream, or term is involved. A second attempt from the
+    same school while one is in flight gets HTTP 409 immediately
+    instead of piling onto the server. The lock is released in the
+    generation thread's `finally` block, and includes a stale-lock
+    timeout in case a thread dies without reaching `finally` (process
+    kill, OOM, etc.), so a school is never permanently locked out.
 """
 
 import requests as http_requests
@@ -159,6 +169,51 @@ def _start_cleanup_thread():
     t.start()
 
 _start_cleanup_thread()
+
+
+# ═══════════════════════════════════════════════════════════════
+#  PER-SCHOOL GENERATION LOCK
+#  Only one report-card generation job may run at a time PER SCHOOL,
+#  regardless of which staff member, student, stream, or term is
+#  involved. This is a resource-protection measure (weak server, PDF
+#  rendering is CPU/IO heavy) — not a data-integrity lock.
+#  Includes a stale-lock timeout in case a thread dies without
+#  reaching its `finally` block (process kill, OOM, etc.), so a
+#  school is never permanently locked out by a crashed worker.
+# ═══════════════════════════════════════════════════════════════
+
+_school_generation_lock      = threading.Lock()
+_active_school_jobs: dict    = {}   # school_id -> {"job_id": str, "started": datetime}
+_SCHOOL_LOCK_TIMEOUT_SECONDS = 180  # safety valve — treat as stale after 3 min
+
+
+def _try_acquire_school_lock(school_id, job_id: str) -> bool:
+    """Atomically reserve the generation slot for a school.
+    Returns False if another job is already running (and not stale)
+    for this school."""
+    now = datetime.utcnow()
+    with _school_generation_lock:
+        active = _active_school_jobs.get(school_id)
+        if active:
+            age = (now - active["started"]).total_seconds()
+            if age < _SCHOOL_LOCK_TIMEOUT_SECONDS:
+                return False
+            logger.warning(
+                "Stale school generation lock for school_id=%s overridden after %.0fs",
+                school_id, age,
+            )
+        _active_school_jobs[school_id] = {"job_id": job_id, "started": now}
+        return True
+
+
+def _release_school_lock(school_id, job_id: str):
+    """Release the slot — only if it still belongs to this job_id, so a
+    late release from a stale/overridden job can't clobber a newer
+    legitimate lock."""
+    with _school_generation_lock:
+        active = _active_school_jobs.get(school_id)
+        if active and active["job_id"] == job_id:
+            del _active_school_jobs[school_id]
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -465,6 +520,11 @@ def get_job_status(job_id: str):
 #  is written to the database — a report card row only ever exists
 #  once its file is confirmed to live on Bunny. The local temp file
 #  produced by the renderer is always deleted before the thread ends.
+#
+#  [CONCURRENCY] Only one generation job may be in flight per school
+#  at a time. If another staff member at the same school already has
+#  a job running, this returns 409 immediately rather than starting a
+#  second heavy render/upload on a resource-constrained server.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/generate", methods=["POST"])
@@ -520,6 +580,20 @@ def generate_report_card():
     static_folder = _flask_app.static_folder
 
     job_id = _new_job()
+
+    # ── CONCURRENCY GUARD: only one generation job per school at a time.
+    #    Any staff member at this school with a job already running
+    #    blocks any other staff member at the same school from starting
+    #    another one until it finishes (or the stale-lock timeout hits).
+    if not _try_acquire_school_lock(school_id, job_id):
+        _update_job(job_id, status="error", error="cancelled — another generation is already in progress for this school")
+        return jsonify({
+            "success": False,
+            "message": (
+                "A report card is already being generated for your school. "
+                "Please wait for it to finish before starting another."
+            ),
+        }), 409
 
     def _do_generate():
         _update_job(job_id, status="running")
@@ -611,6 +685,9 @@ def generate_report_card():
                 # temp file produced by the renderer is never kept
                 # around, whether the upload above succeeded or failed.
                 _delete_local_file(local_path)
+                # Always free the school's generation slot, success or
+                # failure, so the next request for this school can run.
+                _release_school_lock(school_id, job_id)
 
     thread = threading.Thread(target=_do_generate, daemon=True, name=f"gen-{job_id[:8]}")
     thread.start()

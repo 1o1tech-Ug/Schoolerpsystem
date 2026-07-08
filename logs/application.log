@@ -1655,3 +1655,67 @@ requests.exceptions.ConnectionError: HTTPSConnectionPool(host='schoolerp.b-cdn.n
 [2026-07-08 12:05:17] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
 [2026-07-08 12:05:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
 [2026-07-08 12:05:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-08 14:16:11] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-08 14:16:11] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-08 14:17:02] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | No MID or EOT marks for student=128 term=4 — empty report will be generated.
+[2026-07-08 14:17:02] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | No MID or EOT marks for student=128 term=4 — empty report will be generated.
+[2026-07-08 14:17:03] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=128 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:17:03] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=128 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:17:10] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 258:55, unknown property.
+[2026-07-08 14:17:10] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Relative URI reference without a base URI: <img src="None">
+[2026-07-08 14:35:02] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-08 14:35:02] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-08 14:35:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-08 14:35:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-08 14:35:36] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=127 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:35:36] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=127 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:35:42] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 258:55, unknown property.
+[2026-07-08 14:36:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | No MID or EOT marks for student=128 term=4 — empty report will be generated.
+[2026-07-08 14:36:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | No MID or EOT marks for student=128 term=4 — empty report will be generated.
+[2026-07-08 14:36:01] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=128 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:36:01] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=128 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:36:01] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 258:55, unknown property.
+[2026-07-08 14:36:01] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Relative URI reference without a base URI: <img src="None">
+[2026-07-08 14:36:10] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=127 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:36:10] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | compute_attendance failed for student=127 term=4
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/services/report_card_service.py", line 994, in compute_attendance
+    LessonSession.term_id        == term_id,  # ← update column name if needed
+    ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'LessonSession' has no attribute 'term_id'
+[2026-07-08 14:36:10] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 258:55, unknown property.
