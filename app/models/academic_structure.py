@@ -97,6 +97,22 @@ class Subject(db.Model):
     description = db.Column(db.String(100))
     level = db.Column(db.String(20))
 
+    # [NEW] A subject name is only unique WITHIN a given level for a given
+    # school — e.g. "English" may legitimately exist once for O-Level and
+    # once for A-Level. This backs up the application-level duplicate
+    # check in create_subject()/update_subject() (app/apis/academics.py)
+    # with a real DB constraint so a race between two simultaneous
+    # requests can't create two rows with the same (school_id, name,
+    # level). NOTE: because `level` is nullable, two rows with the same
+    # school_id + name and level IS NULL are NOT caught by this
+    # constraint — most databases (Postgres, SQLite, MySQL) treat NULL as
+    # distinct from any other NULL for uniqueness purposes. The API layer
+    # requires level to be non-empty on create/update, so this only
+    # matters for any pre-existing rows with a NULL level.
+    __table_args__ = (
+        UniqueConstraint('school_id', 'name', 'level', name='uq_subject_school_name_level'),
+    )
+
 
 # =========================
 # PAPERS

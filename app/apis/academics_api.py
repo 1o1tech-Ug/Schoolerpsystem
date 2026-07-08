@@ -695,8 +695,13 @@ def create_subject():
         except (ValueError, TypeError):
             return jsonify({"message": f"Max score for {p_name} must be a positive number"}), 400
 
-    if Subject.query.filter_by(name=name, school_id=school_id).first():
-        return jsonify({"message": f"Subject '{name}' already exists"}), 400
+    # [FIX] Uniqueness must be scoped to (school_id, name, level) — not
+    # just (school_id, name). The same subject name (e.g. "English") is
+    # legitimately a different Subject row per level (O-Level, A-Level,
+    # Lower Primary, etc.), so the old name-only check incorrectly
+    # blocked creating "English" at a second level.
+    if Subject.query.filter_by(name=name, school_id=school_id, level=level).first():
+        return jsonify({"message": f"Subject '{name}' already exists for level '{level}'"}), 400
 
     try:
         subject = Subject(school_id=school_id, name=name, description=description, level=level)
@@ -757,6 +762,21 @@ def update_subject(subject_id):
 
     if not name:
         return jsonify({"message": "Subject name is required"}), 400
+    if not level:
+        return jsonify({"message": "Level is required"}), 400
+
+    # [FIX] Same (school_id, name, level) scoping as create_subject,
+    # excluding this subject's own row, so renaming/relevel-ing a
+    # subject doesn't collide with itself but still catches a genuine
+    # duplicate at the same level.
+    dupe = Subject.query.filter(
+        Subject.school_id == school_id,
+        Subject.name       == name,
+        Subject.level      == level,
+        Subject.id         != subject_id,
+    ).first()
+    if dupe:
+        return jsonify({"message": f"Subject '{name}' already exists for level '{level}'"}), 400
 
     if papers_data is not None:
         for p in papers_data:
@@ -804,7 +824,7 @@ def update_subject(subject_id):
 
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"message": "A subject with that name already exists"}), 400
+        return jsonify({"message": "A subject with that name already exists for this level"}), 400
     except Exception:
         db.session.rollback()
         logger.exception("update_subject failed | subject_id=%s", subject_id)

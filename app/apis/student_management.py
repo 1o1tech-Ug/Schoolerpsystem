@@ -8,6 +8,9 @@ CHANGES vs original:
   - All except blocks log internally and return safe client messages.
     No str(e) ever reaches the client.
   - print(e) calls removed; replaced with logger.exception().
+  - delete_student now clears the finance chain (Receipt -> Payment ->
+    InvoiceItem -> Invoice) before deleting the student, fixing the
+    ForeignKeyViolation on invoice_items_invoice_id_fkey.
 """
 
 import logging
@@ -25,6 +28,11 @@ from app.models.people import (
 )
 from app.models.user import StudentAuth, User
 from app.models.academic_structure import Class
+from app.models.finance import Invoice, Payment, Receipt, InvoiceItem
+from app.models.academic_structure import (
+    StudentMark, StudentAttendance, StudentSubject, StudentStream, StudentEnrollment
+)
+from app.models.reportcards import PrimaryReportSummary
 from app.utils.utilities import check_student_limit
 from app.utils.bunny import bunny_upload, bunny_delete, bunny_remote_path_from_url
 from app.core.rate_limit import (
@@ -589,6 +597,35 @@ def delete_student(student_id):
         if not student:
             return jsonify({"message": "Student not found"}), 404
 
+        # ── Finance chain: Receipt → Payment (direct student_id FK) ──
+        payment_ids = [
+            row.id for row in
+            db.session.query(Payment.id).filter_by(student_id=student.id).all()
+        ]
+        if payment_ids:
+            Receipt.query.filter(Receipt.payment_id.in_(payment_ids)).delete(synchronize_session=False)
+            Payment.query.filter(Payment.id.in_(payment_ids)).delete(synchronize_session=False)
+
+        # ── Finance chain: InvoiceItem → Invoice ──
+        invoice_ids = [
+            row.id for row in
+            db.session.query(Invoice.id).filter_by(student_id=student.id).all()
+        ]
+        if invoice_ids:
+            InvoiceItem.query.filter(InvoiceItem.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
+            Invoice.query.filter(Invoice.id.in_(invoice_ids)).delete(synchronize_session=False)
+
+        # ── Academic records tied to this student ──
+        StudentMark.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        StudentAttendance.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        StudentSubject.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        StudentStream.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+        StudentEnrollment.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+
+        # ── Report summaries tied to this student ──
+        PrimaryReportSummary.query.filter_by(student_id=student.id).delete(synchronize_session=False)
+
+        # ── Documents (CDN + DB) ──
         for doc in Document.query.filter_by(student_id=student.id).all():
             _delete_cdn_file(doc.file_url)
             db.session.delete(doc)
