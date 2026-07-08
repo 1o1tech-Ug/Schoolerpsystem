@@ -1142,14 +1142,14 @@
   <div class="demo-modal-inner">
     <button class="close-modal-btn" onclick="closeDemoModal()">×</button>
     <h3>Book Your Free Demo</h3>
-    <p>Fill in your details and our Kampala team will contact you within 24 hours to schedule a personalized walkthrough.</p>
+    <p>Fill in your details below — we'll open WhatsApp with your details pre-filled so you can send them to our team instantly.</p>
 
     <!-- Success toast (shown after submit) -->
     <div class="toast-success" id="demoSuccessToast">
       <i class="fas fa-check-circle"></i>
       <div class="toast-success-text">
-        <strong>Request received!</strong>
-        <span>We'll call or WhatsApp you within 24 hours to schedule your demo.</span>
+        <strong>Opening WhatsApp…</strong>
+        <span>Just hit send in WhatsApp and our Kampala team will get back to you shortly.</span>
       </div>
     </div>
 
@@ -1187,7 +1187,7 @@
       </div>
 
       <button class="form-submit-btn" id="demoSubmitBtn" onclick="submitDemoForm()">
-        <i class="fas fa-calendar-check" style="margin-right:8px;"></i>Submit Demo Request
+        <i class="fab fa-whatsapp" style="margin-right:8px;"></i>Continue on WhatsApp
       </button>
       <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:12px;">Or call us directly: <a href="tel:+256777080843" style="color:var(--blue);text-decoration:none;font-weight:600;">+256 777 080 843</a></p>
     </div>
@@ -1197,6 +1197,9 @@
 <script>
   /* ── STORAGE KEY ── */
   const DEMO_STORAGE_KEY = 'demo_requests';
+
+  /* ── WhatsApp destination number (international format, no + or spaces) ── */
+  const WHATSAPP_NUMBER = '256777080843';
 
   /* ── Navbar scroll ── */
   window.addEventListener('scroll', () => {
@@ -1255,7 +1258,7 @@
     document.getElementById('demoForm').style.display = '';
     const btn = document.getElementById('demoSubmitBtn');
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-calendar-check" style="margin-right:8px;"></i>Submit Demo Request';
+    btn.innerHTML = '<i class="fab fa-whatsapp" style="margin-right:8px;"></i>Continue on WhatsApp';
   }
 
   /* ── Phone validation ── */
@@ -1264,7 +1267,8 @@
     return /^(\+?256|0)[37]\d{8}$/.test(cleaned) || /^\+?\d{7,15}$/.test(cleaned);
   }
 
-  /* ── Save demo request to localStorage ── */
+  /* ── Save demo request to localStorage (kept for our own local record —
+     does not affect whether the WhatsApp message is sent) ── */
   function saveDemoRequest(data) {
     try {
       const existing = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || '[]');
@@ -1273,6 +1277,19 @@
     } catch(err) {
       console.warn('Could not save demo request to storage:', err);
     }
+  }
+
+  /* ── Build the pre-filled WhatsApp message from the form data ── */
+  function buildWhatsAppMessage(data) {
+    let msg = "Hi 1O1 Technologies, I'd like to book a free demo.\n\n";
+    msg += `Name: ${data.name}\n`;
+    msg += `School: ${data.school}\n`;
+    msg += `Phone: ${data.phone}\n`;
+    msg += `Role: ${data.role}\n`;
+    if (data.students) {
+      msg += `Approx. Students: ${data.students}\n`;
+    }
+    return msg;
   }
 
   /* ── Submit demo form ── */
@@ -1306,19 +1323,27 @@
     // Show loading
     const btn = document.getElementById('demoSubmitBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Submitting…';
+    btn.innerHTML = '<span class="spinner"></span>Opening WhatsApp…';
 
-    // Save data
+    // Gather the data the user entered
     const requestData = { name, school, phone, role, students: students || null };
+
+    // Keep a local record (best-effort, never blocks the WhatsApp handoff)
     saveDemoRequest(requestData);
 
-    // Simulate brief processing delay then show success
-    setTimeout(() => {
-      document.getElementById('demoForm').style.display = 'none';
-      document.getElementById('demoSuccessToast').classList.add('show');
-      // Auto-close after 3s
-      setTimeout(closeDemoModal, 3000);
-    }, 800);
+    // Build the WhatsApp deep link with the form data pre-filled as the message
+    const message = buildWhatsAppMessage(requestData);
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+
+    // Open WhatsApp in a new tab/app immediately — this must happen
+    // synchronously within the click handler so mobile browsers don't
+    // block it as a pop-up.
+    window.open(whatsappUrl, '_blank');
+
+    // Show a brief success state in the modal, then close it
+    document.getElementById('demoForm').style.display = 'none';
+    document.getElementById('demoSuccessToast').classList.add('show');
+    setTimeout(closeDemoModal, 3000);
   }
 
   /* ── FAQ ── */
