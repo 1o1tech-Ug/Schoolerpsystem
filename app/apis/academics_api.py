@@ -34,8 +34,11 @@ ALL_ROLES   = {"staff", "admin"}
 #  PAGINATION CONSTANTS
 # ═══════════════════════════════════════════════════════════════
 
-DEFAULT_PAGE_SIZE = 20
-MAX_PAGE_SIZE     = 100
+DEFAULT_PAGE_SIZE  = 20
+MAX_PAGE_SIZE      = 100
+CLASSES_PAGE_SIZE  = 10
+SUBJECTS_PAGE_SIZE = 10
+STUDENTS_PAGE_SIZE = 20
 
 
 def _paginate(query, page: int, per_page: int):
@@ -71,9 +74,36 @@ def _paginate(query, page: int, per_page: int):
     }
 
 
+def _page_range(page: int, total_pages: int, edge: int = 1, window: int = 2) -> list:
+    """
+    Build a compact page-number list for pagination controls, using None
+    as an ellipsis marker.
+
+    e.g. _page_range(6, 12) -> [1, None, 4, 5, 6, 7, 8, None, 12]
+    """
+    if total_pages <= (edge * 2) + (window * 2) + 1:
+        return list(range(1, total_pages + 1))
+
+    pages  = set(range(1, edge + 1))
+    pages |= set(range(total_pages - edge + 1, total_pages + 1))
+    pages |= set(range(max(1, page - window), min(total_pages, page + window) + 1))
+
+    ordered = sorted(pages)
+    result  = []
+    prev    = None
+    for p in ordered:
+        if prev is not None and p - prev > 1:
+            result.append(None)
+        result.append(p)
+        prev = p
+    return result
+
+
 def _pagination_meta(page_data: dict) -> dict:
-    """Return only the metadata portion (no items) for JSON responses."""
-    return {k: v for k, v in page_data.items() if k != "items"}
+    """Return only the metadata portion (no items) for JSON/template responses."""
+    meta = {k: v for k, v in page_data.items() if k != "items"}
+    meta["page_range"] = _page_range(meta["page"], meta["total_pages"])
+    return meta
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -230,6 +260,10 @@ def school_info():
 @jwt_required()
 @limiter.limit(READ_LIMIT)
 def classes_page():
+    """
+    Renders the classes/streams page with server-side pagination
+    (CLASSES_PAGE_SIZE classes per page).
+    """
     guard = any_role_required()
     if guard:
         return guard
@@ -240,15 +274,23 @@ def classes_page():
     if err:
         return err
 
-    classes = Class.query.filter_by(school_id=school_id).all()
+    page = request.args.get("page", default=1, type=int)
+
+    classes_query = Class.query.filter_by(school_id=school_id).order_by(Class.name)
+    paged         = _paginate(classes_query, page, CLASSES_PAGE_SIZE)
+    classes       = paged["items"]
+    class_ids     = [cls.id for cls in classes]
+
     streams = (
         Stream.query.join(Class)
         .filter(
             Class.school_id == school_id,
+            Class.id.in_(class_ids),
             or_(Stream.status != "deleted", Stream.status.is_(None)),
         )
         .all()
-    )
+    ) if class_ids else []
+
     staff = Staff.query.filter_by(school_id=school_id, staff_type="teaching").all()
 
     rows = []
@@ -290,6 +332,7 @@ def classes_page():
     return render_template(
         "modules/academics/classes.html",
         rows=rows, classes=classes, staff=staff, school=school, modules=modules,
+        pagination=_pagination_meta(paged),
     )
 
 
@@ -625,6 +668,10 @@ def stream_detail(stream_id):
 @jwt_required()
 @limiter.limit(READ_LIMIT)
 def subjects_page():
+    """
+    Renders the subjects page with server-side pagination
+    (SUBJECTS_PAGE_SIZE subjects per page).
+    """
     guard = any_role_required()
     if guard:
         return guard
@@ -635,8 +682,12 @@ def subjects_page():
     if err:
         return err
 
-    subjects = Subject.query.filter_by(school_id=school_id).all()
-    staff    = Staff.query.filter_by(school_id=school_id, staff_type="teaching").all()
+    page = request.args.get("page", default=1, type=int)
+
+    subjects_query = Subject.query.filter_by(school_id=school_id).order_by(Subject.name)
+    paged          = _paginate(subjects_query, page, SUBJECTS_PAGE_SIZE)
+    subjects       = paged["items"]
+    staff          = Staff.query.filter_by(school_id=school_id, staff_type="teaching").all()
 
     subject_data = []
     for subj in subjects:
@@ -657,6 +708,7 @@ def subjects_page():
         "modules/academics/subjects.html",
         subject_data=subject_data, staff=staff, school=school,
         modules=modules, is_secondary=is_secondary,
+        pagination=_pagination_meta(paged),
     )
 
 
@@ -934,12 +986,14 @@ def subject_detail(subject_id):
 @limiter.limit(SEARCH_LIMIT)
 def student_lists_page():
     """
-    Renders the student list page.
+    Renders the student list page with server-side pagination
+    (STUDENTS_PAGE_SIZE students per page).
 
-    The template handles its own client-side pagination (20 per page), so the
-    view passes ALL matching students to Jinja — no server-side slicing here.
-    The `page` / `per_page` query params are reserved for the JSON API variant
-    (see /students/list below).
+    Query params:
+        search     – name / code filter (optional)
+        class_id   – filter by class (optional)
+        subject_id – filter by enrolled subject (optional)
+        page       – 1-based page number (default 1)
     """
     guard = any_role_required()
     if guard:
@@ -954,6 +1008,7 @@ def student_lists_page():
     search     = request.args.get("search",     "").strip()
     class_id   = request.args.get("class_id",   type=int)
     subject_id = request.args.get("subject_id", type=int)
+    page       = request.args.get("page", default=1, type=int)
 
     q = Student.query.filter_by(school_id=school_id)
     if search:
@@ -969,7 +1024,11 @@ def student_lists_page():
     if subject_id:
         q = q.filter(Student.subjects.any(StudentSubject.subject_id == subject_id))
 
-    students = q.order_by(Student.first_name, Student.last_name).all()
+    q = q.order_by(Student.first_name, Student.last_name)
+
+    paged    = _paginate(q, page, STUDENTS_PAGE_SIZE)
+    students = paged["items"]
+
     classes  = Class.query.filter_by(school_id=school_id).order_by(Class.name).all()
     subjects = Subject.query.filter_by(school_id=school_id).order_by(Subject.name).all()
 
@@ -989,6 +1048,13 @@ def student_lists_page():
     all_subjects         = Subject.query.filter_by(school_id=school_id).all()
     subject_map          = {s.id: {"name": s.name, "level": s.level or "other"} for s in all_subjects}
     levels_with_subjects = _get_levels_with_subjects(school_id)
+    total_students        = Student.query.filter_by(school_id=school_id).count()
+
+    # Only pass filters that are actually set, so pagination links stay clean
+    filter_args = {}
+    if search:     filter_args["search"]     = search
+    if class_id:   filter_args["class_id"]   = class_id
+    if subject_id: filter_args["subject_id"] = subject_id
 
     return render_template(
         "modules/academics/student_lists.html",
@@ -1003,6 +1069,9 @@ def student_lists_page():
         stream_class_map     = stream_class_map,
         subject_map          = subject_map,
         levels_with_subjects = levels_with_subjects,
+        pagination           = _pagination_meta(paged),
+        total_students       = total_students,
+        filter_args          = filter_args,
     )
 
 

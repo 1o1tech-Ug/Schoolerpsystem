@@ -140,6 +140,48 @@
 .empty-state .icon{ font-size:48px; margin-bottom:12px; }
 .empty-state p{ font-size:15px; }
 
+/* ── PAGINATION ───────────────────────────────────────────── */
+.pagination-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 20px;
+    flex-wrap:wrap;
+    gap:12px;
+    border-top:1px solid #f1f5f9;
+}
+.pagination-info{ font-size:13px; color:#64748b; }
+.pagination-info strong{ color:#0f172a; font-weight:700; }
+.pagination-controls{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.pg-btn{
+    min-width:36px;
+    height:36px;
+    padding:0 10px;
+    border:1.5px solid #e2e8f0;
+    border-radius:8px;
+    background:white;
+    color:#334155;
+    font-size:13px;
+    font-weight:600;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    transition:.15s;
+}
+.pg-btn:hover:not(.disabled):not(.active){ border-color:#2563eb; color:#2563eb; background:#eff6ff; }
+.pg-btn.active{ background:#2563eb; color:white; border-color:#2563eb; pointer-events:none; }
+.pg-btn.disabled{ opacity:.4; pointer-events:none; }
+.pg-ellipsis{
+    min-width:36px;
+    height:36px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#94a3b8;
+    font-size:13px;
+}
+
 /* ── MODAL ────────────────────────────────────────────────── */
 .modal{
     position:fixed;
@@ -335,6 +377,33 @@
             </tbody>
         </table>
     </div>
+
+    {% if pagination and pagination.total > 0 %}
+    <div class="pagination-bar">
+        <div class="pagination-info">
+            Showing <strong>{{ ((pagination.page - 1) * pagination.per_page) + 1 }}</strong>–<strong>{{ [pagination.page * pagination.per_page, pagination.total] | min }}</strong>
+            of <strong>{{ pagination.total }}</strong> classes
+        </div>
+        {% if pagination.total_pages > 1 %}
+        <div class="pagination-controls">
+            <a class="pg-btn {{ 'disabled' if not pagination.has_prev }}"
+               href="{{ url_for('academics_api.classes_page', page=pagination.page - 1) if pagination.has_prev else '#' }}">‹ Prev</a>
+
+            {% for p in pagination.page_range %}
+                {% if p is none %}
+                    <span class="pg-ellipsis">…</span>
+                {% else %}
+                    <a class="pg-btn {{ 'active' if p == pagination.page }}"
+                       href="{{ url_for('academics_api.classes_page', page=p) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            <a class="pg-btn {{ 'disabled' if not pagination.has_next }}"
+               href="{{ url_for('academics_api.classes_page', page=pagination.page + 1) if pagination.has_next else '#' }}">Next ›</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 <!-- ══ CREATE MODAL ══════════════════════════════════════════ -->
@@ -515,47 +584,6 @@ async function api(url, method="GET", body=null){
     return { ok: res.ok, status: res.status, data };
 }
 
-/* ── ADD ROW TO TABLE ──────────────────────────────────────── */
-function removeEmptyRow(){
-    const e = document.getElementById("emptyRow");
-    if (e) e.remove();
-}
-
-function buildCapacityCell(studentCount, capacity){
-    if (!capacity) return `<span class="badge">${studentCount} enrolled</span>`;
-    const cap = parseInt(capacity);
-    const pct = cap ? studentCount / cap : 0;
-    const cls = pct >= 1 ? 'cap-full' : pct >= 0.85 ? 'cap-warn' : 'cap-ok';
-    return `<span class="cap ${cls}">${studentCount}/${cap}</span>`;
-}
-
-function addTableRow(row){
-    removeEmptyRow();
-    const tbody = document.getElementById("classTableBody");
-    const tr    = document.createElement("tr");
-    tr.dataset.streamId = row.stream_id || "";
-    tr.dataset.classId  = row.class_id;
-
-    tr.innerHTML = `
-        <td><span class="class-label">${row.class_name}</span></td>
-        <td><span class="stream-label">${row.stream_name || 'No stream'}</span></td>
-        <td>${row.teacher || '—'}</td>
-        <td>${buildCapacityCell(0, row.capacity)}</td>
-        <td class="actions-cell">
-            ${row.stream_id ? `
-            <button class="action-btn edit-btn"
-                onclick="openEditStreamModal(${row.stream_id})">✏️ Edit</button>
-            <button class="action-btn delete-btn"
-                onclick="confirmDelete('stream',${row.stream_id},'${row.class_name} – ${row.stream_name}')">🗑 Delete</button>
-            ` : `
-            <button class="action-btn delete-btn"
-                onclick="confirmDelete('class',${row.class_id},'${row.class_name}')">🗑 Delete</button>
-            `}
-        </td>
-    `;
-    tbody.appendChild(tr);
-}
-
 /* ── CREATE ────────────────────────────────────────────────── */
 async function createClass(){
     const btn         = document.getElementById("createBtn");
@@ -604,20 +632,7 @@ async function createClass(){
 
     toast("Created successfully");
     closeModal("createModal");
-
-    const teacherSelect = document.getElementById("c_teacher_id");
-    const teacherName   = teacher_id
-        ? teacherSelect.options[teacherSelect.selectedIndex].text
-        : "—";
-
-    addTableRow({
-        class_id:    data.class_id,
-        class_name,
-        stream_id:   data.stream_id,
-        stream_name: stream_name || "",
-        capacity,
-        teacher:     teacherName,
-    });
+    setTimeout(() => location.reload(), 600);
 }
 
 /* ── EDIT STREAM ───────────────────────────────────────────── */
@@ -696,8 +711,8 @@ function confirmDelete(type, id, label, classId=null){
 
 document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
     const url = _deleteType === "stream"
-    ? `${STREAMS_API}/${_deleteId}?class_id=${_deleteClassId}`
-    : `${CLASSES_API}/${_deleteId}`;
+        ? `${STREAMS_API}/${_deleteId}?class_id=${_deleteClassId}`
+        : `${CLASSES_API}/${_deleteId}`;
 
     const { ok, data } = await api(url, "DELETE");
     closeModal("confirmModal");
@@ -705,22 +720,7 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
     if (!ok){ toast(data.message || "Error deleting", "error"); return; }
 
     toast("Deleted successfully");
-
-    if (_deleteType === "stream"){
-        document.querySelectorAll(`tr[data-stream-id="${_deleteId}"]`).forEach(r => r.remove());
-    } else {
-        document.querySelectorAll(`tr[data-class-id="${_deleteId}"]`).forEach(r => r.remove());
-    }
-
-    if (!document.querySelector("#classTableBody tr[data-class-id]")){
-        document.getElementById("classTableBody").innerHTML = `
-            <tr id="emptyRow"><td colspan="5">
-                <div class="empty-state">
-                    <div class="icon">🏫</div>
-                    <p>No classes yet. Click <strong>Add Class / Stream</strong> to get started.</p>
-                </div>
-            </td></tr>`;
-    }
+    setTimeout(() => location.reload(), 600);
 });
 
 /* ── CLOSE MODAL ON BACKDROP CLICK ─────────────────────────── */

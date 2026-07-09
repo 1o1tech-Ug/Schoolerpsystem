@@ -140,6 +140,52 @@
 .empty-state .icon{ font-size:48px; margin-bottom:12px; }
 .empty-state p{ font-size:15px; }
 
+/* ── PAGINATION ───────────────────────────────────────────── */
+.pagination-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 20px;
+    flex-wrap:wrap;
+    gap:12px;
+    border-top:1px solid #f1f5f9;
+    margin-top:20px;
+    background:white;
+    border-radius:18px;
+    box-shadow:0 4px 15px rgba(0,0,0,.05);
+}
+.pagination-info{ font-size:13px; color:#64748b; }
+.pagination-info strong{ color:#0f172a; font-weight:700; }
+.pagination-controls{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.pg-btn{
+    min-width:36px;
+    height:36px;
+    padding:0 10px;
+    border:1.5px solid #e2e8f0;
+    border-radius:8px;
+    background:white;
+    color:#334155;
+    font-size:13px;
+    font-weight:600;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    transition:.15s;
+}
+.pg-btn:hover:not(.disabled):not(.active){ border-color:#2563eb; color:#2563eb; background:#eff6ff; }
+.pg-btn.active{ background:#2563eb; color:white; border-color:#2563eb; pointer-events:none; }
+.pg-btn.disabled{ opacity:.4; pointer-events:none; }
+.pg-ellipsis{
+    min-width:36px;
+    height:36px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#94a3b8;
+    font-size:13px;
+}
+
 /* ── MODAL ────────────────────────────────────────────────── */
 .modal{
     position:fixed;
@@ -382,6 +428,33 @@
     </div>
 {% endif %}
 </div>
+
+{% if pagination and pagination.total > 0 %}
+<div class="pagination-bar">
+    <div class="pagination-info">
+        Showing <strong>{{ ((pagination.page - 1) * pagination.per_page) + 1 }}</strong>–<strong>{{ [pagination.page * pagination.per_page, pagination.total] | min }}</strong>
+        of <strong>{{ pagination.total }}</strong> subjects
+    </div>
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination-controls">
+        <a class="pg-btn {{ 'disabled' if not pagination.has_prev }}"
+           href="{{ url_for('academics_api.subjects_page', page=pagination.page - 1) if pagination.has_prev else '#' }}">‹ Prev</a>
+
+        {% for p in pagination.page_range %}
+            {% if p is none %}
+                <span class="pg-ellipsis">…</span>
+            {% else %}
+                <a class="pg-btn {{ 'active' if p == pagination.page }}"
+                   href="{{ url_for('academics_api.subjects_page', page=p) }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        <a class="pg-btn {{ 'disabled' if not pagination.has_next }}"
+           href="{{ url_for('academics_api.subjects_page', page=pagination.page + 1) if pagination.has_next else '#' }}">Next ›</a>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
 
 <!-- ══ CREATE MODAL ══════════════════════════════════════════ -->
 <div class="modal" id="createModal">
@@ -822,16 +895,7 @@ document.getElementById("confirmDeleteBtn").addEventListener("click", async () =
     if (!ok){ toast(data.message || "Error deleting", "error"); return; }
 
     toast("Subject deleted");
-    const card = document.getElementById(`subj-card-${_deleteId}`);
-    if (card) card.remove();
-
-    if (!document.querySelector(".subject-card")){
-        document.getElementById("subjectGrid").innerHTML = `
-            <div class="empty-state">
-                <div class="icon">📚</div>
-                <p>No subjects yet. Click <strong>Create Subject</strong> to add one.</p>
-            </div>`;
-    }
+    setTimeout(() => location.reload(), 600);
 });
 
 /* ── CLOSE MODAL ON BACKDROP CLICK ─────────────────────────── */

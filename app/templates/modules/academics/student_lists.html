@@ -101,17 +101,18 @@ tbody tr:hover{background:#f8fafd}
 }
 .pagination-info{font-size:13px;color:var(--ink-3);white-space:nowrap}
 .pagination-info strong{color:var(--ink);font-weight:700}
-.pagination-controls{display:flex;align-items:center;gap:4px}
+.pagination-controls{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .pg-btn{
     min-width:36px;height:36px;padding:0 10px;
     border:1.5px solid var(--line);border-radius:var(--r-sm);
     background:var(--surface);color:var(--ink-2);
     font-family:var(--font-body);font-size:13px;font-weight:600;
+    text-decoration:none;
     cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;
 }
-.pg-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
-.pg-btn:disabled{opacity:.38;cursor:not-allowed}
-.pg-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pg-btn:hover:not(.disabled):not(.active){border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.pg-btn.disabled{opacity:.38;pointer-events:none;cursor:not-allowed}
+.pg-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);pointer-events:none}
 .pg-ellipsis{min-width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:13px}
 
 /* Modal */
@@ -187,7 +188,7 @@ tbody tr:hover{background:#f8fafd}
     </div>
     <div class="header-stats">
         <div class="stat-chip">
-            <span class="val">{{ students | length }}</span>
+            <span class="val">{{ total_students }}</span>
             <span class="lbl">Total</span>
         </div>
         <div class="stat-chip">
@@ -249,7 +250,7 @@ tbody tr:hover{background:#f8fafd}
     <div class="table-toolbar">
         <span class="toolbar-title">Registered Students</span>
         <span class="result-badge" id="resultBadge">
-            {{ students|length }} result{{ 's' if students|length != 1 else '' }}
+            {{ pagination.total }} result{{ 's' if pagination.total != 1 else '' }}
         </span>
     </div>
     <div class="table-wrap">
@@ -356,10 +357,32 @@ tbody tr:hover{background:#f8fafd}
     </div>
 
     <!-- PAGINATION BAR -->
-    <div class="pagination-bar" id="paginationBar">
-        <div class="pagination-info" id="pageInfo"></div>
-        <div class="pagination-controls" id="pageControls"></div>
+    {% if pagination and pagination.total > 0 %}
+    <div class="pagination-bar">
+        <div class="pagination-info">
+            Showing <strong>{{ ((pagination.page - 1) * pagination.per_page) + 1 }}</strong>–<strong>{{ [pagination.page * pagination.per_page, pagination.total] | min }}</strong>
+            of <strong>{{ pagination.total }}</strong> students
+        </div>
+        {% if pagination.total_pages > 1 %}
+        <div class="pagination-controls">
+            <a class="pg-btn {{ 'disabled' if not pagination.has_prev }}"
+               href="{{ url_for('academics_api.student_lists_page', page=pagination.page - 1, **filter_args) if pagination.has_prev else '#' }}">‹ Prev</a>
+
+            {% for p in pagination.page_range %}
+                {% if p is none %}
+                    <span class="pg-ellipsis">…</span>
+                {% else %}
+                    <a class="pg-btn {{ 'active' if p == pagination.page }}"
+                       href="{{ url_for('academics_api.student_lists_page', page=p, **filter_args) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            <a class="pg-btn {{ 'disabled' if not pagination.has_next }}"
+               href="{{ url_for('academics_api.student_lists_page', page=pagination.page + 1, **filter_args) if pagination.has_next else '#' }}">Next ›</a>
+        </div>
+        {% endif %}
     </div>
+    {% endif %}
 </div>
 
 
@@ -455,107 +478,6 @@ const ALL_STREAMS = [
 
 let currentStudentId = null;
 let currentClassId   = null;
-
-/* ══════════════════════════════════════════════════════════════
-   PAGINATION
-   ══════════════════════════════════════════════════════════════ */
-const PAGE_SIZE = 20;
-let currentPage = 1;
-let allRows     = [];   // NodeList snapshot converted to array
-
-function initPagination() {
-    allRows = Array.from(document.querySelectorAll('.student-row'));
-
-    // Hide pagination if not needed
-    const bar = document.getElementById('paginationBar');
-    if (allRows.length <= PAGE_SIZE) {
-        bar.style.display = 'none';
-        return;
-    }
-    bar.style.display = 'flex';
-    renderPage(1);
-}
-
-function renderPage(page) {
-    const total      = allRows.length;
-    const totalPages = Math.ceil(total / PAGE_SIZE);
-
-    // Clamp
-    page = Math.max(1, Math.min(page, totalPages));
-    currentPage = page;
-
-    const start = (page - 1) * PAGE_SIZE;  // inclusive index
-    const end   = start + PAGE_SIZE;       // exclusive index
-
-    allRows.forEach((row, idx) => {
-        row.style.display = (idx >= start && idx < end) ? '' : 'none';
-    });
-
-    // Info text
-    const from = start + 1;
-    const to   = Math.min(end, total);
-    document.getElementById('pageInfo').innerHTML =
-        `Showing <strong>${from}–${to}</strong> of <strong>${total}</strong> students`;
-
-    // Build page number buttons
-    renderPageButtons(page, totalPages);
-}
-
-function renderPageButtons(current, total) {
-    const ctrl = document.getElementById('pageControls');
-    ctrl.innerHTML = '';
-
-    const btn = (label, page, disabled = false, active = false) => {
-        const b = document.createElement('button');
-        b.className = 'pg-btn' + (active ? ' active' : '');
-        b.textContent = label;
-        b.disabled = disabled;
-        if (!disabled && !active) b.onclick = () => renderPage(page);
-        return b;
-    };
-
-    const ellipsis = () => {
-        const s = document.createElement('span');
-        s.className = 'pg-ellipsis';
-        s.textContent = '…';
-        return s;
-    };
-
-    // Prev
-    ctrl.appendChild(btn('‹', current - 1, current === 1));
-
-    // Page numbers with ellipsis logic
-    const pages = buildPageRange(current, total);
-    pages.forEach(p => {
-        if (p === '…') {
-            ctrl.appendChild(ellipsis());
-        } else {
-            ctrl.appendChild(btn(p, p, false, p === current));
-        }
-    });
-
-    // Next
-    ctrl.appendChild(btn('›', current + 1, current === total));
-}
-
-/* Returns array like [1, '…', 5, 6, 7, '…', 12] */
-function buildPageRange(current, total) {
-    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
-
-    const pages = new Set([1, total, current]);
-    if (current > 1) pages.add(current - 1);
-    if (current < total) pages.add(current + 1);
-
-    const sorted = Array.from(pages).sort((a, b) => a - b);
-    const result = [];
-
-    sorted.forEach((p, i) => {
-        if (i > 0 && p - sorted[i - 1] > 1) result.push('…');
-        result.push(p);
-    });
-
-    return result;
-}
 
 /* ── Read data-* from edit button and open modal ── */
 function handleEdit(btn) {
@@ -750,9 +672,6 @@ function updateRow(s) {
 function getAccessToken() {
     return localStorage.getItem('access_token') || '';
 }
-
-/* ── Boot ── */
-document.addEventListener('DOMContentLoaded', initPagination);
 </script>
 
 {% endblock %}
