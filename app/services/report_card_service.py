@@ -47,7 +47,8 @@ grade computation AND for the grading-scheme table rendered on the report
 (via `_build_grade_legend()`).  Only when a school has zero GradeScale rows
 do we fall back to the Uganda-standard DEFAULT_*_GRADES tables below.  This
 applies uniformly — no school is special-cased for grading, only for
-template selection (see _SCHOOL_TEMPLATE_OVERRIDES below).
+template selection (see the `custom_reportcards` package and
+`get_template_name()` below).
 
 Section-category resolution (Nursery / Lower-Upper Primary / O-Level / A-Level)
 ----------------------------------------------------------------------------------
@@ -90,18 +91,28 @@ mark exactly as they would off a normal single-exam score.
 
 School-specific templates
 --------------------------
-`_SCHOOL_TEMPLATE_OVERRIDES` lets specific schools use their own report
-card design instead of the shared default template for a report_type.
+Individual schools that need a bespoke report-card layout do NOT have
+their overrides hardcoded in this file. Each such school's
+customizations live in their own module under
+`app/services/custom_reportcards/` (e.g. `custom_reportcards/sunbay.py`),
+which self-registers its template overrides at import time via
+`register_school()`. This file only ever talks to that registry — it
+has no knowledge of which schools exist or how many there are. See
+`app/services/custom_reportcards/__init__.py` for the registration
+contract and step-by-step instructions for adding a new school.
+
 An override entry can be either:
   - a plain template path string (used for every exam type), or
   - a dict keyed by exam type ("BOT" / "MID" / "EOT") mapping to a
     template path, letting a school use a different layout for its
-    EOT report than for its BOT/MID reports (e.g. Sunbay's primary
-    section, which shows MID+EOT+FINAL columns only on the EOT report).
+    EOT report than for its BOT/MID reports (e.g. a primary section
+    that shows MID+EOT+FINAL columns only on the EOT report).
+
 `get_template_name()` resolves which template a given
-(school_id, report_type, exam_type) combination should render. Add new
-schools/report types to that dict as needed — no other code changes
-required.
+(school_id, report_type, exam_type) combination should render by
+looking up `custom_reportcards.get_overrides(school_id)`. Adding a new
+school's custom layout is therefore just a matter of adding one new
+module under `custom_reportcards/` — no changes to this file required.
 
 Performance notes
 -----------------
@@ -138,7 +149,7 @@ import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from flask import render_template
 from sqlalchemy import func, case, select
@@ -153,6 +164,7 @@ from app.models.academic_structure import (
     LessonSession, GradeScale,
 )
 from app.models.reportcards import PrimaryReportSummary
+from app.services.custom_reportcards import get_overrides as get_school_report_overrides
 
 logger = logging.getLogger(__name__)
 
@@ -1764,22 +1776,16 @@ def html_to_pdf_bytes(html: str) -> tuple[bytes, str]:
 # ─────────────────────────────────────────────────────────────────────────────
 #  SCHOOL-SPECIFIC TEMPLATE OVERRIDES
 # ─────────────────────────────────────────────────────────────────────────────
-
-# Each override value is either:
-#   - a plain template path string (used for every exam type), or
-#   - a dict keyed by exam type ("BOT" / "MID" / "EOT") mapping to a
-#     template path, for schools whose EOT layout differs from their
-#     BOT/MID layout (e.g. Sunbay's primary section).
-_SCHOOL_TEMPLATE_OVERRIDES: dict[int, dict[str, Union[str, dict[str, str]]]] = {
-    6: {  # Sunbay Junior School & Day Care Centre
-        "nursery": "modules/academics/report_cards/Sunbay_nursery_report_card.html",
-        "primary": {
-            "BOT": "modules/academics/report_cards/sunbay_primary_report_card.html",
-            "MID": "modules/academics/report_cards/sunbay_primary_report_card.html",
-            "EOT": "modules/academics/report_cards/sunbay_primary_eot_report_card.html",
-        },
-    },
-}
+#
+# Per-school template customizations no longer live in this file. Each
+# school that needs a bespoke layout has its own module under
+# app/services/custom_reportcards/ (e.g. custom_reportcards/sunbay.py),
+# which self-registers with the registry at import time. This file talks
+# to that registry via get_school_report_overrides() (imported at the
+# top of this module) and never hardcodes a school_id anywhere below.
+#
+# See app/services/custom_reportcards/__init__.py for the full contract
+# and instructions for adding a new school's custom templates.
 
 # Base section-category strings for sections that are NOT split by
 # lower/upper (Nursery, O Level, A Level). Primary is handled separately
@@ -1805,15 +1811,22 @@ def get_template_name(school_id: int, report_type: str, exam_type: Optional[str]
     (school_id, report_type, exam_type) combination.
 
     Resolution order:
-      1. _SCHOOL_TEMPLATE_OVERRIDES[school_id][report_type]:
+      1. custom_reportcards.get_overrides(school_id)[report_type] — the
+         school-specific override registered under
+         app/services/custom_reportcards/ (one module per school):
            - if that's a dict (keyed by exam type), look up exam_type
              there, falling back to the shared default template for that
              section if the exam type isn't listed;
            - if that's a plain string, it's used regardless of exam_type
              (the school hasn't split its templates by exam type).
       2. _TEMPLATE_MAP[report_type] (system default for that section).
+
+    This function deliberately has zero knowledge of which schools have
+    custom templates — that's entirely owned by the custom_reportcards
+    registry — so this file never needs to change as new schools with
+    bespoke layouts are added.
     """
-    overrides = _SCHOOL_TEMPLATE_OVERRIDES.get(school_id, {})
+    overrides = get_school_report_overrides(school_id)
     override  = overrides.get(report_type)
 
     if isinstance(override, dict):
@@ -2085,9 +2098,16 @@ class ReportCardService:
             # We use file:// URIs so WeasyPrint can load images directly from disk
             # without needing Flask routing or a running HTTP server.
             static_path    = Path(static_folder).resolve()
+            static_url     = static_path.as_uri()
+            # `sunbay_logo` / `children_image` are kept as named context
+            # keys solely for backward compatibility with Sunbay's
+            # existing custom_reportcards templates, which already
+            # reference these variable names. Any *new* custom template
+            # (see app/services/custom_reportcards/) should build its own
+            # image URIs from `static_url` above rather than adding more
+            # one-off named keys here.
             sunbay_logo    = (static_path / "images" / "sunbay_logo.png").as_uri()
             children_image = (static_path / "images" / "children1.jpg").as_uri()
-            static_url     = static_path.as_uri()
 
             # ── 11. Template context ────────────────────────────────────────
             ctx = {
@@ -2126,10 +2146,11 @@ class ReportCardService:
             except Exception as exc:
                 # exc_info=True writes the full traceback (including which
                 # Jinja file/line raised, e.g. a missing/renamed variable)
-                # to the log — this is almost certainly where your nursery
-                # failure is coming from, since Sunbay has a custom
-                # nursery template that may reference a context key that
-                # doesn't exist or differs from the default template.
+                # to the log — this is especially useful when the failing
+                # template is a school-specific override registered under
+                # app/services/custom_reportcards/, since those may
+                # reference context keys that differ from the default
+                # template's.
                 logger.error(
                     "Template rendering failed for student=%s school=%s "
                     "report_type=%s exam_type=%s template=%s",
