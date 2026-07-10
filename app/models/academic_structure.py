@@ -287,6 +287,35 @@ class StudentAttendance(db.Model):
 
 
 # =========================
+# STUDENT DAILY ATTENDANCE
+# =========================
+class StudentDailyAttendance(db.Model):
+    """
+    One row per student per calendar day. Derived from StudentAttendance
+    (which is per lesson session) every time a teacher saves attendance.
+
+    Rule: a student is "present" for the day if present/late in AT LEAST
+    ONE lesson session that day; otherwise "absent". This is what report
+    cards read from — never read StudentAttendance directly for report
+    card attendance counts.
+    """
+    __tablename__ = 'student_daily_attendance'
+
+    id = db.Column(db.Integer, primary_key=True)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+
+    status = db.Column(db.String(20), nullable=False)  # "present" or "absent"
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    student = db.relationship('Student', backref='daily_attendance')
+
+    __table_args__ = (
+        UniqueConstraint('student_id', 'date', 'school_id', name='uq_student_daily_attendance'),
+    )
+
+# =========================
 # ASSESSMENT TYPE
 # =========================
 class AssessmentType(enum.Enum):

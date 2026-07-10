@@ -160,8 +160,9 @@ from app.models.academic_structure import (
     Class, Stream, AcademicYear, Term,
     Subject, Papers,
     TeachAssignment, Assessment, AssessmentType,
-    StudentMark, StudentStream, StudentAttendance,
-    LessonSession, GradeScale,
+    StudentMark, StudentStream,
+    StudentDailyAttendance,
+    GradeScale,
 )
 from app.models.reportcards import PrimaryReportSummary
 from app.services.custom_reportcards import get_overrides as get_school_report_overrides
@@ -985,25 +986,35 @@ def compute_attendance(school_id: int, student_id: int, term_id: int) -> dict:
     Return {"total": int, "present": int, "absent": int} for one student
     in one term.
 
-    NOTE: This join uses LessonSession.term_id. If your LessonSession model
-    uses a different column name (e.g. semester_id, period_id), update the
-    .where() clause below to match. Run this to check:
-        from app.models.academic_structure import LessonSession
-        print([c.name for c in LessonSession.__table__.columns])
+    Reads from StudentDailyAttendance — one row per student per calendar
+    day (see _sync_daily_attendance() in teachers_apis.py) — rather than
+    the raw per-lesson StudentAttendance table. This is what makes "DAYS
+    ATTENDED" / "ABSENT" / "TOT" on the report card actually mean days,
+    not individual subject lessons.
+
+    A day counts if it falls within the term's [start_date, end_date]
+    range (inclusive).
     """
     try:
+        term = Term.query.get(term_id)
+        if not term or not term.start_date or not term.end_date:
+            logger.warning(
+                "compute_attendance: term=%s has no start/end date configured "
+                "— returning zeroed attendance.", term_id,
+            )
+            return {"total": 0, "present": 0, "absent": 0}
+
         row = db.session.execute(
             select(
-                func.count(StudentAttendance.id).label("total"),
+                func.count(StudentDailyAttendance.id).label("total"),
                 func.sum(
-                    case((StudentAttendance.status == "present", 1), else_=0)
+                    case((StudentDailyAttendance.status == "present", 1), else_=0)
                 ).label("present"),
-            )
-            .join(LessonSession, LessonSession.id == StudentAttendance.lesson_id)
-            .where(
-                StudentAttendance.school_id  == school_id,
-                StudentAttendance.student_id == student_id,
-                LessonSession.term_id        == term_id,  # ← update column name if needed
+            ).where(
+                StudentDailyAttendance.school_id  == school_id,
+                StudentDailyAttendance.student_id == student_id,
+                StudentDailyAttendance.date >= term.start_date,
+                StudentDailyAttendance.date <= term.end_date,
             )
         ).one()
 
@@ -1012,14 +1023,11 @@ def compute_attendance(school_id: int, student_id: int, term_id: int) -> dict:
         return {"total": total, "present": present, "absent": total - present}
 
     except Exception:
-        # logger.exception() automatically appends the full traceback to the
-        # log record — this is what will show up in the Render "Logs" tab.
         logger.exception(
             "compute_attendance failed for student=%s term=%s",
             student_id, term_id,
         )
         return {"total": 0, "present": 0, "absent": 0}
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  SHARED PER-SUBJECT PERCENTAGE HELPER

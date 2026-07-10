@@ -58,7 +58,7 @@ def create_app():
     from app.models.academic_structure import (
         Class, Stream, AcademicConfig, AcademicYear, Term,
         Subject, TeacherSubject, Papers, TeacherStream,
-        StudentSubject, StudentStream, StaffAttendance,
+        StudentSubject, StudentStream,StudentDailyAttendance, StaffAttendance,
         TeachAssignment,
         LessonSession, StudentAttendance,
         AssessmentType, Assessment, StudentMark, GradeScale, StudentEnrollment,

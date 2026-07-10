@@ -27,7 +27,7 @@ from app.models.academic_structure import (
     StudentStream,
     Assessment, AssessmentType, StudentMark,
     AcademicConfig, Term, AcademicYear,
-    LessonSession, StudentAttendance,
+    LessonSession, StudentAttendance,StudentDailyAttendance,
 )
 from app.core.rate_limit import (
     READ_LIMIT, WRITE_LIMIT, MARKS_SAVE_LIMIT,
@@ -126,6 +126,58 @@ def _build_streams_and_levels(assignments):
                 levels[level].append(a.subject)
 
     return list(stream_map.values()), levels
+
+
+
+def _sync_daily_attendance(school_id, student_ids, att_date):
+    """
+    Recomputes the daily attendance status for each student on att_date
+    from ALL their lesson sessions that day (not just the one just saved),
+    and upserts into StudentDailyAttendance.
+
+    Rule: present if present/late in ANY lesson that day, else absent.
+    """
+    if not student_ids:
+        return
+
+    # All lesson sessions for this school on this date
+    session_ids = [
+        s.id for s in LessonSession.query.filter_by(
+            school_id=school_id, date=att_date
+        ).all()
+    ]
+    if not session_ids:
+        return
+
+    # All lesson-level attendance rows for these students on that date
+    rows = StudentAttendance.query.filter(
+        StudentAttendance.school_id == school_id,
+        StudentAttendance.lesson_id.in_(session_ids),
+        StudentAttendance.student_id.in_(student_ids),
+    ).all()
+
+    status_by_student = {}
+    for r in rows:
+        if r.status in ("present", "late"):
+            status_by_student[r.student_id] = "present"
+        else:
+            status_by_student.setdefault(r.student_id, "absent")
+
+    existing = {
+        d.student_id: d
+        for d in StudentDailyAttendance.query.filter_by(
+            school_id=school_id, date=att_date
+        ).filter(StudentDailyAttendance.student_id.in_(student_ids)).all()
+    }
+
+    for sid, status in status_by_student.items():
+        if sid in existing:
+            existing[sid].status = status
+        else:
+            db.session.add(StudentDailyAttendance(
+                school_id=school_id, student_id=sid,
+                date=att_date, status=status,
+            ))
 
 
 def _serialize_assignment(a):
@@ -804,6 +856,18 @@ def save_attendance():
             saved += 1
 
         db.session.commit()
+      
+
+        try:
+            student_ids = [r.get("student_id") for r in records if r.get("student_id")]
+            _sync_daily_attendance(school_id, student_ids, att_date)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception("daily attendance sync failed | assignment_id=%s date=%s", assignment_id, date_str)
+            # don't fail the request — lesson attendance was already saved successfully
+
+        return jsonify({"message": f"Attendance saved — {saved} record(s)", "saved": saved}), 200
         return jsonify({"message": f"Attendance saved — {saved} record(s)", "saved": saved}), 200
 
     except Exception:
