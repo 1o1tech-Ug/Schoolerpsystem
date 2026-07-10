@@ -12,3 +12,10 @@
 [2026-07-10 14:49:34] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.services.report_card_service | No marks for student=144 term=5 exam=EOT — empty report will be generated.
 [2026-07-10 14:49:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 321:9, unknown property.
 [2026-07-10 14:49:35] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Relative URI reference without a base URI: <img src="None">
+[2026-07-11 00:24:02] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-11 00:24:02] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-11 00:24:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-11 00:24:05] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-11 00:24:47] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-11 00:24:47] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-11 00:26:23] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 321:9, unknown property.

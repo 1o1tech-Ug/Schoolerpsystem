@@ -48,6 +48,17 @@ CHANGES vs original:
     generation thread's `finally` block, and includes a stale-lock
     timeout in case a thread dies without reaching `finally` (process
     kill, OOM, etc.), so a school is never permanently locked out.
+  - [FIX][CDN-CACHE] Report card PDFs are now uploaded to a UNIQUE
+    remote path on every single generation (see _upload_report_pdf).
+    Previously every regeneration for the same student/term/exam_type
+    reused the exact same remote path, so a CDN edge PoP that had
+    already cached the OLD file at that path would keep serving those
+    stale bytes for its own TTL — regardless of the Cache-Control
+    header set on the NEW upload, and regardless of the old object
+    being deleted from storage (a storage delete is not an edge-cache
+    purge). Versioning the path removes the dependency on purge APIs
+    or query-string cache-key behavior entirely: there is nothing
+    stale for the edge to have cached at a path it has never seen.
 """
 
 import requests as http_requests
@@ -103,10 +114,10 @@ MAX_LOGO_SIZE_BYTES     = 5 * 1024 * 1024
 VALID_EXAM_TYPES        = {"BOT", "MID", "EOT"}
 
 # Cache-Control sent to BunnyCDN when uploading report card PDFs.
-# Report files are regenerated and re-uploaded at the SAME remote path
-# (see _upload_report_pdf below), so the CDN edge and browsers must
-# always revalidate rather than serve a cached copy from a previous
-# generation.
+# Report files are regenerated and re-uploaded at a NEW versioned
+# remote path each time (see _upload_report_pdf below), but we still
+# set this so any given file is never cached indefinitely by the edge
+# or the browser.
 _REPORT_CACHE_CONTROL = "no-cache, no-store, must-revalidate"
 
 _SECTION_LABELS = {
@@ -297,7 +308,7 @@ def _stream_report_type(stream) -> str:
     return classify_class(class_name)
 
 
-def _upload_report_pdf(local_path: str, academic_year, term, stream) -> tuple[str, str]:
+def _upload_report_pdf(local_path: str, academic_year, term, stream, unique_token: str) -> tuple[str, str]:
     """
     Uploads the generated PDF to BunnyCDN. This is the ONLY persistence
     layer for report card files — there is intentionally no local-disk
@@ -305,25 +316,42 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream) -> tuple[st
     caller MUST treat the whole generation as failed (never record a
     report card whose file only exists locally).
 
+    [FIX][CDN-CACHE] `unique_token` is folded into the remote filename
+    so every generation lands on a brand-new CDN path instead of
+    reusing the same path across regenerations. Relying solely on
+    Cache-Control headers / query-string busting was not sufficient:
+    a CDN edge PoP that already cached the OLD file at a given path
+    keeps serving those bytes for its own TTL regardless of what
+    Cache-Control the NEW upload sets, and regardless of whether the
+    old object was deleted from storage — that's a storage-level
+    delete, not an edge-cache purge. Giving every generation a unique
+    path sidesteps the problem entirely: there is nothing stale for
+    the edge to have cached at a URL it has never seen before.
+
     Returns (cdn_url, remote_path).
     """
     with open(local_path, "rb") as fh:
         pdf_bytes = fh.read()
 
     filename    = os.path.basename(local_path)
+    name_part, ext_part = os.path.splitext(filename)
     ay_slug     = (academic_year.name if academic_year else "unknown").replace(" ", "_")
     term_slug   = (term.name          if term          else "unknown").replace(" ", "_")
     stream_slug = (stream.name        if stream        else "unknown").replace(" ", "_")
 
+    # unique_token makes this path different from any previous
+    # generation for the same student/term/exam_type, so a CDN edge
+    # that cached an older version has nothing stale to serve.
+    versioned_filename = f"{name_part}_{unique_token}{ext_part}"
+
     remote_path = (
-        f"uploads/report_cards/{ay_slug}/{term_slug}/{stream_slug}/{filename}"
+        f"uploads/report_cards/{ay_slug}/{term_slug}/{stream_slug}/{versioned_filename}"
     )
 
     try:
-        # Explicit no-cache Cache-Control on upload — this is what
-        # BunnyCDN's Pull Zone forwards back to the browser/edge on every
-        # request for this file, so a regenerated report at the same
-        # remote_path is never served stale from cache.
+        # Explicit no-cache Cache-Control on upload — belt-and-suspenders
+        # on top of the path versioning above, so this specific file is
+        # also never held onto indefinitely by an intermediary.
         cdn_url = bunny_upload(
             data=pdf_bytes,
             remote_path=remote_path,
@@ -337,7 +365,7 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream) -> tuple[st
         logger.warning("_upload_report_pdf: bunny_upload returned no URL for %s", local_path)
         raise RuntimeError("Failed to upload report card to storage")
 
-    logger.info("_upload_report_pdf: uploaded %s → %s", filename, cdn_url)
+    logger.info("_upload_report_pdf: uploaded %s → %s", versioned_filename, cdn_url)
     return cdn_url, remote_path
 
 
@@ -628,14 +656,24 @@ def generate_report_card():
                     exam_type=exam_type,
                 ).first()
 
+                # [FIX][CDN-CACHE] Unique per-generation token folded into
+                # the CDN remote path — see _upload_report_pdf docstring.
+                # Combines a timestamp (readable in Bunny's file browser)
+                # with a short uuid suffix (guarantees uniqueness even if
+                # two jobs somehow land in the same second).
+                unique_token = f"{int(now.timestamp())}_{uuid.uuid4().hex[:8]}"
+
                 # Upload to Bunny FIRST. If this raises, we fall straight
                 # into the except block below — no DB row is touched and
                 # the previous report card (if any) stays untouched.
-                cdn_url, remote_path = _upload_report_pdf(local_path, _ay, _term, _stream)
+                cdn_url, remote_path = _upload_report_pdf(local_path, _ay, _term, _stream, unique_token)
 
-                # Only now that the new file is safely on Bunny do we
-                # remove the previous CDN file, so a failed re-generation
-                # never leaves a report card with no file at all.
+                # Only now that the new file is safely on Bunny — at a
+                # path the CDN edge has never served before, so there is
+                # nothing stale to worry about — do we remove the
+                # previous CDN file. This ordering means a failed
+                # re-generation never leaves a report card with no file
+                # at all.
                 if existing_report and existing_report.firebase_url:
                     _delete_cdn_file(existing_report.firebase_url)
 
