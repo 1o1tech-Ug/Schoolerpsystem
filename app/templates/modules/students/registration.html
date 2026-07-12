@@ -839,7 +839,7 @@ const COLUMN_DEFS = [
   { key: "first_name",       icon: "👤", desc: "Student's first name",        required: true  },
   { key: "last_name",        icon: "👤", desc: "Student's last/family name",   required: true  },
   { key: "gender",           icon: "⚥",  desc: "Male or Female",               required: true  },
-  { key: "date_of_birth",    icon: "📅", desc: "Format: YYYY-MM-DD",           required: true  },
+  { key: "date_of_birth",    icon: "📅", desc: "Any common date format — e.g. 2010-05-14, 14/05/2010, 14-May-2010", required: true  },
   { key: "admission_number", icon: "🔢", desc: "Unique admission ID",          required: true  },
   { key: "guardian_name",    icon: "👨‍👧", desc: "Parent / guardian full name", required: true  },
   { key: "guardian_contact", icon: "📞", desc: "Phone number or email",        required: true  },
@@ -1035,6 +1035,101 @@ async function handleExcelFile(file) {
   } catch (err) { showToast("Failed to load Excel parser: " + err.message, "error"); }
 }
 
+/* ── FLEXIBLE DATE PARSING ──
+   [FIX] The bulk import used to hard-reject anything that wasn't
+   exactly YYYY-MM-DD, even though that's an unreasonably rigid ask
+   for a spreadsheet a school admin fills in by hand. This parser
+   accepts a wide range of common formats and normalizes every
+   recognized date to YYYY-MM-DD (the format the backend/date input
+   actually expects) before validation. Only genuinely unparseable
+   values are still flagged as errors.
+
+   Supported inputs (case-insensitive, flexible separators / . -):
+     - YYYY-MM-DD / YYYY/MM/DD              (ISO-ish, unambiguous)
+     - DD-MM-YYYY / DD/MM/YYYY / DD.MM.YYYY (day-first, used locally)
+     - MM-DD-YYYY / MM/DD/YYYY              (US month-first — only
+       inferred when the first number can't be a day, i.e. > 12,
+       otherwise day-first wins since that's the local convention)
+     - D Month YYYY   e.g. "14 May 2010", "5 Jan 2012"
+     - Month D, YYYY  e.g. "May 14, 2010", "January 5 2012"
+     - 2-digit years are expanded assuming 1930-2029
+*/
+const MONTH_NAMES = {
+  jan:1, january:1, feb:2, february:2, mar:3, march:3, apr:4, april:4,
+  may:5, jun:6, june:6, jul:7, july:7, aug:8, august:8,
+  sep:9, sept:9, september:9, oct:10, october:10, nov:11, november:11,
+  dec:12, december:12,
+};
+
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+function isValidYMD(y, m, d) {
+  if (m < 1 || m > 12) return false;
+  const daysInMonth = new Date(y, m, 0).getDate();
+  return d >= 1 && d <= daysInMonth;
+}
+
+function expandYear(y) {
+  if (y >= 100) return y;
+  return y <= 29 ? 2000 + y : 1900 + y;
+}
+
+/* Returns "YYYY-MM-DD" on success, or null if the string can't be
+   confidently parsed as a real calendar date. */
+function parseFlexibleDate(raw) {
+  if (!raw) return null;
+  const str = raw.trim();
+  if (!str) return null;
+
+  // Already ISO — fast path, still validated for a real calendar date.
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    const [, y, mo, d] = m.map(Number);
+    return isValidYMD(y, mo, d) ? `${y}-${pad2(mo)}-${pad2(d)}` : null;
+  }
+
+  // YYYY/MM/DD
+  m = str.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if (m) {
+    const [, y, mo, d] = m.map(Number);
+    return isValidYMD(y, mo, d) ? `${y}-${pad2(mo)}-${pad2(d)}` : null;
+  }
+
+  // Numeric with -, / or . separators: ambiguous between D-M-Y and M-D-Y.
+  m = str.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/);
+  if (m) {
+    let [, a, b, y] = m.map(Number);
+    y = expandYear(y);
+    // Prefer day-first (local convention). Fall back to month-first
+    // only if day-first is impossible (a > 12) but month-first works.
+    if (isValidYMD(y, b, a)) return `${y}-${pad2(b)}-${pad2(a)}`;
+    if (isValidYMD(y, a, b)) return `${y}-${pad2(a)}-${pad2(b)}`;
+    return null;
+  }
+
+  // "14 May 2010" / "14th May 2010"
+  m = str.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{2,4})$/);
+  if (m) {
+    const d = Number(m[1]);
+    const mo = MONTH_NAMES[m[2].toLowerCase()];
+    const y = expandYear(Number(m[3]));
+    if (mo && isValidYMD(y, mo, d)) return `${y}-${pad2(mo)}-${pad2(d)}`;
+    return null;
+  }
+
+  // "May 14, 2010" / "May 14 2010"
+  m = str.match(/^([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{2,4})$/);
+  if (m) {
+    const mo = MONTH_NAMES[m[1].toLowerCase()];
+    const d = Number(m[2]);
+    const y = expandYear(Number(m[3]));
+    if (mo && isValidYMD(y, mo, d)) return `${y}-${pad2(mo)}-${pad2(d)}`;
+    return null;
+  }
+
+  return null;
+}
+
 /* ── PARSE & VALIDATE ── */
 function parseAndValidate(csvText) {
   const lines = csvText.replace(/\r/g, "").split("\n").filter(l => l.trim());
@@ -1067,9 +1162,17 @@ function parseAndValidate(csvText) {
     else if (row.gender)
       row.gender = row.gender.charAt(0).toUpperCase() + row.gender.slice(1).toLowerCase();
 
-    // Date format
-    if (row.date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(row.date_of_birth))
-      errors.push("date_of_birth must be YYYY-MM-DD");
+    // [FIX] Date of birth — accept common formats, normalize to
+    // YYYY-MM-DD in place so downstream import/display is consistent.
+    // Only flag as an error if it truly can't be parsed as a date.
+    if (row.date_of_birth) {
+      const normalized = parseFlexibleDate(row.date_of_birth);
+      if (!normalized) {
+        errors.push(`date_of_birth "${row.date_of_birth}" is not a recognizable date`);
+      } else {
+        row.date_of_birth = normalized;
+      }
+    }
 
     // Duplicate admission number within the file
     if (row.admission_number) {
