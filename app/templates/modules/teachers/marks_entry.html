@@ -10,6 +10,7 @@
     --ink:#0a0f1e; --ink-2:#3d4a63; --ink-3:#8492a6; --line:#e8ecf3;
     --surface:#fff; --bg:#f4f6fb;
     --blue:#2352ff; --blue-dim:#e8edff; --blue-dark:#1438cc;
+    --amber:#f59e0b; --amber-dark:#d97706;
     --green:#00c07a; --green-dim:#e0faf0;
     --rose:#f43f5e; --rose-dim:#ffe4e9;
     --amber:#f59e0b; --amber-dim:#fef3c7;
@@ -82,6 +83,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
 .score-display{font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--ink-2)}
 .score-display.has-score{color:var(--green)}
 .score-display.no-score{color:var(--ink-3)}
+.comment-flag{display:inline-block;margin-left:6px;font-size:12px;cursor:help}
 
 .edit-btn{height:32px;padding:0 12px;border-radius:6px;border:1.5px solid var(--line);background:none;font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;color:var(--blue);transition:all .15s}
 .edit-btn:hover{border-color:var(--blue);background:var(--blue-dim)}
@@ -102,22 +104,37 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
 .modal-backdrop{position:fixed;inset:0;background:rgba(10,15,30,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:4000;padding:20px}
 .modal-backdrop.show{display:flex;animation:bdIn .2s ease}
 @keyframes bdIn{from{opacity:0}to{opacity:1}}
-.modal{width:100%;max-width:500px;background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--shadow-xl);animation:modalIn .25s cubic-bezier(.16,1,.3,1);overflow:hidden}
+.modal{width:100%;max-width:520px;background:var(--surface);border-radius:var(--r-xl);box-shadow:var(--shadow-xl);animation:modalIn .25s cubic-bezier(.16,1,.3,1);overflow:hidden;max-height:88vh;display:flex;flex-direction:column}
 @keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-.modal-header{padding:22px 24px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start}
+.modal-header{padding:22px 24px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0}
 .modal-title{font-family:var(--font-display);font-size:18px;font-weight:800}
 .modal-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 .info-pill{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;background:var(--blue-dim);color:var(--blue)}
 .close-btn{width:34px;height:34px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:none;cursor:pointer;font-size:15px;color:var(--ink-3);display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .close-btn:hover{border-color:var(--rose);color:var(--rose);background:var(--rose-dim)}
-.modal-body{padding:22px 24px}
-.score-field{margin-bottom:16px}
+.modal-body{padding:22px 24px;overflow-y:auto}
+.score-field{margin-bottom:20px;padding-bottom:18px;border-bottom:1px dashed var(--line)}
+.score-field:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
 .score-field label{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);margin-bottom:8px}
 .score-input{height:48px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:0 16px;font-size:16px;font-family:var(--font-display);font-weight:700;color:var(--ink);background:var(--bg);outline:none;width:100%;transition:border-color .18s,box-shadow .18s}
 .score-input:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(35,82,255,.12)}
 .score-input.error{border-color:var(--rose);box-shadow:0 0 0 3px rgba(244,63,94,.12)}
 .score-hint{font-size:11px;color:var(--ink-3);margin-top:5px}
-.modal-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+
+/* [NEW] Comment field under each score */
+.comment-field{margin-top:10px}
+.comment-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.comment-textarea{
+  width:100%;min-height:56px;resize:vertical;
+  border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:10px 12px;font-size:13px;font-family:var(--font-body);
+  color:var(--ink);background:var(--bg);outline:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+.comment-textarea:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(35,82,255,.12)}
+.comment-hint{font-size:10.5px;color:var(--ink-3);margin-top:4px}
+
+.modal-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
 .btn-cancel{height:42px;padding:0 18px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:none;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:all .15s}
 .btn-cancel:hover{border-color:var(--ink-2)}
 .btn-submit{height:42px;padding:0 22px;background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:13px;font-weight:700;cursor:pointer;transition:background .18s;display:flex;align-items:center;gap:8px}
@@ -371,6 +388,11 @@ function toast(msg, type = 'success') {
     setTimeout(() => { el.classList.add('leaving'); el.addEventListener('animationend', () => el.remove()); }, 3800);
 }
 
+function escHtml(str) {
+    return (str == null ? "" : String(str)).replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c]);
+}
+
 /* ── Load Students ── */
 async function loadStudents() {
     const stream_id  = document.getElementById('stream_id').value;
@@ -446,14 +468,21 @@ function renderStudentTable(data) {
 
         if (hasPapers) {
             data.papers.forEach(p => {
-                const score = s.saved_marks && s.saved_marks[String(p.id)];
-                const cls   = score != null ? 'has-score' : 'no-score';
-                html += `<td><span class="score-display ${cls}">${score != null ? score : '—'}</span></td>`;
+                const score   = s.saved_marks && s.saved_marks[String(p.id)];
+                const comment = s.saved_comments && s.saved_comments[String(p.id)];
+                const cls     = score != null ? 'has-score' : 'no-score';
+                /* [NEW] Small 💬 flag with a title tooltip when a comment
+                   already exists for this score, so teachers can see at a
+                   glance which cells have a remark without opening the modal. */
+                const flag = comment ? `<span class="comment-flag" title="${escHtml(comment)}">💬</span>` : "";
+                html += `<td><span class="score-display ${cls}">${score != null ? score : '—'}</span>${flag}</td>`;
             });
         } else {
-            const score = s.saved_score;
-            const cls   = score != null ? 'has-score' : 'no-score';
-            html += `<td><span class="score-display ${cls}">${score != null ? score : '—'}</span></td>`;
+            const score   = s.saved_score;
+            const comment = s.saved_comment;
+            const cls     = score != null ? 'has-score' : 'no-score';
+            const flag    = comment ? `<span class="comment-flag" title="${escHtml(comment)}">💬</span>` : "";
+            html += `<td><span class="score-display ${cls}">${score != null ? score : '—'}</span>${flag}</td>`;
         }
 
         html += `<td><button class="edit-btn" onclick="openModal(${s.id})">✏️ Edit</button></td></tr>`;
@@ -474,9 +503,14 @@ function openModal(studentId) {
     const hasPapers = currentData.papers && currentData.papers.length > 0;
     let html = '';
 
+    /* [NEW] Every score field now has a matching comment textarea
+       underneath it — this is what report_card_service.py reads to
+       populate the "Comment" column on the nursery report card next
+       to each Learning Area score. Optional: leaving it blank is fine. */
     if (hasPapers) {
         currentData.papers.forEach(p => {
-            const existing = currentStudent.saved_marks && currentStudent.saved_marks[String(p.id)];
+            const existingScore   = currentStudent.saved_marks    && currentStudent.saved_marks[String(p.id)];
+            const existingComment = currentStudent.saved_comments && currentStudent.saved_comments[String(p.id)];
             html += `
             <div class="score-field">
                 <label>${p.paper_name}</label>
@@ -484,13 +518,21 @@ function openModal(studentId) {
                     class="score-input modal-score"
                     data-paper="${p.id}"
                     data-max="${p.max_marks}"
-                    value="${existing != null ? existing : ''}"
+                    value="${existingScore != null ? existingScore : ''}"
                     placeholder="Enter score (max ${p.max_marks})"
                     oninput="validateScore(this)">
                 <div class="score-hint">Max marks: ${p.max_marks}</div>
+                <div class="comment-field">
+                    <label>Remark (optional)</label>
+                    <textarea class="comment-textarea modal-comment"
+                        data-paper="${p.id}"
+                        placeholder="e.g. Needs more practice with this area">${escHtml(existingComment || "")}</textarea>
+                    <div class="comment-hint">Shown on the report card next to this subject's score.</div>
+                </div>
             </div>`;
         });
     } else {
+        const existingComment = currentStudent.saved_comment;
         html = `
         <div class="score-field">
             <label>${currentData.subject.name}</label>
@@ -500,6 +542,13 @@ function openModal(studentId) {
                 value="${currentStudent.saved_score != null ? currentStudent.saved_score : ''}"
                 placeholder="Enter score"
                 oninput="validateScore(this)">
+            <div class="comment-field">
+                <label>Remark (optional)</label>
+                <textarea class="comment-textarea modal-comment"
+                    data-paper=""
+                    placeholder="e.g. Excellent participation this term">${escHtml(existingComment || "")}</textarea>
+                <div class="comment-hint">Shown on the report card next to this subject's score.</div>
+            </div>
         </div>`;
     }
 
@@ -558,10 +607,18 @@ async function submitModalMarks() {
             hasError = true; break;
         }
 
+        // [NEW] Pull the matching comment textarea for this paper (same
+        // data-paper value links them) and include it in the payload.
+        const commentEl = document.querySelector(
+            `.modal-comment[data-paper="${paperId || ''}"]`
+        );
+        const comment = commentEl ? commentEl.value.trim() : "";
+
         marks.push({
             student_id: currentStudent.id,
             paper_id:   paperId ? parseInt(paperId) : null,
             score,
+            comment,   // [NEW] backend treats "" as "leave existing unchanged"
         });
     }
 
@@ -674,10 +731,13 @@ function renderSavedMarks(records) {
             paperNames.forEach(pName => {
                 const p     = (r.papers || []).find(x => x.paper_name === pName);
                 const score = p ? p.score : null;
-                html += `<td><span class="score-display ${score != null ? 'has-score' : 'no-score'}">${score != null ? score : '—'}</span></td>`;
+                const comment = p ? p.comment : "";
+                const flag = comment ? `<span class="comment-flag" title="${escHtml(comment)}">💬</span>` : "";
+                html += `<td><span class="score-display ${score != null ? 'has-score' : 'no-score'}">${score != null ? score : '—'}</span>${flag}</td>`;
             });
         } else {
-            html += `<td><span class="score-display ${r.score != null ? 'has-score' : 'no-score'}">${r.score != null ? r.score : '—'}</span></td>`;
+            const flag = r.comment ? `<span class="comment-flag" title="${escHtml(r.comment)}">💬</span>` : "";
+            html += `<td><span class="score-display ${r.score != null ? 'has-score' : 'no-score'}">${r.score != null ? r.score : '—'}</span>${flag}</td>`;
         }
 
         html += `</tr>`;

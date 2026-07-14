@@ -225,7 +225,8 @@ def load_marks_students():
             for asmt in assessments
         }
 
-        saved_scores = {}
+        saved_scores   = {}
+        saved_comments = {}   # [NEW] (subject_id, paper_id, student_id) -> comment
         if assessments:
             for mark in StudentMark.query.filter(
                 StudentMark.assessment_id.in_([a.id for a in assessments]),
@@ -234,7 +235,8 @@ def load_marks_students():
                 key = asmt_to_subj_paper.get(mark.assessment_id)
                 if key:
                     subj_id, paper_id = key
-                    saved_scores[(subj_id, paper_id, mark.student_id)] = mark.score
+                    saved_scores[(subj_id, paper_id, mark.student_id)]   = mark.score
+                    saved_comments[(subj_id, paper_id, mark.student_id)] = mark.comment
 
         papers_by_subject = {}
         subject_data = []
@@ -259,23 +261,32 @@ def load_marks_students():
                 "student_code": student.student_code,
                 "name":         f"{student.first_name} {student.last_name}",
                 "scores":       {},
+                "comments":     {},   # [NEW]
             }
             for subject in subjects:
                 if subject.id not in my_subjects:
-                    row["scores"][str(subject.id)] = None
+                    row["scores"][str(subject.id)]   = None
+                    row["comments"][str(subject.id)] = None
                     continue
 
                 papers = papers_by_subject[subject.id]
                 if papers:
-                    paper_scores = {}
+                    paper_scores   = {}
+                    paper_comments = {}   # [NEW]
                     for p in papers:
                         s = saved_scores.get((subject.id, p.id, student.id))
                         if s is not None:
                             paper_scores[str(p.id)] = s
-                    row["scores"][str(subject.id)] = paper_scores
+                        c = saved_comments.get((subject.id, p.id, student.id))
+                        if c:
+                            paper_comments[str(p.id)] = c
+                    row["scores"][str(subject.id)]   = paper_scores
+                    row["comments"][str(subject.id)] = paper_comments
                 else:
                     s = saved_scores.get((subject.id, None, student.id))
-                    row["scores"][str(subject.id)] = s
+                    c = saved_comments.get((subject.id, None, student.id))   # [NEW]
+                    row["scores"][str(subject.id)]   = s
+                    row["comments"][str(subject.id)] = c
 
             student_data.append(row)
 
@@ -354,13 +365,15 @@ def get_student_marks_entry():
             for asmt in assessments
         }
 
-        marks_by_assessment = {}
+        marks_by_assessment    = {}
+        comments_by_assessment = {}   # [NEW]
         if assessments:
             for mark in StudentMark.query.filter(
                 StudentMark.assessment_id.in_([a.id for a in assessments]),
                 StudentMark.student_id == student_id,
             ).all():
-                marks_by_assessment[mark.assessment_id] = mark.score
+                marks_by_assessment[mark.assessment_id]    = mark.score
+                comments_by_assessment[mark.assessment_id] = mark.comment
 
         results = []
         for subject in subjects:
@@ -369,13 +382,15 @@ def get_student_marks_entry():
             if papers:
                 paper_data = []
                 for paper in papers:
-                    asmt  = assessment_map.get((subject.id, paper.id))
-                    score = marks_by_assessment.get(asmt.id, "") if asmt else ""
+                    asmt    = assessment_map.get((subject.id, paper.id))
+                    score   = marks_by_assessment.get(asmt.id, "") if asmt else ""
+                    comment = comments_by_assessment.get(asmt.id, "") if asmt else ""   # [NEW]
                     paper_data.append({
                         "id":        paper.id,
                         "name":      paper.paper_name,
                         "max_marks": paper.max_marks,
                         "score":     score,
+                        "comment":   comment or "",   # [NEW]
                     })
                 results.append({
                     "id":     subject.id,
@@ -383,13 +398,15 @@ def get_student_marks_entry():
                     "papers": paper_data,
                 })
             else:
-                asmt  = assessment_map.get((subject.id, None))
-                score = marks_by_assessment.get(asmt.id, "") if asmt else ""
+                asmt    = assessment_map.get((subject.id, None))
+                score   = marks_by_assessment.get(asmt.id, "") if asmt else ""
+                comment = comments_by_assessment.get(asmt.id, "") if asmt else ""   # [NEW]
                 results.append({
-                    "id":     subject.id,
-                    "name":   subject.name,
-                    "score":  score,
-                    "papers": [],
+                    "id":      subject.id,
+                    "name":    subject.name,
+                    "score":   score,
+                    "comment": comment or "",   # [NEW]
+                    "papers":  [],
                 })
 
         return jsonify({"subjects": results}), 200
@@ -483,6 +500,13 @@ def save_student_marks():
                         )
                     }), 400
 
+            # [NEW] Optional per-mark comment — trim, cap length, blank → None
+            # so we don't store empty strings that would otherwise render as
+            # a populated-but-blank comment cell on the report. Mirrors
+            # teachers_api.save_marks() handling.
+            raw_comment = item.get("comment")
+            comment = (str(raw_comment).strip()[:1000] or None) if raw_comment else None
+
             assignment = assignment_by_subject.get(subject_id)
 
             assessment = _get_or_create_assessment(
@@ -502,12 +526,19 @@ def save_student_marks():
 
             if existing:
                 existing.score = score
+                # [NEW] Only overwrite the comment if one was actually
+                # submitted this time — leaving the field blank in the
+                # UI on a later save shouldn't silently wipe a comment
+                # a teacher left earlier for this same assessment.
+                if comment is not None:
+                    existing.comment = comment
             else:
                 db.session.add(StudentMark(
                     school_id     = school_id,
                     assessment_id = assessment.id,
                     student_id    = student_id,
                     score         = score,
+                    comment       = comment,   # [NEW]
                 ))
             saved += 1
 
@@ -631,18 +662,21 @@ def load_saved_marks():
             for asmt in assessments
         }
 
-        marks_map = {}
+        marks_map    = {}
+        comments_map = {}   # [NEW]
         if assessment_ids_map:
             for mark in StudentMark.query.filter(
                 StudentMark.assessment_id.in_(list(assessment_ids_map.values())),
                 StudentMark.student_id.in_(student_ids),
             ).all():
-                marks_map.setdefault(mark.assessment_id, {})[mark.student_id] = mark.score
+                marks_map.setdefault(mark.assessment_id, {})[mark.student_id]    = mark.score
+                comments_map.setdefault(mark.assessment_id, {})[mark.student_id] = mark.comment
 
         student_rows = []
         for student in students:
             my_subjects = student_subject_map.get(student.id, set())
-            scores = {}
+            scores   = {}
+            comments = {}   # [NEW]
 
             for col in columns:
                 subj_id  = col["subject_id"]
@@ -650,20 +684,24 @@ def load_saved_marks():
                 key      = col["key"]
 
                 if subj_id not in my_subjects:
-                    scores[key] = "N/A"
+                    scores[key]   = "N/A"
+                    comments[key] = ""
                     continue
 
                 asmt_id = assessment_ids_map.get((subj_id, paper_id))
                 if asmt_id is None:
-                    scores[key] = "-"
+                    scores[key]   = "-"
+                    comments[key] = ""
                 else:
                     val = marks_map.get(asmt_id, {}).get(student.id)
                     scores[key] = val if val is not None else "-"
+                    comments[key] = comments_map.get(asmt_id, {}).get(student.id) or ""   # [NEW]
 
             student_rows.append({
                 "student_code": student.student_code,
                 "name":         f"{student.first_name} {student.last_name}",
                 "scores":       scores,
+                "comments":     comments,   # [NEW]
             })
 
         return jsonify({

@@ -222,6 +222,12 @@ body {
     font-size: 13px;
     margin-bottom: 6px;
 }
+.cmt-text {
+    font-size: 12.5px;
+    color: #111;
+    margin-bottom: 8px;
+    min-height: 18px;
+}
 .cmt-line {
     display: block;
     width: 100%;
@@ -245,6 +251,10 @@ body {
     text-align: right;
     font-weight: 700;
     font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
 }
 .sign-uline {
     display: inline-block;
@@ -254,6 +264,7 @@ body {
     border-bottom: 1.5px solid #555;
     vertical-align: bottom;
 }
+.sign-img { height: 30px; max-width: 100px; object-fit: contain; }
 
 .next-term {
     margin-top: 16px; padding-top: 6px;
@@ -372,7 +383,13 @@ body {
                         <td class="grade-blue">{{ row.grade }}</td>
 
                         <td class="remark-good">{{ row.remark }}</td>
-                        <td class="initial-red"></td>
+                        <!-- [FIX][item 5] Per-subject marking-teacher
+                             initials — editable via the Edit modal
+                             (ReportCardOverride.subject_initials).
+                             report_card_service.py must populate
+                             row.initials, same as it does row.comment
+                             for the nursery template. -->
+                        <td class="initial-red">{{ row.initials if row.initials else '' }}</td>
                     </tr>
                     {% else %}
                     <tr><td colspan="6" style="text-align:center; color:#888;">No marks recorded for this exam yet.</td></tr>
@@ -439,19 +456,39 @@ body {
 
                 <div class="cmt-block">
                     <span class="cmt-lbl">General Class Teacher's Comment:</span>
+                    {% if class_teacher_comment %}
+                    <div class="cmt-text">{{ class_teacher_comment }}</div>
+                    {% else %}
                     <div class="cmt-line"></div>
+                    {% endif %}
                     <div class="cmt-row-2">
                         <div class="cmt-line-70"></div>
-                        <div class="sign-box">Sign:<span class="sign-uline"></span></div>
+                        <div class="sign-box">
+                            
+                            Sign:<span c>{% if class_teacher_signature_url %}
+                            <img class="sign-img" src="{{ class_teacher_signature_url }}" alt="Class teacher signature">
+                            {% endif %}</span>
+                            {% if class_teacher_initials %}({{ class_teacher_initials }}){% endif %}
+                        </div>
                     </div>
                 </div>
 
                 <div class="cmt-block">
                     <span class="cmt-lbl">Head Teacher's Comment:</span>
+                    {% if headteacher_comment %}
+                    <div class="cmt-text">{{ headteacher_comment }}</div>
+                    {% else %}
                     <div class="cmt-line"></div>
+                    {% endif %}
                     <div class="cmt-row-2">
                         <div class="cmt-line-70"></div>
-                        <div class="sign-box">Sign:<span class="sign-uline"></span></div>
+                        <div class="sign-box">
+                            
+                            Sign:<span >{% if headteacher_signature_url %}
+                            <img class="sign-img" src="{{ headteacher_signature_url }}" alt="Headteacher signature">
+                            {% endif %}</span>
+                            {% if headteacher_initials %}({{ headteacher_initials }}){% endif %}
+                        </div>
                     </div>
                 </div>
 

@@ -140,6 +140,29 @@ Error-logging notes
   the full traceback is logged with the student/stream/exam context
   *before* the error propagates, so a generic "failed to render" caught
   further up the call stack no longer hides where it came from.
+
+[NEW] Report-card editing support (attendance/comments/initials, per
+"Edit Report Card" in the UI) and per-mark teacher comments:
+- Every subject row produced by build_subject_rows(),
+  build_eot_subject_rows(), and build_secondary_subject_rows() now
+  carries a stable "subject_id" key (previously absent), and a
+  "comment" key populated from any StudentMark.comment left during
+  Marks Entry (see fetch_subject_comments() below). The nursery
+  template's per-subject "Comment" column reads this; the
+  primary/EOT templates' "INITIAL" column reads the "initials" key,
+  which generate() merges in from ReportCardOverride.subject_initials.
+- ReportCardService.generate() accepts two new optional kwargs,
+  `overrides` and `signatures` (plain dicts — see
+  app/apis/reportcardgeneration.py's _start_generation_job(), which is
+  the only caller). `overrides` supplies attendance overrides, the
+  class-teacher/headteacher comments+initials, and per-subject
+  initials; `signatures` supplies the headteacher/class-teacher
+  signature URLs. Both default to `None`/`{}` so existing callers that
+  don't pass them keep working unchanged.
+- ReportCardService.compute_preview() is a new read-only counterpart to
+  generate() — same data pipeline through positions/attendance, no
+  template render, no PDF, no disk write. Powers the "Edit Report
+  Card" review screen.
 """
 
 import os
@@ -963,6 +986,71 @@ def fetch_student_marks(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#  [NEW] PER-SUBJECT TEACHER COMMENTS  (from Marks Entry, StudentMark.comment)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def fetch_subject_comments(
+    school_id: int,
+    student_id: int,
+    term_id: int,
+    exam_enum,
+    stream_id: Optional[int] = None,
+) -> dict[int, str]:
+    """
+    Return {subject_id: comment} for one student in one term/exam, drawn
+    from StudentMark.comment (populated via the Marks Entry UI — see
+    teachers_apis.py / academics_api_2.py).
+
+    A subject can have multiple StudentMark rows (one per paper). If more
+    than one of them has a non-empty comment, the first non-empty one
+    found wins — report cards show one comment per subject/learning area,
+    not one per paper, so there's no sensible way to show more than one
+    here. Most schools only ever put a comment on the whole-subject mark
+    (papers=[] case) or on a single paper, so this is rarely ambiguous
+    in practice.
+    """
+    if stream_id is None:
+        ss_row = StudentStream.query.filter_by(
+            student_id=student_id, school_id=school_id,
+        ).first()
+        if not ss_row:
+            return {}
+        stream_id = ss_row.stream_id
+
+    assessments = Assessment.query.filter(
+        Assessment.school_id == school_id,
+        Assessment.stream_id == stream_id,
+        Assessment.term_id   == term_id,
+        Assessment.type      == exam_enum,
+    ).all()
+    if not assessments:
+        return {}
+
+    assessment_ids = [a.id for a in assessments]
+    asmt_map = {a.id: a.subject_id for a in assessments}
+
+    mark_rows = db.session.execute(
+        select(StudentMark.assessment_id, StudentMark.comment)
+        .where(
+            StudentMark.assessment_id.in_(assessment_ids),
+            StudentMark.student_id == student_id,
+            StudentMark.comment.isnot(None),
+        )
+    ).fetchall()
+
+    comments: dict[int, str] = {}
+    for assessment_id, comment in mark_rows:
+        if not comment:
+            continue
+        subj_id = asmt_map.get(assessment_id)
+        if subj_id is None or subj_id in comments:
+            continue
+        comments[subj_id] = comment
+
+    return comments
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #  TEACHER NAME RESOLVERS  (kept for backward compatibility)
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1075,16 +1163,21 @@ def build_subject_rows(
     subjects_map: Optional[dict] = None,
     papers_map:   Optional[dict] = None,
     teacher_map:  Optional[dict] = None,
+    comments_map: Optional[dict] = None,
 ) -> list:
     """
     Build subject row dicts for primary / nursery templates (single-exam
     report: BOT or MID). For the primary EOT report, use
     build_eot_subject_rows() instead.
 
-    *subjects_map*, *papers_map*, and *teacher_map* are optional pre-loaded
-    dicts. When omitted the function falls back to individual DB queries
-    (single-student convenience usage). Pass them in from BatchContext
-    for bulk generation.
+    *subjects_map*, *papers_map*, *teacher_map*, and *comments_map* are
+    optional pre-loaded dicts. When omitted the function falls back to
+    individual DB queries (single-student convenience usage). Pass them
+    in from BatchContext for bulk generation.
+
+    [NEW] Every row now carries "subject_id" (stable key used to merge in
+    ReportCardOverride.subject_initials later) and "comment" (from
+    StudentMark.comment via *comments_map* — see fetch_subject_comments()).
     """
     subject_ids = list(marks_data.keys())
 
@@ -1094,6 +1187,8 @@ def build_subject_rows(
         papers_map = _load_papers_map(subject_ids, school_id)
     if teacher_map is None:
         teacher_map = _load_teacher_map(school_id, stream_id, subject_ids)
+    if comments_map is None:
+        comments_map = {}
 
     grade_fn = nursery_grade if report_type == "nursery" else primary_grade
 
@@ -1145,6 +1240,7 @@ def build_subject_rows(
                 subj_score = None
 
             rows.append({
+                "subject_id":   subj_id,
                 "subject_name": subject.name,
                 "teacher_name": teacher_name,
                 "total_score":  subj_score,
@@ -1152,6 +1248,7 @@ def build_subject_rows(
                 "remark":       subj_remark,
                 "papers":       paper_rows,
                 "has_papers":   True,
+                "comment":      comments_map.get(subj_id),
             })
 
         else:
@@ -1162,6 +1259,7 @@ def build_subject_rows(
                 g, r = "—", "—"
 
             rows.append({
+                "subject_id":   subj_id,
                 "subject_name": subject.name,
                 "teacher_name": teacher_name,
                 "total_score":  round(float(score), 1) if score is not None else None,
@@ -1169,6 +1267,7 @@ def build_subject_rows(
                 "remark":       r,
                 "papers":       [],
                 "has_papers":   False,
+                "comment":      comments_map.get(subj_id),
             })
 
     rows.sort(key=lambda x: x["subject_name"])
@@ -1190,6 +1289,7 @@ def build_eot_subject_rows(
     subjects_map: Optional[dict] = None,
     papers_map:   Optional[dict] = None,
     teacher_map:  Optional[dict] = None,
+    comments_map: Optional[dict] = None,
 ) -> list:
     """
     Build subject row dicts for the Primary End-of-Term (EOT) report,
@@ -1206,6 +1306,10 @@ def build_eot_subject_rows(
     single-exam report, so this row list is a drop-in replacement for
     build_subject_rows()'s output wherever a primary EOT report is
     being generated.
+
+    [NEW] Every row now carries "subject_id" and "comment" (comments are
+    pulled from the EOT exam's marks — comments_map should be built for
+    the EOT exam_enum, matching what's shown to the user).
     """
     subject_ids = sorted(set(mid_marks_data.keys()) | set(eot_marks_data.keys()))
 
@@ -1215,6 +1319,8 @@ def build_eot_subject_rows(
         papers_map = _load_papers_map(subject_ids, school_id)
     if teacher_map is None:
         teacher_map = _load_teacher_map(school_id, stream_id, subject_ids)
+    if comments_map is None:
+        comments_map = {}
 
     grade_fn = nursery_grade if report_type == "nursery" else primary_grade
 
@@ -1239,6 +1345,7 @@ def build_eot_subject_rows(
             grade, remark = "—", "—"
 
         rows.append({
+            "subject_id":   subj_id,
             "subject_name": subject.name,
             "teacher_name": teacher_name,
             "mid_score":    round(mid_pct, 1) if mid_pct is not None else None,
@@ -1249,6 +1356,7 @@ def build_eot_subject_rows(
             "total_score":  final_pct,
             "grade":        grade,
             "remark":       remark,
+            "comment":      comments_map.get(subj_id),
         })
 
     rows.sort(key=lambda x: x["subject_name"])
@@ -1270,6 +1378,7 @@ def build_secondary_subject_rows(
     subjects_map: Optional[dict] = None,
     papers_map:   Optional[dict] = None,
     teacher_map:  Optional[dict] = None,
+    comments_map: Optional[dict] = None,
 ) -> list:
     """
     Build subject row dicts for O-Level / A-Level templates.
@@ -1280,6 +1389,9 @@ def build_secondary_subject_rows(
       - ict_min_mark      → ICT / Computer Studies
       - sub_math_min_mark → Subsidiary Mathematics
     A student scoring below the threshold earns 0 points (grade "F").
+
+    [NEW] Every row now carries "subject_id" and "comment" (from
+    *comments_map*, see fetch_subject_comments()).
     """
     subject_ids = list(marks_data.keys())
 
@@ -1289,6 +1401,8 @@ def build_secondary_subject_rows(
         papers_map = _load_papers_map(subject_ids, school_id)
     if teacher_map is None:
         teacher_map = _load_teacher_map(school_id, stream_id, subject_ids)
+    if comments_map is None:
+        comments_map = {}
 
     grade_fn = alevel_grade if report_type == "alevel" else olevel_grade
     rows: list = []
@@ -1325,6 +1439,7 @@ def build_secondary_subject_rows(
                 grade, comment, pts = "—", "—", None
 
             rows.append({
+                "subject_id":       subj_id,
                 "subject_name":     subject.name,
                 "subject_code":     getattr(subject, "code", "") or "",
                 "teacher_name":     teacher_name,
@@ -1340,6 +1455,13 @@ def build_secondary_subject_rows(
                 "total_100":        score_pct,
                 "grade":            grade,
                 "comment":          comment,
+                # [NOTE] "comment" above is the grade-derived remark
+                # (e.g. "Excellent performance"), matching the original
+                # field name/semantics for O/A-Level rows. The teacher's
+                # free-text mark comment (item 6) is exposed separately
+                # as "mark_comment" so it doesn't clobber this existing
+                # field that templates already rely on.
+                "mark_comment":     comments_map.get(subj_id),
                 "papers": [{"paper_num": 1, "exam_score": raw, "exam_max": 100.0, "is_first": True}],
                 "is_summary":       False,
                 "row_index":        0,
@@ -1421,6 +1543,7 @@ def build_secondary_subject_rows(
             grade, comment, pts = "—", "—", None
 
         rows.append({
+            "subject_id":       subj_id,
             "subject_name":     subject.name,
             "subject_code":     getattr(subject, "code", "") or "",
             "teacher_name":     teacher_name,
@@ -1438,6 +1561,7 @@ def build_secondary_subject_rows(
             "total_100":        total_100,
             "grade":            grade,
             "comment":          comment,
+            "mark_comment":     comments_map.get(subj_id),
             "papers":           eot_entry,
             "is_summary":       False,
             "row_index":        0,
@@ -1868,6 +1992,18 @@ class ReportCardService:
             result = service.generate(student, stream, term, year,
                                       exam_type, static_folder,
                                       batch_ctx=batch)
+
+    [NEW] Editing support
+    -----------------------
+        preview = service.compute_preview(student, stream, term, year, exam_type)
+        # -> read-only dict: report_type, subjects (with subject_id/comment),
+        #    aggregates, positions, attendance, default_* comment fields.
+        # No template render, no PDF, no disk write.
+
+        result = service.generate(student, stream, term, year, exam_type,
+                                  static_folder,
+                                  overrides={...}, signatures={...})
+        # overrides/signatures are optional — see docstrings below.
     """
 
     def __init__(self, school, school_detail):
@@ -1906,6 +2042,224 @@ class ReportCardService:
             grade_scales=grade_scales,
         )
 
+    # ─────────────────────────────────────────────────────────────────────
+    #  [NEW] INTERNAL: shared computation used by both generate() and
+    #  compute_preview() — marks fetch through attendance, no rendering.
+    # ─────────────────────────────────────────────────────────────────────
+    def _compute(
+        self,
+        *,
+        student:       "Student",
+        stream:        "Stream",
+        term:          "Term",
+        academic_year: "AcademicYear",
+        exam_type:     str,
+        batch_ctx:     Optional[BatchContext] = None,
+    ) -> dict:
+        """
+        Run the full data pipeline (marks → subject rows → aggregates →
+        position → attendance → comments) WITHOUT rendering a template or
+        touching disk. Used by both generate() (which renders on top of
+        this) and compute_preview() (which returns this as-is).
+
+        Returns a dict with keys:
+          report_type, class_name, exam_enum, subject_rows, aggregates
+          (dict: total/average/aggregate/division/points), position,
+          total_students, attendance (dict), grade_legend.
+        """
+        school_id   = self.school.id
+        class_name  = stream.class_.name if stream and stream.class_ else ""
+        report_type = classify_class(class_name)
+
+        try:
+            exam_enum = AssessmentType(exam_type.upper())
+        except ValueError:
+            raise ValueError(f"Invalid exam_type: {exam_type!r}. Must be BOT, MID or EOT.")
+
+        if batch_ctx is not None:
+            grade_scales = batch_ctx.grade_scales
+        else:
+            grade_scales = fetch_grade_scales_for(school_id, report_type, class_name)
+
+        is_primary_eot = (report_type == "primary" and exam_type.upper() == "EOT")
+
+        mid_marks_data: dict = {}
+        eot_marks_data: dict = {}
+
+        if is_primary_eot:
+            mid_marks_data = fetch_student_marks(
+                school_id=school_id, student_id=student.id, term_id=term.id,
+                exam_enum=AssessmentType("MID"), stream_id=stream.id,
+            )
+            eot_marks_data = fetch_student_marks(
+                school_id=school_id, student_id=student.id, term_id=term.id,
+                exam_enum=exam_enum, stream_id=stream.id,
+            )
+            marks_data = eot_marks_data
+        else:
+            marks_data = fetch_student_marks(
+                school_id=school_id, student_id=student.id, term_id=term.id,
+                exam_enum=exam_enum, stream_id=stream.id,
+            )
+
+        # [NEW] Per-subject teacher comments (from Marks Entry). For
+        # primary EOT, comments come from the EOT exam specifically —
+        # matching whichever marks the "final" score is anchored to.
+        comments_map = fetch_subject_comments(
+            school_id=school_id, student_id=student.id, term_id=term.id,
+            exam_enum=exam_enum, stream_id=stream.id,
+        )
+
+        bulk_kwargs = {}
+        if batch_ctx is not None:
+            bulk_kwargs = {
+                "subjects_map": batch_ctx.subjects_map,
+                "papers_map":   batch_ctx.papers_map,
+                "teacher_map":  batch_ctx.teacher_map,
+            }
+
+        if is_primary_eot:
+            subject_rows = build_eot_subject_rows(
+                school_id=school_id, stream_id=stream.id, student_id=student.id,
+                mid_marks_data=mid_marks_data, eot_marks_data=eot_marks_data,
+                grade_scales=grade_scales, report_type=report_type,
+                comments_map=comments_map, **bulk_kwargs,
+            )
+        elif report_type in ("olevel", "alevel"):
+            subject_rows = build_secondary_subject_rows(
+                school_id=school_id, stream_id=stream.id, student_id=student.id,
+                marks_data=marks_data, grade_scales=grade_scales,
+                report_type=report_type, school_detail=self.school_detail,
+                comments_map=comments_map, **bulk_kwargs,
+            )
+        else:
+            subject_rows = build_subject_rows(
+                school_id=school_id, stream_id=stream.id, student_id=student.id,
+                marks_data=marks_data, grade_scales=grade_scales,
+                report_type=report_type, comments_map=comments_map, **bulk_kwargs,
+            )
+
+        aggregates        = None
+        division          = None
+        subsidiary_points = None
+
+        if report_type == "primary":
+            subject_rows   = _finalize_primary_subject_rows(subject_rows, class_name)
+            aggregate_rows = [r for r in subject_rows if r["is_aggregate_subject"]]
+            force_next_division = _has_f9_in_english_or_math(aggregate_rows)
+            aggregates, division = compute_primary_aggregates(
+                aggregate_rows, grade_scales, force_next_division=force_next_division,
+            )
+        elif report_type == "olevel":
+            aggregates, division = compute_olevel_aggregates(subject_rows, grade_scales)
+        elif report_type == "alevel":
+            aggregates, subsidiary_points = compute_alevel_points(subject_rows, grade_scales)
+
+        score_key = "total_100" if report_type in ("olevel", "alevel") else "total_score"
+        totals    = [r[score_key] for r in subject_rows if r.get(score_key) is not None]
+        average_mark = round(sum(totals) / len(totals), 1) if totals else None
+
+        if batch_ctx is not None:
+            position       = batch_ctx.positions.get(student.id)
+            total_students = batch_ctx.total_students
+        else:
+            pos_map = calculate_stream_positions(
+                school_id, stream.id, term.id, exam_enum, grade_scales=grade_scales,
+            )
+            position       = pos_map.get(student.id)
+            total_students = len(pos_map)
+
+        attendance   = compute_attendance(school_id, student.id, term.id)
+        grade_legend = _build_grade_legend(grade_scales, report_type)
+
+        return {
+            "report_type":       report_type,
+            "class_name":        class_name,
+            "exam_enum":         exam_enum,
+            "subject_rows":      subject_rows,
+            "aggregates":        aggregates,
+            "division":          division,
+            "subsidiary_points": subsidiary_points,
+            "average_mark":      average_mark,
+            "position":          position,
+            "total_students":    total_students,
+            "attendance":        attendance,
+            "grade_legend":      grade_legend,
+        }
+
+    # ─────────────────────────────────────────────────────────────────────
+    #  [NEW] READ-ONLY PREVIEW  —  powers the "Edit Report Card" screen
+    # ─────────────────────────────────────────────────────────────────────
+    def compute_preview(
+        self,
+        *,
+        student:       "Student",
+        stream:        "Stream",
+        term:          "Term",
+        academic_year: "AcademicYear",
+        exam_type:     str,
+    ) -> dict:
+        """
+        Read-only counterpart to generate() — same computation pipeline
+        through subject rows / aggregates / position / attendance, but no
+        template render, no PDF conversion, no disk write.
+
+        Returns:
+            {
+              "report_type": "nursery" | "primary" | "olevel" | "alevel",
+              "subjects": [ {subject_id, subject_name, total_score, grade,
+                             remark, comment, ...}, ... ],
+              "aggregates": {"total": float|None, "average": float|None,
+                             "aggregate": int|None, "division": str|None,
+                             "points": int|None},
+              "positions": {"stream_position": int|None,
+                            "total_students": int},
+              "attendance": {"present": int, "total": int},
+              "default_class_teacher_comment": "",
+              "default_headteacher_comment": "",
+              "default_class_teacher_initials": "",
+              "default_headteacher_initials": "",
+            }
+
+        Consumed by app/apis/reportcardgeneration.py's
+        get_report_card_preview(), which merges in any saved
+        ReportCardOverride on top of these computed defaults.
+        """
+        data = self._compute(
+            student=student, stream=stream, term=term,
+            academic_year=academic_year, exam_type=exam_type,
+        )
+
+        totals = [
+            r.get("total_100" if data["report_type"] in ("olevel", "alevel") else "total_score")
+            for r in data["subject_rows"]
+        ]
+        totals = [t for t in totals if t is not None]
+
+        return {
+            "report_type": data["report_type"],
+            "subjects":    data["subject_rows"],
+            "aggregates": {
+                "total":     round(sum(totals), 1) if totals else None,
+                "average":   data["average_mark"],
+                "aggregate": data["aggregates"],
+                "division":  data["division"],
+                "points":    data["subsidiary_points"],
+            },
+            "positions": {
+                "stream_position": data["position"],
+                "total_students":  data["total_students"],
+            },
+            "attendance": {
+                "present": data["attendance"].get("present"),
+                "total":   data["attendance"].get("total"),
+            },
+            "default_class_teacher_comment":  "",
+            "default_headteacher_comment":    "",
+            "default_class_teacher_initials": "",
+            "default_headteacher_initials":   "",
+        }
+
     def generate(
         self,
         student:       "Student",
@@ -1915,6 +2269,8 @@ class ReportCardService:
         exam_type:     str,
         static_folder: str,
         batch_ctx:     Optional[BatchContext] = None,
+        overrides:     Optional[dict] = None,
+        signatures:    Optional[dict] = None,
     ) -> dict:
         """
         Generate a report card for one student.
@@ -1925,6 +2281,32 @@ class ReportCardService:
             Pre-computed stream data.  Supply this when generating reports
             for multiple students in the same stream to share grade-scale,
             position, subject/paper/teacher lookups across all calls.
+
+        overrides : dict, optional  [NEW]
+            {
+              "attendance_present": int | None,
+              "attendance_total": int | None,
+              "class_teacher_comment": str,
+              "headteacher_comment": str,
+              "class_teacher_initials": str,
+              "headteacher_initials": str,
+              "subject_initials": {"<subject_id>": "XY", ...},
+            }
+            Passed by app/apis/reportcardgeneration.py from a saved
+            ReportCardOverride row (or {} if none exists). Attendance
+            fields override the computed present/total only when not
+            None; everything else defaults to "" when absent/empty so
+            templates can safely render them unconditionally.
+
+        signatures : dict, optional  [NEW]
+            {
+              "headteacher_signature_url": str | None,
+              "headteacher_name": str | None,
+              "class_teacher_signature_url": str | None,
+              "class_teacher_name": str | None,
+            }
+            Rendered as <img> tags in the report's sign-off section when
+            present; templates handle a missing/None URL gracefully.
 
         Returns
         -------
@@ -1944,164 +2326,46 @@ class ReportCardService:
         via logger.error(..., exc_info=True), so it appears in Render logs
         even though the caller ultimately just sees "failed to render".
         """
-        school_id   = self.school.id
-        class_name  = stream.class_.name if stream and stream.class_ else ""
-        report_type = classify_class(class_name)
+        overrides  = overrides  or {}
+        signatures = signatures or {}
+
+        school_id = self.school.id
 
         logger.info(
-            "Generating report: student=%s class=%s report_type=%s exam=%s",
-            student.id, class_name, report_type, exam_type,
+            "Generating report: student=%s exam=%s has_overrides=%s has_signatures=%s",
+            student.id, exam_type, bool(overrides), bool(signatures),
         )
 
         try:
-            # ── 1. Exam enum ─────────────────────────────────────────────────
-            try:
-                exam_enum = AssessmentType(exam_type.upper())
-            except ValueError:
-                raise ValueError(f"Invalid exam_type: {exam_type!r}. Must be BOT, MID or EOT.")
+            data = self._compute(
+                student=student, stream=stream, term=term,
+                academic_year=academic_year, exam_type=exam_type,
+                batch_ctx=batch_ctx,
+            )
 
-            # ── 2. Grade scales ───────────────────────────────────────────────
-            if batch_ctx is not None:
-                grade_scales = batch_ctx.grade_scales
-            else:
-                grade_scales = fetch_grade_scales_for(school_id, report_type, class_name)
+            report_type  = data["report_type"]
+            class_name   = data["class_name"]
+            subject_rows = data["subject_rows"]
 
-            # ── 3. Fetch marks ────────────────────────────────────────────────
-            # Primary EOT reports need BOTH the MID and EOT marks, since the
-            # report averages them into a FINAL MARKS column.
-            is_primary_eot = (report_type == "primary" and exam_type.upper() == "EOT")
+            # [NEW] Merge per-subject marking-teacher initials
+            # (Primary report's "INITIAL" column) from the override into
+            # each row, keyed by subject_id.
+            subject_initials = overrides.get("subject_initials") or {}
+            for row in subject_rows:
+                sid = row.get("subject_id")
+                row["initials"] = subject_initials.get(str(sid), "") if sid is not None else ""
 
-            mid_marks_data: dict = {}
-            eot_marks_data: dict = {}
+            # [NEW] Attendance overrides — only replace present/total when
+            # explicitly set; "absent" is always re-derived so it never
+            # goes stale relative to whichever of the two was overridden.
+            attendance = dict(data["attendance"])
+            if overrides.get("attendance_present") is not None:
+                attendance["present"] = overrides["attendance_present"]
+            if overrides.get("attendance_total") is not None:
+                attendance["total"] = overrides["attendance_total"]
+            attendance["absent"] = max(0, attendance.get("total", 0) - attendance.get("present", 0))
 
-            if is_primary_eot:
-                mid_marks_data = fetch_student_marks(
-                    school_id=school_id,
-                    student_id=student.id,
-                    term_id=term.id,
-                    exam_enum=AssessmentType("MID"),
-                    stream_id=stream.id,
-                )
-                eot_marks_data = fetch_student_marks(
-                    school_id=school_id,
-                    student_id=student.id,
-                    term_id=term.id,
-                    exam_enum=exam_enum,
-                    stream_id=stream.id,
-                )
-                marks_data = eot_marks_data  # used only for the "no marks" check below
-
-                if not mid_marks_data and not eot_marks_data:
-                    logger.warning(
-                        "No MID or EOT marks for student=%s term=%s — empty report will be generated.",
-                        student.id, term.id,
-                    )
-            else:
-                marks_data = fetch_student_marks(
-                    school_id=school_id,
-                    student_id=student.id,
-                    term_id=term.id,
-                    exam_enum=exam_enum,
-                    stream_id=stream.id,
-                )
-                if not marks_data:
-                    logger.warning(
-                        "No marks for student=%s term=%s exam=%s — empty report will be generated.",
-                        student.id, term.id, exam_type,
-                    )
-
-            # ── 4. Build subject rows ─────────────────────────────────────────
-            bulk_kwargs = {}
-            if batch_ctx is not None:
-                bulk_kwargs = {
-                    "subjects_map": batch_ctx.subjects_map,
-                    "papers_map":   batch_ctx.papers_map,
-                    "teacher_map":  batch_ctx.teacher_map,
-                }
-
-            if is_primary_eot:
-                subject_rows = build_eot_subject_rows(
-                    school_id=school_id,
-                    stream_id=stream.id,
-                    student_id=student.id,
-                    mid_marks_data=mid_marks_data,
-                    eot_marks_data=eot_marks_data,
-                    grade_scales=grade_scales,
-                    report_type=report_type,
-                    **bulk_kwargs,
-                )
-            elif report_type in ("olevel", "alevel"):
-                subject_rows = build_secondary_subject_rows(
-                    school_id=school_id,
-                    stream_id=stream.id,
-                    student_id=student.id,
-                    marks_data=marks_data,
-                    grade_scales=grade_scales,
-                    report_type=report_type,
-                    school_detail=self.school_detail,
-                    **bulk_kwargs,
-                )
-            else:
-                subject_rows = build_subject_rows(
-                    school_id=school_id,
-                    stream_id=stream.id,
-                    student_id=student.id,
-                    marks_data=marks_data,
-                    grade_scales=grade_scales,
-                    report_type=report_type,
-                    **bulk_kwargs,
-                )
-
-            # ── 5. Aggregates / division / points ─────────────────────────────
-            aggregates        = None
-            division          = None
-            subsidiary_points = None
-
-            if report_type == "primary":
-                # Reorder so the core aggregate subjects (P1-P3: Literacy
-                # I/II, Math, English — P4-P7: Math, English, Social
-                # Studies, Science) come first, non-core subjects last
-                # with their grade/remark blanked out. See
-                # _finalize_primary_subject_rows() docstring for detail.
-                subject_rows = _finalize_primary_subject_rows(subject_rows, class_name)
-                aggregate_rows = [r for r in subject_rows if r["is_aggregate_subject"]]
-
-                # An F9 in English or Mathematics pushes the learner to
-                # the next Division regardless of their aggregate total.
-                force_next_division = _has_f9_in_english_or_math(aggregate_rows)
-                aggregates, division = compute_primary_aggregates(
-                    aggregate_rows, grade_scales,
-                    force_next_division=force_next_division,
-                )
-            elif report_type == "olevel":
-                aggregates, division = compute_olevel_aggregates(subject_rows, grade_scales)
-            elif report_type == "alevel":
-                aggregates, subsidiary_points = compute_alevel_points(subject_rows, grade_scales)
-
-            # ── 6. Average mark ─────────────────────────────────────────────
-            score_key = "total_100" if report_type in ("olevel", "alevel") else "total_score"
-            totals    = [r[score_key] for r in subject_rows if r.get(score_key) is not None]
-            average_mark = round(sum(totals) / len(totals), 1) if totals else None
-
-            # ── 7. Position ───────────────────────────────────────────────────
-            if batch_ctx is not None:
-                position       = batch_ctx.positions.get(student.id)
-                total_students = batch_ctx.total_students
-            else:
-                pos_map        = calculate_stream_positions(
-                    school_id, stream.id, term.id, exam_enum,
-                    grade_scales=grade_scales,
-                )
-                position       = pos_map.get(student.id)
-                total_students = len(pos_map)
-
-            # ── 8. Attendance ─────────────────────────────────────────────────
-            attendance = compute_attendance(school_id, student.id, term.id)
-
-            # ── 9. Grade legend ───────────────────────────────────────────────
-            grade_legend = _build_grade_legend(grade_scales, report_type)
-
-            # ── 10. Resolve absolute file:// URIs for WeasyPrint ───────────────
+            # ── Resolve absolute file:// URIs for WeasyPrint ───────────────
             # url_for() is unavailable in background threads (no request context).
             # We use file:// URIs so WeasyPrint can load images directly from disk
             # without needing Flask routing or a running HTTP server.
@@ -2117,7 +2381,7 @@ class ReportCardService:
             sunbay_logo    = (static_path / "images" / "sunbay_logo.png").as_uri()
             children_image = (static_path / "images" / "children1.jpg").as_uri()
 
-            # ── 11. Template context ────────────────────────────────────────
+            # ── Template context ────────────────────────────────────────
             ctx = {
                 "school":             self.school,
                 "school_detail":      self.school_detail,
@@ -2130,14 +2394,14 @@ class ReportCardService:
                 "academic_year":      academic_year,
                 "exam_type":          exam_type,
                 "subject_rows":       subject_rows,
-                "average_mark":       average_mark,
-                "position":           position,
-                "total_students":     total_students,
-                "aggregates":         aggregates,
-                "division":           division,
-                "subsidiary_points":  subsidiary_points,
+                "average_mark":       data["average_mark"],
+                "position":           data["position"],
+                "total_students":     data["total_students"],
+                "aggregates":         data["aggregates"],
+                "division":           data["division"],
+                "subsidiary_points":  data["subsidiary_points"],
                 "attendance":         attendance,
-                "grade_legend":       grade_legend,
+                "grade_legend":       data["grade_legend"],
                 "report_type":        report_type,
                 "generated_date":     datetime.utcnow().strftime("%d %B %Y"),
                 # ── file:// URIs for school-specific templates (no url_for needed) ──
@@ -2145,9 +2409,23 @@ class ReportCardService:
                 "children_image":     children_image,
                 "static_url":         static_url,
                 "static_folder":      static_path,   # kept for backward compat
+                # [NEW] Editable comments/initials — always present as
+                # empty strings when unset so templates can render them
+                # unconditionally without extra `is defined` checks.
+                "class_teacher_comment":  overrides.get("class_teacher_comment")  or "",
+                "headteacher_comment":    overrides.get("headteacher_comment")    or "",
+                "class_teacher_initials": overrides.get("class_teacher_initials") or "",
+                "headteacher_initials":   overrides.get("headteacher_initials")   or "",
+                # [NEW] Signatures — school-wide headteacher + per-stream
+                # class teacher. None when not yet uploaded; templates
+                # already guard with {% if ... %}.
+                "headteacher_signature_url":   signatures.get("headteacher_signature_url"),
+                "headteacher_name":            signatures.get("headteacher_name"),
+                "class_teacher_signature_url": signatures.get("class_teacher_signature_url"),
+                "class_teacher_name":          signatures.get("class_teacher_name"),
             }
 
-            # ── 12. Render HTML ─────────────────────────────────────────────
+            # ── Render HTML ─────────────────────────────────────────────
             template_name = get_template_name(school_id, report_type, exam_type)
             try:
                 html = render_template(template_name, **ctx)
@@ -2167,10 +2445,10 @@ class ReportCardService:
                 )
                 raise RuntimeError(f"Template rendering failed: {exc}") from exc
 
-            # ── 13. Convert to PDF ───────────────────────────────────────────
+            # ── Convert to PDF ───────────────────────────────────────────
             file_bytes, ext = html_to_pdf_bytes(html)
 
-            # ── 14. Save to disk ──────────────────────────────────────────────
+            # ── Save to disk ──────────────────────────────────────────────
             year_name    = academic_year.name if academic_year else "unknown"
             term_label   = (term.name or "term").replace(" ", "_") if term else "term"
             stream_label = (stream.name or "stream").replace(" ", "_") if stream else "stream"
@@ -2190,7 +2468,7 @@ class ReportCardService:
                 )
                 raise RuntimeError(f"Could not write report file: {exc}") from exc
 
-            # ── 15. Build URL path ────────────────────────────────────────────
+            # ── Build URL path ────────────────────────────────────────────
             try:
                 rel      = os.path.relpath(full_path, os.path.dirname(static_folder))
                 file_url = "/" + rel.replace("\\", "/")
@@ -2227,13 +2505,12 @@ class ReportCardService:
             tb_str = traceback.format_exc()
             logger.error(
                 "generate() failed: student=%s school=%s stream=%s term=%s "
-                "exam=%s report_type=%s\n%s",
+                "exam=%s\n%s",
                 getattr(student, "id", None),
                 school_id,
                 getattr(stream, "id", None),
                 getattr(term, "id", None),
                 exam_type,
-                report_type,
                 tb_str,
                 exc_info=True,
             )

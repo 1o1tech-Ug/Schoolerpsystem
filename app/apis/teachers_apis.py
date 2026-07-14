@@ -9,6 +9,16 @@ CHANGES vs original:
     No str(e) / str(exc) ever reaches the client.
   - Removed bare print() calls.
   - Pagination added to /attendance/students and /attendance/history.
+  - [NEW] Marks entry now supports an optional per-mark `comment`
+    alongside the score. This is what report_card_service.py reads to
+    populate the "Comment" column on the nursery report card next to
+    each Learning Area score (previously always left blank). Teachers
+    can leave a short remark ("Needs more practice", "Excellent
+    participation") when entering marks, same as they enter the score.
+    load_marks_entry() now returns saved_comments alongside saved_marks
+    so the UI can pre-fill existing comments when reopening the form;
+    save_marks() accepts an optional "comment" key per row in the
+    `marks` payload and persists it to StudentMark.comment.
 """
 
 import logging
@@ -308,7 +318,8 @@ def load_marks_entry():
         config  = AcademicConfig.query.filter_by(school_id=school_id).first()
         term_id = config.current_term_id if config else None
 
-        saved_map = {}
+        saved_map      = {}
+        saved_comments = {}   # [NEW] (student_id, paper_id) -> comment
         if term_id:
             assessments = Assessment.query.filter_by(
                 school_id=school_id,
@@ -322,7 +333,8 @@ def load_marks_entry():
                     assessment_id=asmt.id,
                 ).all()
                 for m in marks:
-                    saved_map[(m.student_id, asmt.paper_id)] = m.score
+                    saved_map[(m.student_id, asmt.paper_id)]      = m.score
+                    saved_comments[(m.student_id, asmt.paper_id)] = m.comment
 
         stream = Stream.query.get(stream_id)
         cls    = Class.query.get(stream.class_id) if stream else None
@@ -342,8 +354,16 @@ def load_marks_entry():
                     str(p.id): saved_map.get((s.id, p.id))
                     for p in papers
                 }
+                # [NEW] Parallel map of any comment already left for
+                # each paper, so re-opening the edit form shows it.
+                row["saved_comments"] = {
+                    str(p.id): saved_comments.get((s.id, p.id)) or ""
+                    for p in papers
+                }
             else:
-                row["saved_score"] = saved_map.get((s.id, None))
+                row["saved_score"]   = saved_map.get((s.id, None))
+                # [NEW]
+                row["saved_comment"] = saved_comments.get((s.id, None)) or ""
             student_data.append(row)
 
         return jsonify({
@@ -441,6 +461,12 @@ def save_marks():
 
         row["score"] = score
 
+        # [NEW] Optional per-mark comment — trim, cap length, blank → None
+        # so we don't store empty strings that would otherwise render as
+        # a populated-but-blank comment cell on the report.
+        raw_comment = row.get("comment")
+        row["comment"] = (str(raw_comment).strip()[:1000] or None) if raw_comment else None
+
     try:
         assessment_cache = {}
         saved = 0
@@ -449,6 +475,7 @@ def save_marks():
             student_id = row.get("student_id")
             paper_id   = row.get("paper_id")
             score      = row.get("score")
+            comment    = row.get("comment")  # [NEW]
 
             if student_id is None or score is None:
                 continue
@@ -488,12 +515,19 @@ def save_marks():
 
             if existing:
                 existing.score = score
+                # [NEW] Only overwrite the comment if one was actually
+                # submitted this time — leaving the field blank in the
+                # UI on a later save shouldn't silently wipe a comment
+                # a teacher left earlier for this same assessment.
+                if comment is not None:
+                    existing.comment = comment
             else:
                 db.session.add(StudentMark(
                     school_id=school_id,
                     assessment_id=asmt.id,
                     student_id=student_id,
                     score=score,
+                    comment=comment,  # [NEW]
                 ))
 
             saved += 1
@@ -579,7 +613,11 @@ def filter_marks():
             paper_name = asmt.paper.paper_name if asmt.paper else None
             for m in asmt.marks:
                 student_marks.setdefault(m.student_id, {})
-                student_marks[m.student_id][paper_name] = m.score
+                # [NEW] carry the comment through alongside the score so
+                # the saved-marks browser can show it too if desired.
+                student_marks[m.student_id][paper_name] = {
+                    "score": m.score, "comment": m.comment or "",
+                }
 
         if not student_marks:
             return jsonify([]), 200
@@ -603,12 +641,14 @@ def filter_marks():
 
             if has_papers:
                 row["papers"] = [
-                    {"paper_name": pname, "score": score}
-                    for pname, score in sorted(marks_by_paper.items())
+                    {"paper_name": pname, "score": data["score"], "comment": data["comment"]}
+                    for pname, data in sorted(marks_by_paper.items())
                     if pname is not None
                 ]
             else:
-                row["score"] = marks_by_paper.get(None)
+                data = marks_by_paper.get(None) or {"score": None, "comment": ""}
+                row["score"]   = data["score"]
+                row["comment"] = data["comment"]
 
             result.append(row)
 

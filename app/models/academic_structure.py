@@ -371,6 +371,16 @@ class StudentMark(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     score = db.Column(db.Float, nullable=False)
 
+    # [NEW] Optional per-mark remark a teacher can leave alongside the
+    # score (e.g. "Needs more practice writing letters", "Excellent
+    # participation"). Populated from the Marks Entry UI (teachers and
+    # academics modules). This is what report_card_service.py should
+    # read to fill the comment/remark column next to each subject's
+    # score on the report card PDF — most directly the nursery report's
+    # "Comment" column beside the 5 Learning Areas — instead of leaving
+    # that column blank as it is today.
+    comment = db.Column(db.Text)
+
     # Relationships
     # NOTE: 'school' backref is defined on School model
     assessment = db.relationship('Assessment', back_populates='marks')

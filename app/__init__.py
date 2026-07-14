@@ -55,6 +55,9 @@ def create_app():
         Student, StudentAcademic, Guardian,
         MedicalRecord, Document, Staff,
     )
+    from app.models.report_card_extras import (
+    HeadteacherSignature,ClassTeacherSignature,ReportCardOverride,ReportCommentBank,
+    )
     from app.models.academic_structure import (
         Class, Stream, AcademicConfig, AcademicYear, Term,
         Subject, TeacherSubject, Papers, TeacherStream,

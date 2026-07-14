@@ -19,6 +19,8 @@
   --amber-light:  #fef3c7;
   --teal:         #0284c7;
   --teal-light:   #e0f2fe;
+  --violet:       #7c3aed;
+  --violet-light: #ede9fe;
   --slate-50:     #f8fafc;
   --slate-100:    #f1f5f9;
   --slate-200:    #e2e8f0;
@@ -187,6 +189,7 @@
   border-color: var(--red);
   background: #fff7f7;
 }
+textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit; }
 
 .field-error {
   color: var(--red);
@@ -245,6 +248,9 @@
 .btn-generate  { background: var(--green); color: #fff; }
 .btn-generate:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,163,74,.35); }
 .btn-generate:disabled { background: var(--slate-300); color: var(--slate-500); transform: none; box-shadow: none; }
+
+.btn-auto      { background: var(--violet); color: #fff; }
+.btn-auto:hover { background: #6d28d9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,.35); }
 
 .btn-view      { background: var(--blue-light);  color: var(--blue-dark); }
 .btn-view:hover { background: #bfdbfe; }
@@ -362,7 +368,6 @@
   flex-shrink: 0;
 }
 
-/* Spinning dot for "generating" state */
 @keyframes spin { to { transform: rotate(360deg); } }
 .badge-spinning .badge-dot {
   animation: spin .8s linear infinite;
@@ -429,6 +434,7 @@
 }
 
 .confirm-modal-box { max-width: 440px; }
+.edit-modal-box     { max-width: 880px; }
 
 .modal-header {
   padding: 20px 24px;
@@ -439,6 +445,7 @@
   flex-shrink: 0;
 }
 .modal-title { font-size: 16px; font-weight: 700; color: var(--slate-900); }
+.modal-subtitle { font-size: 12px; color: var(--slate-500); margin-top: 2px; }
 
 .modal-close {
   border: none;
@@ -456,7 +463,8 @@
 .modal-close:hover { background: var(--red-light); color: var(--red); }
 
 .modal-body    { padding: 24px; overflow-y: auto; }
-.modal-footer  { padding: 18px 24px; border-top: 1px solid var(--slate-100); display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+.modal-footer  { padding: 18px 24px; border-top: 1px solid var(--slate-100); display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
+.modal-footer.spread { justify-content: space-between; }
 
 .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 18px; }
 .logo-preview { margin-top: 10px; max-height: 90px; max-width: 100%; border-radius: 8px; border: 1px solid var(--slate-200); display: none; }
@@ -464,6 +472,111 @@
 
 .confirm-icon { font-size: 40px; text-align: center; margin-bottom: 12px; }
 .confirm-message { font-size: 15px; color: var(--slate-700); text-align: center; margin-bottom: 8px; }
+
+/* ── Config modal section divider (Signatures section) ── */
+.config-section-divider {
+  margin: 28px 0 18px;
+  padding-top: 20px;
+  border-top: 1.5px dashed var(--slate-200);
+}
+.config-section-title {
+  font-size: 13.5px; font-weight: 700; color: var(--slate-800);
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.config-section-desc { font-size: 12px; color: var(--slate-500); margin-bottom: 16px; }
+
+.sig-current {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--slate-50); border: 1px dashed var(--slate-300);
+  border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 12px;
+}
+.sig-current img { height: 40px; max-width: 140px; object-fit: contain; background: #fff; border-radius: 4px; border: 1px solid var(--slate-200); }
+.sig-current .sig-meta { font-size: 12px; color: var(--slate-600); }
+.sig-current .sig-meta strong { color: var(--slate-900); display: block; font-size: 13px; }
+
+.sig-upload-row { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 10px; align-items: end; }
+
+.stream-sig-table td { vertical-align: middle; font-size: 12.5px; }
+.stream-sig-thumb { height: 26px; max-width: 80px; object-fit: contain; background: #fff; border: 1px solid var(--slate-200); border-radius: 4px; padding: 2px; }
+.stream-sig-empty { color: var(--slate-400); font-size: 11.5px; font-style: italic; }
+
+/* ════════════════════════════════════════════
+   EDIT-BEFORE-GENERATE MODAL
+════════════════════════════════════════════ */
+.edit-summary-box {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--slate-600);
+}
+.edit-summary-box strong { color: var(--slate-900); }
+
+.edit-section-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--slate-500);
+  margin: 22px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.edit-section-label:first-child { margin-top: 0; }
+.edit-section-label .readonly-pill {
+  background: var(--slate-100); color: var(--slate-500);
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  text-transform: none; letter-spacing: 0;
+}
+
+.readonly-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.readonly-item {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.readonly-item .ri-label { font-size: 10.5px; color: var(--slate-400); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 3px; }
+.readonly-item .ri-value { font-size: 14px; font-weight: 700; color: var(--slate-800); }
+
+.attendance-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.saved-override-note {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--teal-light); color: #0369a1;
+  border: 1px solid #7dd3fc; border-radius: var(--radius-sm);
+  padding: 8px 12px; font-size: 12px; font-weight: 600;
+  margin-bottom: 18px;
+}
+
+/* Comment field with dropdown-to-fill */
+.comment-block { margin-bottom: 4px; }
+.comment-select-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.comment-select-row select { flex: 1; }
+
+/* Per-subject initials table */
+.initials-table-wrap { border: 1px solid var(--slate-200); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 4px; }
+.initials-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.initials-table th {
+  background: var(--slate-50); color: var(--slate-500); text-transform: uppercase;
+  font-size: 10px; letter-spacing: .4px; font-weight: 700; text-align: left;
+  padding: 8px 12px; border-bottom: 1px solid var(--slate-200);
+}
+.initials-table td { padding: 8px 12px; border-bottom: 1px solid var(--slate-100); vertical-align: middle; }
+.initials-table tr:last-child td { border-bottom: none; }
+.initials-input {
+  width: 70px; border: 1.5px solid var(--slate-200); border-radius: 6px;
+  padding: 5px 8px; font-size: 12.5px; text-align: center; outline: none;
+}
+.initials-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
 
 /* ════════════════════════════════════════════
    TOAST
@@ -507,6 +620,8 @@
   .filter-bar .btn { width: 100%; justify-content: center; }
   .rc-card-header { flex-direction: column; }
   .table-header-bar { flex-direction: column; align-items: stretch; }
+  .sig-upload-row { grid-template-columns: 1fr; }
+  .attendance-row { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -604,7 +719,7 @@
 
       <!-- Generation-in-progress notice -->
       <div class="gen-lock-notice" id="gen-lock-notice">
-        ⏳ &nbsp;A report is currently being generated. Other Generate buttons are disabled until it finishes.
+        ⏳ &nbsp;A report is currently being generated. Other actions are disabled until it finishes.
       </div>
 
       <!-- Student table -->
@@ -767,7 +882,9 @@
 
 
 <!-- ════════════════════════════════════════════
-     CONFIG MODAL
+     CONFIG MODAL  —  general school details PLUS
+     [NEW] Signatures section (headteacher, school-
+     wide + class teacher, per-stream), per item #1.
 ════════════════════════════════════════════ -->
 <div class="modal-backdrop" id="configModal">
   <div class="modal-box">
@@ -863,13 +980,111 @@
         {% endif %}
 
       </div>
+
+      <!-- ════════════════════════════════════════
+           [NEW] SIGNATURES SECTION
+      ════════════════════════════════════════ -->
+      <div class="config-section-divider">
+        <div class="config-section-title">🎓 Headteacher Signature</div>
+        <div class="config-section-desc">Uploaded once for the whole school — reused on every report card automatically.</div>
+
+        <div class="sig-current" id="ht-sig-current" style="display:none;">
+          <img id="ht-sig-img" src="" alt="Headteacher signature">
+          <div class="sig-meta">
+            <strong id="ht-sig-name">—</strong>
+            Current signature on file
+          </div>
+        </div>
+
+        <div class="sig-upload-row">
+          <div class="form-group">
+            <label class="form-label">Headteacher Name</label>
+            <input type="text" id="ht-teacher-name" class="form-control" placeholder="e.g. Mrs. Jane Nakato">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Signature Image</label>
+            <input type="file" id="ht-sig-file" class="form-control" accept=".png,.jpg,.jpeg,.webp">
+          </div>
+          <button class="btn btn-primary" id="ht-sig-save-btn" onclick="saveHeadteacherSignature()">
+            💾 Save
+          </button>
+        </div>
+        <small style="color:var(--slate-400); font-size:11.5px; margin-top:6px; display:block;">
+          PNG, JPG, JPEG or WEBP — max 5MB. Uploading a new signature replaces the current one.
+        </small>
+      </div>
+
+      <div class="config-section-divider">
+        <div class="config-section-title">🏫 Class Teacher Signatures</div>
+        <div class="config-section-desc">One signature per class &amp; stream — reused on every report card generated for that stream.</div>
+
+        <div class="table-wrapper" style="margin-top:0;">
+          <table class="rc-table stream-sig-table">
+            <thead>
+              <tr>
+                <th>Class / Stream</th>
+                <th>Teacher Name</th>
+                <th>Signature</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="stream-sig-tbody">
+              <tr><td colspan="4" style="text-align:center;color:var(--slate-400);">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
+      <button class="btn btn-secondary" onclick="closeConfigModal()">Close</button>
       <button class="btn btn-primary" id="cfg-save-btn" onclick="saveConfig()">
         💾 &nbsp;Save Configuration
       </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     EDIT REPORT CARD MODAL
+     [CHANGED] Replaces the old "Generate" flow. Shows
+     computed academic data (read-only) plus editable
+     attendance, per-subject initials, and class-teacher
+     / headteacher comments (with a "pick existing" bank
+     dropdown). "Save & Generate" applies the edits and
+     renders the PDF in one step.
+════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="editModal">
+  <div class="modal-box edit-modal-box">
+
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="edit-modal-title">Edit Report Card</div>
+        <div class="modal-subtitle" id="edit-modal-subtitle">Loading student data…</div>
+      </div>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+
+    <div class="modal-body" id="edit-modal-body">
+      <div style="text-align:center; padding:40px 0; color:var(--slate-400);">
+        ⏳ Loading report preview…
+      </div>
+    </div>
+
+    <div class="modal-footer spread">
+      <span class="filter-note" style="align-self:center;">Marks &amp; grades are computed automatically and can't be edited here.</span>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-secondary" id="edit-save-only-btn" onclick="saveOverrideOnly()" disabled>
+          💾 Save Only
+        </button>
+        <button class="btn btn-generate" id="edit-save-generate-btn" onclick="saveOverrideAndGenerate()" disabled>
+          <span id="edit-save-spinner" class="spinner" style="display:none;"></span>
+          ⚡ Save &amp; Generate
+        </button>
+      </div>
     </div>
 
   </div>
@@ -930,15 +1145,62 @@ let _pendingDeleteId  = null;
 let _pendingDeleteSrc = null;
 let _reqInFlight      = false;
 
-// [NEW] Whole-school generation lock (client-side mirror of the
-// server's per-school lock). While a generation job is in flight for
-// THIS school, every other "Generate" button on the page is disabled
-// so a staff member can't fire off a second heavy PDF job — matching
-// the backend, which would reject it with 409 anyway. Tracking the
-// active student id lets us leave that one row showing "Generating…"
-// while disabling all the others.
-let _generationInFlight     = false;
-let _activeGenStudentId     = null;
+let _generationInFlight = false;
+let _activeGenStudentId = null;
+
+// Edit modal state
+let _editModalStudentId = null;
+let _editModalPreview   = null;
+let _ctCommentBank      = [];
+let _htCommentBank      = [];
+
+/* [NEW] HARDCODED COMMENT BANKS — no server round-trip needed for
+   the "choose an existing comment" dropdown in the edit modal. */
+const CT_COMMENT_BANK = [
+  "An excellent term's work — keep up the outstanding effort and consistency.",
+  "A very hardworking and disciplined learner.",
+  "Shows great enthusiasm for learning and consistently completes assignments on time.",
+  "A good, solid performance this term. Continue working hard to improve further.",
+  "Participates actively in class discussions and group work.",
+  "A fair effort this term. With more consistent revision, real improvement is possible.",
+  "Needs to pay closer attention during lessons and complete homework more consistently.",
+  "This term's performance needs attention — extra effort and support are encouraged next term.",
+  "A respectful and cooperative member of the class.",
+  "Should focus more on time management during tests and exams.",
+  "Has shown steady improvement over the course of the term.",
+  "Demonstrates strong leadership qualities among peers.",
+  "Needs to be more consistent with submitting assignments.",
+  "A quiet but consistent worker who meets expectations.",
+  "Should aim to participate more actively in class.",
+  "Excellent behaviour and a positive attitude towards learning.",
+  "Needs extra support with reading and comprehension skills.",
+  "A creative thinker who enjoys tackling challenging problems.",
+  "Continues to work well independently and in groups.",
+  "Encouraged to revise more consistently to boost performance.",
+];
+
+const HT_COMMENT_BANK = [
+  "Congratulations on an excellent term. Keep up this standard.",
+  "A commendable term overall. Well done.",
+  "Satisfactory progress this term — there is room to do even better.",
+  "More effort is required next term to improve this performance.",
+  "Keep up the effort next term.",
+  "A well-rounded learner who contributes positively to the school community.",
+  "Encouraged to maintain discipline and focus in the coming term.",
+  "Shows good potential — consistency will bring further improvement.",
+  "A pleasure to have in the school. Keep up the good conduct.",
+  "Needs to put in more effort across all subjects next term.",
+  "An impressive overall performance this term.",
+  "Should strive for greater consistency across all subjects.",
+  "Good conduct and commendable academic effort this term.",
+  "Encouraged to seek extra help where needed next term.",
+  "A promising learner who should keep up the momentum.",
+  "There is a need for greater commitment to studies next term.",
+  "Well done on a steady term of progress.",
+  "Should work closely with teachers to address weak areas.",
+  "A dependable and well-behaved member of the school.",
+  "Continued hard work will lead to even better results.",
+];
 
 /* ─────────────────────────────────────
    AUTH HEADERS
@@ -976,14 +1238,7 @@ function toast(msg, type = "info", ms = 4000) {
 }
 
 /* ─────────────────────────────────────
-   VIEW REPORT
-   [FIX] Routed through the Flask server (/api/report-cards/<id>/view)
-   instead of a raw <a href="CDN_URL"> link. A direct browser hit on the
-   BunnyCDN URL can be served from a stale local edge PoP cache even
-   after regenerating the report — fetching it as a blob through our
-   own server (same pattern as downloadReport below) sidesteps that
-   entirely, since every request always resolves the CURRENT file for
-   this report_id fresh from the DB + origin.
+   VIEW / DOWNLOAD REPORT
 ───────────────────────────────────── */
 async function viewReport(reportId) {
   if (!reportId) { toast("No file available to view", "warning"); return; }
@@ -995,14 +1250,10 @@ async function viewReport(reportId) {
     const blobUrl = URL.createObjectURL(blob);
     const win     = window.open(blobUrl, "_blank", "noopener");
     if (!win) toast("Pop-up blocked — please allow pop-ups to view reports", "warning");
-    // Revoke after a while once the new tab has had time to load it.
     setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
   } catch (e) { toast(e.message || "Could not open report", "error"); }
 }
 
-/* ─────────────────────────────────────
-   DOWNLOAD REPORT
-───────────────────────────────────── */
 async function downloadReport(reportId, label) {
   if (!reportId) { toast("No file available to download", "warning"); return; }
   toast("Preparing download…", "info", 2000);
@@ -1077,43 +1328,48 @@ function _buildStatusBadge(generated, generating = false) {
 
 /* ─────────────────────────────────────
    BUILD ACTIONS CELL
-   [FIX] View is now a button calling viewReport(reportId) instead of
-   an <a href> pointing straight at the (possibly edge-cached) CDN URL.
-   [NEW] While ANY generation job is in flight for this school, every
-   Generate button other than the one actively running is rendered
-   disabled — mirrors the server's per-school lock so staff get
-   immediate visual feedback instead of only finding out via a 409.
+   [CHANGED] Once a report has been generated, Edit/Auto are hidden —
+   only View/Download/Delete remain (deleting the report flips
+   report_generated back to false and Edit/Auto reappear). While
+   ungenerated, Edit is ALWAYS available regardless of another
+   school-wide generation job running — reviewing/editing a different
+   student's report while another generation is in flight is fine;
+   only *starting a new generation* should be blocked, so only Auto
+   (which itself triggers generation) gets disabled in that case.
 ───────────────────────────────────── */
 function _buildGenActions(s, generating = false) {
   if (generating)
     return `<span style="font-size:12px;color:var(--slate-400);">⏳ Please wait…</span>`;
+
+  let html = `<div class="actions-cell">`;
+
   if (s.report_generated) {
     const label = _esc(s.student_code || s.name || "");
-    return `<div class="actions-cell">
-      <button class="btn btn-view btn-sm" onclick="viewReport(${s.report_id})">👁 View</button>
-      <button class="btn btn-download btn-sm" onclick="downloadReport(${s.report_id},'${label}')">⬇ Download</button>
-      <button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${s.report_id},'gen')">🗑 Delete</button>
-    </div>`;
+    html += `<button class="btn btn-view btn-sm" onclick="viewReport(${s.report_id})">👁 View</button>`;
+    html += `<button class="btn btn-download btn-sm" onclick="downloadReport(${s.report_id},'${label}')">⬇ Download</button>`;
+    html += `<button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${s.report_id},'gen')">🗑 Delete</button>`;
+  } else {
+    const autoDisabled = _generationInFlight ? "disabled" : "";
+    html += `<button class="btn btn-secondary btn-sm" id="edit-btn-${s.id}" onclick="openEditModal(${s.id})">✏️ Edit</button>`;
+    html += `<button class="btn btn-auto btn-sm" id="auto-btn-${s.id}" onclick="autoGenerate(${s.id})" ${autoDisabled}>⚡ Auto</button>`;
   }
-  const blockedByOther = _generationInFlight && _activeGenStudentId !== s.id;
-  const disabledAttr   = blockedByOther ? "disabled" : "";
-  return `<button class="btn btn-generate btn-sm" id="gen-btn-${s.id}" onclick="generateOne(${s.id})" ${disabledAttr}>⚡ Generate</button>`;
+
+  html += `</div>`;
+  return html;
 }
 
 /* ─────────────────────────────────────
    SCHOOL-WIDE GENERATION LOCK (UI)
-   Disables/enables every rendered "Generate" button on the page
-   except the one for `exceptStudentId` (the job actually running),
-   and toggles the banner above the table. This is purely a UX guard
-   — the server's per-school lock (409 on conflict) is the real
-   source of truth and is handled in generateOne() below.
+   [CHANGED] Only the "Auto" buttons get locked while a generation job
+   is in flight — Edit is never disabled by an in-flight generation for
+   a different student.
 ───────────────────────────────────── */
 function _setGenerationLock(active, exceptStudentId = null) {
   _generationInFlight = active;
   _activeGenStudentId = active ? exceptStudentId : null;
 
-  document.querySelectorAll('[id^="gen-btn-"]').forEach(btn => {
-    const id = btn.id.replace("gen-btn-", "");
+  document.querySelectorAll('[id^="auto-btn-"]').forEach(btn => {
+    const id = btn.id.replace("auto-btn-", "");
     if (active && String(id) !== String(exceptStudentId)) {
       btn.disabled = true;
       btn.classList.add("is-loading");
@@ -1235,16 +1491,37 @@ function _pollJob(jobId, onDone, onError) {
 }
 
 /* ─────────────────────────────────────
-   GENERATE ONE  (non-blocking)
-   [NEW] Guarded by the whole-school generation lock:
-     - Blocks client-side if another generation is already tracked as
-       in flight (fast feedback, no round trip).
-     - Still handles a 409 from the server (e.g. another staff member
-       started one a split second earlier, or in another tab/device)
-       by resetting the UI and showing the server's message — the
-       server lock is always the real source of truth.
-     - Releases the lock in every exit path: success, job error,
-       network/request error, and 409.
+   START A JOB + POLL (shared by the
+   manual "Save & Generate" flow and the
+   "Auto" one-click flow)
+───────────────────────────────────── */
+function _pollAndFinish(studentId, jobId) {
+  _pollJob(
+    jobId,
+    (result) => {
+      const reportType = result.report_type || _loadedStudents[studentId]?.report_type || "";
+      const updated = {
+        ..._loadedStudents[studentId],
+        report_generated: true,
+        report_id:        result.report_id || result.id || null,
+        report_url:       result.file_url  || "",
+        report_type:      reportType,
+      };
+      _patchStudentRow(studentId, updated, false);
+      _setGenerationLock(false);
+      toast(`Report generated (${_esc(result.section_label || reportType)})`, "success");
+    },
+    (errMsg) => {
+      _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
+      _setGenerationLock(false);
+      toast(errMsg, "error");
+    }
+  );
+}
+
+/* ─────────────────────────────────────
+   GENERATE (called after overrides are
+   already saved by the Edit modal)
 ───────────────────────────────────── */
 async function generateOne(studentId) {
   if (_generationInFlight) {
@@ -1252,7 +1529,6 @@ async function generateOne(studentId) {
     return;
   }
 
-  // Optimistically mark as "generating" and lock out every other button.
   _setGenerationLock(true, studentId);
   _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, true);
 
@@ -1270,8 +1546,6 @@ async function generateOne(studentId) {
     const d = await res.json();
 
     if (res.status === 409) {
-      // Another job is already running for this school (server-side
-      // source of truth) — release the lock and inform the user.
       _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
       _setGenerationLock(false);
       toast(d.message || "A report card is already being generated for your school.", "warning");
@@ -1279,37 +1553,309 @@ async function generateOne(studentId) {
     }
     if (!res.ok) throw new Error(d.message || "Generation failed");
 
-    const jobId = d.job_id;
-
-    // Poll until done
-    _pollJob(
-      jobId,
-      // onDone
-      (result) => {
-        const reportType = result.report_type || _loadedStudents[studentId]?.report_type || "";
-        const updated = {
-          ..._loadedStudents[studentId],
-          report_generated: true,
-          report_id:        result.report_id || result.id || null,
-          report_url:       result.file_url  || "",
-          report_type:      reportType,
-        };
-        _patchStudentRow(studentId, updated, false);
-        _setGenerationLock(false);
-        toast(`Report generated (${_esc(result.section_label || reportType)})`, "success");
-      },
-      // onError
-      (errMsg) => {
-        _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
-        _setGenerationLock(false);
-        toast(errMsg, "error");
-      }
-    );
+    _pollAndFinish(studentId, d.job_id);
 
   } catch (e) {
     _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
     _setGenerationLock(false);
     toast(e.message, "error");
+  }
+}
+
+/* ─────────────────────────────────────
+   [NEW] AUTO GENERATE  — one click:
+   auto-fills class-teacher/headteacher
+   comments (only if not already set) and
+   immediately starts generation.
+───────────────────────────────────── */
+async function autoGenerate(studentId) {
+  if (_generationInFlight) {
+    toast("A report is already being generated for your school. Please wait for it to finish.", "warning");
+    return;
+  }
+
+  _setGenerationLock(true, studentId);
+  _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, true);
+
+  try {
+    const res = await fetch("/api/report-cards/auto-generate", {
+      method:  "POST",
+      headers: _auth(),
+      body: JSON.stringify({
+        student_id: studentId,
+        term_id:    document.getElementById("gen-term").value,
+        exam_type:  document.getElementById("gen-exam-type").value,
+        stream_id:  document.getElementById("gen-stream").value,
+      }),
+    });
+    const d = await res.json();
+
+    if (res.status === 409) {
+      _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
+      _setGenerationLock(false);
+      toast(d.message || "A report card is already being generated for your school.", "warning");
+      return;
+    }
+    if (!res.ok) throw new Error(d.message || "Auto-generate failed");
+
+    _pollAndFinish(studentId, d.job_id);
+
+  } catch (e) {
+    _patchStudentRow(studentId, { ..._loadedStudents[studentId] }, false);
+    _setGenerationLock(false);
+    toast(e.message, "error");
+  }
+}
+
+/* ════════════════════════════════════════════
+   EDIT-BEFORE-GENERATE MODAL
+════════════════════════════════════════════ */
+
+function closeEditModal() {
+  document.getElementById("editModal").classList.remove("open");
+  _editModalStudentId = null;
+  _editModalPreview   = null;
+}
+
+/* [CHANGED] Edit is always available — no longer blocked by an
+   in-flight generation for another student. Comment options are now
+   hardcoded client-side (CT_COMMENT_BANK / HT_COMMENT_BANK) instead
+   of being fetched from the server. */
+async function openEditModal(studentId) {
+  const student = _loadedStudents[studentId];
+  if (!student) return;
+
+  _editModalStudentId = studentId;
+  document.getElementById("editModal").classList.add("open");
+  document.getElementById("edit-modal-title").textContent    = `Edit — ${student.name}`;
+  document.getElementById("edit-modal-subtitle").textContent = `${student.class_name} — ${student.stream_name}`;
+  document.getElementById("edit-save-generate-btn").disabled = true;
+  document.getElementById("edit-save-only-btn").disabled     = true;
+  document.getElementById("edit-modal-body").innerHTML = `
+    <div style="text-align:center; padding:40px 0; color:var(--slate-400);">⏳ Loading report preview…</div>`;
+
+  // [CHANGED] Comment options are hardcoded client-side now — no fetch.
+  _ctCommentBank = CT_COMMENT_BANK;
+  _htCommentBank = HT_COMMENT_BANK;
+
+  try {
+    const previewRes = await fetch(`/api/report-cards/preview?${new URLSearchParams({
+      student_id: studentId,
+      term_id:    document.getElementById("gen-term").value,
+      exam_type:  document.getElementById("gen-exam-type").value,
+      stream_id:  document.getElementById("gen-stream").value,
+    })}`, { headers: _auth() });
+
+    const previewData = await previewRes.json();
+    if (!previewRes.ok) throw new Error(previewData.message || "Failed to load report preview");
+
+    _editModalPreview = previewData.preview;
+    _renderEditModalBody(previewData.preview);
+    document.getElementById("edit-save-generate-btn").disabled = false;
+    document.getElementById("edit-save-only-btn").disabled     = false;
+
+  } catch (e) {
+    document.getElementById("edit-modal-body").innerHTML = `
+      <div class="alert alert-danger" style="margin:0;">⚠️ ${_esc(e.message)}</div>`;
+  }
+}
+
+/* [CHANGED] Works against plain string arrays (CT_COMMENT_BANK /
+   HT_COMMENT_BANK) instead of {id, text} objects — option value is now
+   the array index. */
+function _commentOptions(bank) {
+  return bank.map((text, idx) =>
+    `<option value="${idx}">${_esc(text.length > 60 ? text.slice(0, 60) + "…" : text)}</option>`
+  ).join("");
+}
+
+function _renderEditModalBody(preview) {
+  const agg = preview.aggregates || {};
+  const pos = preview.positions  || {};
+
+  const readonlyItems = [];
+  if (agg.total !== undefined)       readonlyItems.push(["Total", agg.total]);
+  if (agg.average !== undefined)     readonlyItems.push(["Average", agg.average]);
+  if (agg.aggregate !== undefined)   readonlyItems.push(["Aggregate", agg.aggregate]);
+  if (agg.division !== undefined)    readonlyItems.push(["Division", agg.division]);
+  if (agg.points !== undefined)      readonlyItems.push(["Points", agg.points]);
+  if (pos.stream_position !== undefined) readonlyItems.push(["Position", pos.stream_position]);
+
+  const readonlyHtml = readonlyItems.length ? `
+    <div class="readonly-grid">
+      ${readonlyItems.map(([label, val]) => `
+        <div class="readonly-item">
+          <div class="ri-label">${_esc(label)}</div>
+          <div class="ri-value">${_esc(val)}</div>
+        </div>`).join("")}
+    </div>` : `<p class="filter-note">No computed summary available.</p>`;
+
+  const savedNote = preview.has_saved_override
+    ? `<div class="saved-override-note">💾 This report has previously saved edits — shown below, ready to adjust or regenerate as-is.</div>`
+    : "";
+
+  // [NEW] Per-subject initials table — Primary report's "INITIAL"
+  // column (the marking teacher's initials for that specific subject).
+  const subjects = preview.subjects || [];
+  const initialsRowsHtml = subjects.length ? `
+    <div class="initials-table-wrap">
+      <table class="initials-table">
+        <thead><tr><th>Subject</th><th>Score</th><th>Grade</th><th>Initials</th></tr></thead>
+        <tbody>
+          ${subjects.map(row => `
+            <tr>
+              <td>${_esc(row.subject_name || "")}</td>
+              <td>${row.total_score != null ? _esc(row.total_score) : "—"}</td>
+              <td>${_esc(row.grade || "—")}</td>
+              <td>
+                <input type="text" class="initials-input subject-initials-input"
+                  data-subject-id="${row.subject_id ?? ''}"
+                  maxlength="6"
+                  value="${_esc(row.initials || '')}"
+                  placeholder="e.g. JN">
+              </td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>` : `<p class="filter-note">No subjects with marks recorded yet.</p>`;
+
+  document.getElementById("edit-modal-body").innerHTML = `
+    ${savedNote}
+
+    <div class="edit-summary-box">
+      <strong>${_esc(preview.student.name)}</strong> · ${_esc(preview.section_label || preview.report_type || "")}
+    </div>
+
+    <div class="edit-section-label">📊 Academic Summary <span class="readonly-pill">Read-only — computed</span></div>
+    ${readonlyHtml}
+
+    <div class="edit-section-label">📅 Attendance</div>
+    <div class="attendance-row">
+      <div class="form-group">
+        <label class="form-label">Days Present</label>
+        <input type="number" min="0" class="form-control" id="edit-attendance-present"
+               value="${preview.attendance_present ?? ""}" placeholder="e.g. 58">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total School Days</label>
+        <input type="number" min="0" class="form-control" id="edit-attendance-total"
+               value="${preview.attendance_total ?? ""}" placeholder="e.g. 60">
+      </div>
+    </div>
+
+    <div class="edit-section-label">✏️ Per-Subject Initials <span class="readonly-pill">Marking teacher</span></div>
+    ${initialsRowsHtml}
+
+    <div class="edit-section-label">✍️ Class Teacher</div>
+    <div class="comment-block">
+      <div class="comment-select-row">
+        <select class="form-control" id="edit-ct-comment-select" onchange="_applyBankComment('ct')">
+          <option value="">Choose an existing comment…</option>
+          ${_commentOptions(_ctCommentBank)}
+        </select>
+      </div>
+      <textarea class="form-control" id="edit-ct-comment" placeholder="e.g. A hardworking and disciplined learner.">${_esc(preview.class_teacher_comment)}</textarea>
+    </div>
+    <div class="form-group" style="max-width:200px; margin-top:10px;">
+      <label class="form-label">Initials</label>
+      <input type="text" class="form-control" id="edit-ct-initials" maxlength="20"
+             value="${_esc(preview.class_teacher_initials)}" placeholder="e.g. J.N.">
+    </div>
+
+    <div class="edit-section-label">🎓 Headteacher</div>
+    <div class="comment-block">
+      <div class="comment-select-row">
+        <select class="form-control" id="edit-ht-comment-select" onchange="_applyBankComment('ht')">
+          <option value="">Choose an existing comment…</option>
+          ${_commentOptions(_htCommentBank)}
+        </select>
+      </div>
+      <textarea class="form-control" id="edit-ht-comment" placeholder="e.g. Keep up the good work.">${_esc(preview.headteacher_comment)}</textarea>
+    </div>
+    <div class="form-group" style="max-width:200px; margin-top:10px;">
+      <label class="form-label">Initials</label>
+      <input type="text" class="form-control" id="edit-ht-initials" maxlength="20"
+             value="${_esc(preview.headteacher_initials)}" placeholder="e.g. R.K.">
+    </div>
+  `;
+}
+
+/* [NEW] Picking a comment from the dropdown fills the textarea with its
+   text — still fully editable afterwards, this is just a starting point
+   so staff don't have to type from scratch every time.
+   [CHANGED] Reads from the plain string-array bank by index instead of
+   matching an {id, text} object. */
+function _applyBankComment(which) {
+  const selectEl   = document.getElementById(which === "ct" ? "edit-ct-comment-select" : "edit-ht-comment-select");
+  const textareaEl = document.getElementById(which === "ct" ? "edit-ct-comment"        : "edit-ht-comment");
+  const bank       = which === "ct" ? _ctCommentBank : _htCommentBank;
+  const idx        = selectEl.value;
+  if (idx !== "" && bank[idx] !== undefined) textareaEl.value = bank[idx];
+}
+
+function _collectOverridePayload(studentId) {
+  const subjectInitials = {};
+  document.querySelectorAll(".subject-initials-input").forEach(inp => {
+    const sid = inp.dataset.subjectId;
+    if (sid && inp.value.trim()) subjectInitials[sid] = inp.value.trim();
+  });
+
+  return {
+    student_id: studentId,
+    term_id:    document.getElementById("gen-term").value,
+    exam_type:  document.getElementById("gen-exam-type").value,
+    attendance_present:     document.getElementById("edit-attendance-present").value || null,
+    attendance_total:       document.getElementById("edit-attendance-total").value   || null,
+    class_teacher_comment:  document.getElementById("edit-ct-comment").value,
+    headteacher_comment:    document.getElementById("edit-ht-comment").value,
+    class_teacher_initials: document.getElementById("edit-ct-initials").value,
+    headteacher_initials:   document.getElementById("edit-ht-initials").value,
+    subject_initials:       subjectInitials,
+  };
+}
+
+async function _saveOverride(studentId) {
+  const res = await fetch("/api/report-cards/overrides", {
+    method: "POST", headers: _auth(), body: JSON.stringify(_collectOverridePayload(studentId)),
+  });
+  const d = await res.json();
+  if (!res.ok) throw new Error(d.message || "Failed to save changes");
+  return d;
+}
+
+async function saveOverrideOnly() {
+  if (!_editModalStudentId) return;
+  const btn = document.getElementById("edit-save-only-btn");
+  btn.disabled = true;
+  try {
+    await _saveOverride(_editModalStudentId);
+    toast("Changes saved", "success");
+    closeEditModal();
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function saveOverrideAndGenerate() {
+  if (!_editModalStudentId || !_editModalPreview) return;
+  const studentId = _editModalStudentId;
+
+  const btn     = document.getElementById("edit-save-generate-btn");
+  const spinner = document.getElementById("edit-save-spinner");
+  btn.disabled = true;
+  spinner.style.display = "inline-block";
+
+  try {
+    await _saveOverride(studentId);
+    closeEditModal();
+    await generateOne(studentId);
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = "none";
   }
 }
 
@@ -1347,11 +1893,6 @@ async function loadSavedReports() {
   }
 }
 
-/* ─────────────────────────────────────
-   RENDER SAVED REPORTS
-   [FIX] View button now calls viewReport(reportId) — same reasoning
-   as the Generate-section table above.
-───────────────────────────────────── */
 function _renderSaved(reports) {
   const wrap  = document.getElementById("saved-table-wrap");
   const empty = document.getElementById("saved-empty");
@@ -1433,9 +1974,12 @@ document.getElementById("confirm-delete-btn").addEventListener("click", async ()
 });
 
 /* ─────────────────────────────────────
-   CONFIG MODAL
+   CONFIG MODAL  (general details + signatures)
 ───────────────────────────────────── */
-function openConfigModal()  { document.getElementById("configModal").classList.add("open"); }
+function openConfigModal()  {
+  document.getElementById("configModal").classList.add("open");
+  _loadStreamSignatures();
+}
 function closeConfigModal() { document.getElementById("configModal").classList.remove("open"); }
 
 function validateLogoFile(input) {
@@ -1487,10 +2031,125 @@ async function saveConfig() {
     const d   = await res.json();
     if (!res.ok) throw new Error(d.message || "Save failed");
     toast("Configuration saved successfully","success");
-    closeConfigModal();
     if (d.logo_url) { const lp=document.getElementById("logo-preview"); if(lp){ lp.src=d.logo_url; lp.style.display="block"; } }
   } catch (e) { toast(e.message,"error"); }
   finally { btn.disabled=false; btn.innerHTML="💾 &nbsp;Save Configuration"; }
+}
+
+/* ════════════════════════════════════════════
+   [NEW] SIGNATURES  (now inside the Configure modal)
+════════════════════════════════════════════ */
+
+async function saveHeadteacherSignature() {
+  const fileInput = document.getElementById("ht-sig-file");
+  const nameInput = document.getElementById("ht-teacher-name");
+  const btn       = document.getElementById("ht-sig-save-btn");
+
+  if (!fileInput.files[0]) { toast("Please choose a signature image", "warning"); return; }
+  const ext = fileInput.files[0].name.split(".").pop().toLowerCase();
+  if (!ALLOWED_EXTS.has(ext)) { toast(`Invalid type ".${ext}". Allowed: PNG, JPG, JPEG, WEBP`, "error"); return; }
+  if (fileInput.files[0].size > MAX_LOGO_BYTES) { toast("File exceeds 5MB limit", "error"); return; }
+
+  btn.disabled = true; btn.innerHTML = "⏳ Saving…";
+
+  try {
+    const fd = new FormData();
+    fd.append("signature", fileInput.files[0]);
+    if (nameInput.value.trim()) fd.append("teacher_name", nameInput.value.trim());
+
+    const res = await fetch("/api/school/headteacher-signature", { method: "POST", headers: _auth(false), body: fd });
+    const d   = await res.json();
+    if (!res.ok) throw new Error(d.message || "Failed to save signature");
+
+    toast("Headteacher signature saved", "success");
+    document.getElementById("ht-sig-current").style.display = "flex";
+    document.getElementById("ht-sig-img").src   = d.signature_url;
+    document.getElementById("ht-sig-name").textContent = d.teacher_name || "Headteacher";
+    fileInput.value = "";
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    btn.disabled = false; btn.innerHTML = "💾 Save";
+  }
+}
+
+async function _loadStreamSignatures() {
+  const tbody = document.getElementById("stream-sig-tbody");
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--slate-400);">Loading…</td></tr>`;
+  try {
+    const res = await fetch("/api/streams/signatures", { headers: _auth() });
+    const d   = await res.json();
+    if (!res.ok) throw new Error(d.message || "Failed to load signatures");
+    _renderStreamSignatures(d.streams || []);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);">${_esc(e.message)}</td></tr>`;
+  }
+}
+
+function _renderStreamSignatures(streams) {
+  const tbody = document.getElementById("stream-sig-tbody");
+  if (!streams.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--slate-400);">No streams found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = streams.map(s => `
+    <tr id="stream-sig-row-${s.stream_id}">
+      <td><div class="cell-name">${_esc(s.class_name)} — ${_esc(s.stream_name)}</div></td>
+      <td>${_esc(s.teacher_name || "—")}</td>
+      <td>
+        ${s.has_signature
+          ? `<img class="stream-sig-thumb" src="${s.signature_url}" alt="signature">`
+          : `<span class="stream-sig-empty">No signature</span>`}
+      </td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-secondary btn-sm" onclick="_openStreamSigUpload(${s.stream_id}, '${_esc(s.class_name)} — ${_esc(s.stream_name)}')">
+            ${s.has_signature ? "🔄 Replace" : "⬆ Upload"}
+          </button>
+          ${s.has_signature ? `<button class="btn btn-delete btn-sm" onclick="_deleteStreamSignature(${s.stream_id})">🗑</button>` : ""}
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+function _openStreamSigUpload(streamId, label) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".png,.jpg,.jpeg,.webp";
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!ALLOWED_EXTS.has(ext)) { toast(`Invalid type ".${ext}". Allowed: PNG, JPG, JPEG, WEBP`, "error"); return; }
+    if (file.size > MAX_LOGO_BYTES) { toast("File exceeds 5MB limit", "error"); return; }
+
+    const teacherName = prompt(`Class teacher's name for ${label} (optional):`, "");
+
+    try {
+      const fd = new FormData();
+      fd.append("signature", file);
+      if (teacherName && teacherName.trim()) fd.append("teacher_name", teacherName.trim());
+
+      const res = await fetch(`/api/streams/${streamId}/signature`, { method: "POST", headers: _auth(false), body: fd });
+      const d   = await res.json();
+      if (!res.ok) throw new Error(d.message || "Failed to save signature");
+
+      toast("Class teacher signature saved", "success");
+      _loadStreamSignatures();
+    } catch (e) { toast(e.message, "error"); }
+  };
+  input.click();
+}
+
+async function _deleteStreamSignature(streamId) {
+  if (!confirm("Remove this class teacher's signature?")) return;
+  try {
+    const res = await fetch(`/api/streams/${streamId}/signature`, { method: "DELETE", headers: _auth(false) });
+    const d   = await res.json();
+    if (!res.ok) throw new Error(d.message || "Failed to remove signature");
+    toast("Signature removed", "success");
+    _loadStreamSignatures();
+  } catch (e) { toast(e.message, "error"); }
 }
 
 /* ─────────────────────────────────────

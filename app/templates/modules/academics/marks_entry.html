@@ -65,6 +65,10 @@ tbody tr:hover{background:#f8fafc}
 .score-pill.entered{background:#dcfce7;color:#166534}
 .score-pill.na{background:var(--border-soft);color:var(--txt-3);font-style:italic}
 
+/* Small comment/remark indicator shown next to a score once a
+   teacher has left a remark for that mark. Hovering shows the remark. */
+.comment-flag{display:inline-block;margin-left:6px;font-size:12px;cursor:help}
+
 .empty-state{padding:40px 20px;text-align:center;color:var(--txt-3);font-size:14px}
 .spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -85,13 +89,26 @@ tbody tr:hover{background:#f8fafc}
 .subject-box{border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
 .subject-box-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .subject-box-title .badge{font-size:11px;background:var(--blue-soft);color:var(--blue-dark);padding:2px 8px;border-radius:999px;font-weight:600}
-.paper-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.paper-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
 .paper-item label{display:block;font-size:12px;font-weight:600;color:var(--txt-2);margin-bottom:6px}
 .paper-item .max-hint{font-size:11px;color:var(--txt-3);font-weight:400;margin-left:4px}
 .paper-item input[type="number"]{width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:0 12px;font-size:14px;font-family:'DM Mono',monospace;color:var(--txt);outline:none;transition:border-color .15s}
 .paper-item input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .paper-item input.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.1)}
 .modal-footer{margin-top:22px;display:flex;gap:10px;justify-content:flex-end}
+
+/* Remark/comment textarea under each score input in the edit modal */
+.comment-field{margin-top:10px}
+.comment-field label{display:block;font-size:11px;font-weight:600;color:var(--txt-3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.comment-textarea{
+  width:100%;min-height:56px;resize:vertical;
+  border:1.5px solid var(--border);border-radius:var(--r-sm);
+  padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;
+  color:var(--txt);background:var(--bg);outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.comment-textarea:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.comment-hint{font-size:10.5px;color:var(--txt-3);margin-top:4px}
 </style>
 
 <div class="me-wrap">
@@ -243,6 +260,13 @@ function setLoading(id, msg) {
     `<div class="empty-state"><span class="spinner"></span>${msg}</div>`;
 }
 
+/* Escape helper used when dropping teacher-entered remarks into
+   HTML attributes (title tooltips) or textarea bodies. */
+function escHtml(str) {
+  return (str == null ? "" : String(str)).replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c]);
+}
+
 function getEntryFilters() {
   return {
     termId:   document.getElementById("entry_term_id").value,
@@ -265,7 +289,6 @@ async function loadStudents() {
   setLoading("studentsTable", "Fetching students…");
 
   try {
-    /* ✅ term_id is now passed to /load */
     const res  = await fetch(
       API(`/marks-entry/load?stream_id=${streamId}&term_id=${termId}&exam_type=${examType}`)
     );
@@ -322,17 +345,28 @@ function renderStudentTable(data) {
 
     cols.forEach(c => {
       let score = null;
-      const subjectScores = st.scores ? st.scores[String(c.subjectId)] : undefined;
+      let comment = null;
+      const subjectScores   = st.scores   ? st.scores[String(c.subjectId)]   : undefined;
+      const subjectComments = st.comments ? st.comments[String(c.subjectId)] : undefined;
+
       if (c.isPaper) {
         score = (subjectScores && typeof subjectScores === "object")
           ? subjectScores[String(c.paperId)]
           : null;
+        comment = (subjectComments && typeof subjectComments === "object")
+          ? subjectComments[String(c.paperId)]
+          : null;
       } else {
         score = (subjectScores !== null && subjectScores !== undefined && typeof subjectScores !== "object")
           ? subjectScores : null;
+        comment = (subjectComments !== null && subjectComments !== undefined && typeof subjectComments !== "object")
+          ? subjectComments : null;
       }
-      const has = score !== null && score !== undefined && score !== "";
-      html += `<td><span class="score-pill ${has ? "entered" : ""}">${has ? score : "—"}</span></td>`;
+
+      const has  = score !== null && score !== undefined && score !== "";
+      /* show a 💬 flag with the remark in a tooltip when present */
+      const flag = comment ? `<span class="comment-flag" title="${escHtml(comment)}">💬</span>` : "";
+      html += `<td><span class="score-pill ${has ? "entered" : ""}">${has ? score : "—"}</span>${flag}</td>`;
     });
 
     html += `<td><button class="btn btn-amber btn-icon" title="Edit marks"
@@ -359,7 +393,6 @@ async function editStudent(studentId, studentName) {
   document.getElementById("editModal").classList.add("open");
 
   try {
-    /* ✅ term_id now passed to /student */
     const url = API(
       `/marks-entry/student?student_id=${studentId}&stream_id=${streamId}&term_id=${termId}&exam_type=${examType}`
     );
@@ -390,6 +423,7 @@ async function editStudent(studentId, studentName) {
           const maxAttr = maxVal !== "" ? `max="${maxVal}"` : "";
           const maxLbl  = maxVal !== "" ? `<span class="max-hint">/ ${maxVal}</span>` : "";
           const val     = (paper.score !== "" && paper.score !== null) ? paper.score : "";
+          const commentVal = paper.comment || "";
           html += `<div class="paper-item">
             <label>${paper.name}${maxLbl}</label>
             <input type="number" min="0" ${maxAttr} step="0.5"
@@ -399,10 +433,19 @@ async function editStudent(studentId, studentName) {
               data-max="${maxVal}"
               value="${val}"
               oninput="validateScore(this)">
+            <div class="comment-field">
+              <label>Remark (optional)</label>
+              <textarea class="comment-textarea"
+                data-subject-id="${subject.id}"
+                data-paper-id="${paper.id}"
+                placeholder="e.g. Needs more practice with this area">${escHtml(commentVal)}</textarea>
+              <div class="comment-hint">Shown on the report card next to this score.</div>
+            </div>
           </div>`;
         });
       } else {
         const val = (subject.score !== "" && subject.score !== null) ? subject.score : "";
+        const commentVal = subject.comment || "";
         html += `<div class="paper-item">
           <label>Score</label>
           <input type="number" min="0" step="0.5"
@@ -412,6 +455,14 @@ async function editStudent(studentId, studentName) {
             data-max=""
             value="${val}"
             oninput="validateScore(this)">
+          <div class="comment-field">
+            <label>Remark (optional)</label>
+            <textarea class="comment-textarea"
+              data-subject-id="${subject.id}"
+              data-paper-id=""
+              placeholder="e.g. Excellent participation this term">${escHtml(commentVal)}</textarea>
+            <div class="comment-hint">Shown on the report card next to this score.</div>
+          </div>
         </div>`;
       }
 
@@ -457,10 +508,21 @@ async function submitMarks() {
   document.querySelectorAll(".mark-input").forEach(input => {
     const val = input.value.trim();
     if (val === "") return;
+
+    const subjectId = input.dataset.subjectId;
+    const paperId    = input.dataset.paperId || "";
+    /* pull the matching remark textarea for this score (linked via
+       the same data-subject-id / data-paper-id pair) */
+    const commentEl = document.querySelector(
+      `.comment-textarea[data-subject-id="${subjectId}"][data-paper-id="${paperId}"]`
+    );
+    const comment = commentEl ? commentEl.value.trim() : "";
+
     marks.push({
-      subject_id: parseInt(input.dataset.subjectId),
+      subject_id: parseInt(subjectId),
       paper_id:   input.dataset.paperId ? parseInt(input.dataset.paperId) : null,
       score:      parseFloat(val),
+      comment,    // backend treats "" as "leave existing unchanged"
     });
   });
 
@@ -470,7 +532,6 @@ async function submitMarks() {
   btn.disabled = true;
 
   try {
-    /* ✅ term_id now passed to /save */
     const res  = await fetch(API("/marks-entry/save"), {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
@@ -578,7 +639,8 @@ async function loadSavedMarks() {
 
       columns.forEach(col => {
 
-        const raw = st.scores[col.key];
+        const raw     = st.scores[col.key];
+        const comment = st.comments ? st.comments[col.key] : "";
 
         const isNA     = raw === "N/A";
         const isDash   = raw === "-" || raw === null || raw === "";
@@ -596,11 +658,14 @@ async function loadSavedMarks() {
           display = raw;
         }
 
+        /* remark flag next to the saved score */
+        const flag = (hasScore && comment) ? `<span class="comment-flag" title="${escHtml(comment)}">💬</span>` : "";
+
         html += `
           <td>
             <span class="${cls}">
               ${display}
-            </span>
+            </span>${flag}
           </td>
         `;
       });

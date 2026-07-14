@@ -19,3 +19,206 @@
 [2026-07-11 00:24:47] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
 [2026-07-11 00:24:47] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
 [2026-07-11 00:26:23] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 321:9, unknown property.
+[2026-07-14 12:42:28] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 12:42:28] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 12:42:59] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 12:42:59] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:08:09] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:08:09] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:08:30] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-14 15:08:30] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-14 15:08:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:08:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:14:54] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:14:54] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:16:54] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:16:54] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:17:50] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:17:50] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:18:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:18:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:19:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:19:08] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:19:25] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-14 15:19:25] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-14 15:38:38] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:38:38] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 15:39:08] ERROR | GET /api/academics2/marks-entry | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /api/academics2/marks-entry | IP=127.0.0.1 | USER=9 | OSError: [Errno 5] I/O error
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/jwt_manager.py", line 557, in _decode_jwt_from_config
+    return _decode_jwt(**kwargs, allow_expired=allow_expired)
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/tokens.py", line 96, in _decode_jwt
+    decoded_token = jwt.decode(
+        encoded_token,
+    ...<5 lines>...
+        options=options,
+    )
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 365, in decode
+    decoded = self.decode_complete(
+        jwt,
+    ...<8 lines>...
+        leeway=leeway,
+    )
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 272, in decode_complete
+    self._validate_claims(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        payload,
+        ^^^^^^^^
+    ...<4 lines>...
+        subject=subject,
+        ^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 405, in _validate_claims
+    self._validate_exp(payload, now, leeway)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 508, in _validate_exp
+    raise ExpiredSignatureError("Signature has expired")
+jwt.exceptions.ExpiredSignatureError: Signature has expired
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 48, in silent_refresh_logic
+    print(f"✅ Auto-healed token for: {identity}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 5] I/O error
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 51, in silent_refresh_logic
+    print(f"❌ Full session expired or missing: {e}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 5] I/O error
+[2026-07-14 15:39:08] ERROR | GET /api/academics2/marks-entry | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /api/academics2/marks-entry | IP=127.0.0.1 | USER=9 | OSError: [Errno 5] I/O error
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 340, in _decode_jwt_from_request
+    decoded_token = decode_token(encoded_token, csrf_token)
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/utils.py", line 128, in decode_token
+    return jwt_manager._decode_jwt_from_config(encoded_token, csrf_value, allow_expired)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/jwt_manager.py", line 557, in _decode_jwt_from_config
+    return _decode_jwt(**kwargs, allow_expired=allow_expired)
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask_jwt_extended/tokens.py", line 96, in _decode_jwt
+    decoded_token = jwt.decode(
+        encoded_token,
+    ...<5 lines>...
+        options=options,
+    )
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 365, in decode
+    decoded = self.decode_complete(
+        jwt,
+    ...<8 lines>...
+        leeway=leeway,
+    )
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 272, in decode_complete
+    self._validate_claims(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        payload,
+        ^^^^^^^^
+    ...<4 lines>...
+        subject=subject,
+        ^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 405, in _validate_claims
+    self._validate_exp(payload, now, leeway)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/jwt/api_jwt.py", line 508, in _validate_exp
+    raise ExpiredSignatureError("Signature has expired")
+jwt.exceptions.ExpiredSignatureError: Signature has expired
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 48, in silent_refresh_logic
+    print(f"✅ Auto-healed token for: {identity}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 5] I/O error
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/home/cloud_test/erp/myenv/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 51, in silent_refresh_logic
+    print(f"❌ Full session expired or missing: {e}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 5] I/O error
+[2026-07-14 15:42:09] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=9 | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=9
+[2026-07-14 15:42:09] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=9 | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=9
+[2026-07-14 15:46:51] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 15:54:38] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 15:56:02] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 15:57:46] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:03:56] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:05:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:11:54] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:11:54] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:12:39] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:14:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:15:39] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:17:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:19:53] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:19:53] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:20:29] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:21:59] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:21:59] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:22:36] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:25:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:25:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:26:16] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-14 16:26:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Relative URI reference without a base URI: <img src="None">
+[2026-07-14 16:33:15] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
+[2026-07-14 16:35:36] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 269:55, unknown property.
+[2026-07-14 16:40:48] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:40:48] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 16:41:19] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 269:55, unknown property.
+[2026-07-14 16:43:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
+[2026-07-14 17:17:27] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 17:17:27] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 17:18:37] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
+[2026-07-14 17:19:55] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
+[2026-07-14 17:20:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
+[2026-07-14 17:21:07] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
+[2026-07-14 17:28:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 17:28:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-14 17:29:13] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
