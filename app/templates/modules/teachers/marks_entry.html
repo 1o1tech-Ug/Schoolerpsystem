@@ -73,6 +73,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
 .table-wrap{overflow-x:auto}
 .data-table{width:100%;border-collapse:collapse}
 .data-table th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);background:#f8fafd;border-bottom:1px solid var(--line);white-space:nowrap}
+.data-table th.th-activity{background:var(--amber-dim);color:var(--amber-dark)}
 .data-table td{padding:13px 16px;border-top:1px solid var(--line);font-size:14px;vertical-align:middle}
 .data-table tbody tr:hover{background:#f8fafd}
 
@@ -84,6 +85,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
 .score-display.has-score{color:var(--green)}
 .score-display.no-score{color:var(--ink-3)}
 .comment-flag{display:inline-block;margin-left:6px;font-size:12px;cursor:help}
+
+/* [NEW] Learning-activity remark pill — nursery streams only. Activities
+   are comment-only (no score), so this is the cell's primary content
+   rather than a flag next to a score, mirroring the academics-module view. */
+.activity-pill{display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;background:var(--bg);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--ink-2);cursor:help}
+.activity-pill.filled{background:var(--amber-dim);color:var(--amber-dark)}
+.activity-pill.empty{color:var(--ink-3);font-style:italic}
 
 .edit-btn{height:32px;padding:0 12px;border-radius:6px;border:1.5px solid var(--line);background:none;font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;color:var(--blue);transition:all .15s}
 .edit-btn:hover{border-color:var(--blue);background:var(--blue-dim)}
@@ -121,7 +129,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
 .score-input.error{border-color:var(--rose);box-shadow:0 0 0 3px rgba(244,63,94,.12)}
 .score-hint{font-size:11px;color:var(--ink-3);margin-top:5px}
 
-/* [NEW] Comment field under each score */
+/* Comment field under each score */
 .comment-field{margin-top:10px}
 .comment-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
 .comment-textarea{
@@ -133,6 +141,23 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink)}
 }
 .comment-textarea:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(35,82,255,.12)}
 .comment-hint{font-size:10.5px;color:var(--ink-3);margin-top:4px}
+
+/* [NEW] Learning Activities block inside the edit modal — nursery
+   streams only. Comment-only (no score input), so it gets its own
+   lighter box rather than reusing .score-field. */
+.activity-section{margin-top:8px;padding:16px;border:1px solid var(--line);border-radius:var(--r-md);background:#fffbeb}
+.activity-section-title{font-family:var(--font-display);font-size:13px;font-weight:800;color:var(--amber-dark);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.activity-field{margin-bottom:14px}
+.activity-field:last-child{margin-bottom:0}
+.activity-field label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin-bottom:6px}
+.activity-textarea{
+  width:100%;min-height:52px;resize:vertical;
+  border:1.5px solid var(--line);border-radius:var(--r-sm);
+  padding:10px 12px;font-size:13px;font-family:var(--font-body);
+  color:var(--ink);background:var(--surface);outline:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+.activity-textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.14)}
 
 .modal-footer{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
 .btn-cancel{height:42px;padding:0 18px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:none;font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:all .15s}
@@ -393,6 +418,14 @@ function escHtml(str) {
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c]);
 }
 
+/* Short preview text for an activity-comment pill in the table view —
+   the tooltip (title attr) always carries the full remark. */
+function activityPreview(comment) {
+    const c = (comment || "").trim();
+    if (!c) return "";
+    return c.length > 24 ? c.slice(0, 24) + "…" : c;
+}
+
 /* ── Load Students ── */
 async function loadStudents() {
     const stream_id  = document.getElementById('stream_id').value;
@@ -443,6 +476,12 @@ function renderStudentTable(data) {
 
     const hasPapers = data.papers && data.papers.length > 0;
 
+    // [NEW] Only ever populated for Daycare/KG1/KG2/KG3 streams — see
+    // backend `_is_nursery_stream()`. Every other class keeps the
+    // exact same table it always had.
+    const isNursery  = !!data.is_nursery;
+    const activities = (isNursery && data.activities) ? data.activities : [];
+
     let html = `<div class="table-wrap"><table class="data-table"><thead><tr>
         <th>Code</th><th>Student</th><th>Class & Stream</th><th>Subject</th>`;
 
@@ -451,6 +490,10 @@ function renderStudentTable(data) {
     } else {
         html += `<th>Score</th>`;
     }
+
+    // [NEW] Learning Activity columns — nursery streams only.
+    activities.forEach(a => { html += `<th class="th-activity">${a.name}</th>`; });
+
     html += `<th>Action</th></tr></thead><tbody>`;
 
     data.students.forEach(s => {
@@ -471,7 +514,7 @@ function renderStudentTable(data) {
                 const score   = s.saved_marks && s.saved_marks[String(p.id)];
                 const comment = s.saved_comments && s.saved_comments[String(p.id)];
                 const cls     = score != null ? 'has-score' : 'no-score';
-                /* [NEW] Small 💬 flag with a title tooltip when a comment
+                /* Small 💬 flag with a title tooltip when a comment
                    already exists for this score, so teachers can see at a
                    glance which cells have a remark without opening the modal. */
                 const flag = comment ? `<span class="comment-flag" title="${escHtml(comment)}">💬</span>` : "";
@@ -484,6 +527,14 @@ function renderStudentTable(data) {
             const flag    = comment ? `<span class="comment-flag" title="${escHtml(comment)}">💬</span>` : "";
             html += `<td><span class="score-display ${cls}">${score != null ? score : '—'}</span>${flag}</td>`;
         }
+
+        // [NEW] Learning Activity remark cells — comment-only, no score.
+        activities.forEach(a => {
+            const comment = s.activity_comments ? (s.activity_comments[String(a.id)] || "") : "";
+            const has     = comment.trim() !== "";
+            const title   = has ? escHtml(comment) : "No remark yet";
+            html += `<td><span class="activity-pill ${has ? "filled" : "empty"}" title="${title}">${has ? escHtml(activityPreview(comment)) : "—"}</span></td>`;
+        });
 
         html += `<td><button class="edit-btn" onclick="openModal(${s.id})">✏️ Edit</button></td></tr>`;
     });
@@ -500,13 +551,15 @@ function openModal(studentId) {
     document.getElementById('modalStudentName').textContent = currentStudent.name;
     document.getElementById('modalSubjectName').textContent = currentData.subject.name;
 
-    const hasPapers = currentData.papers && currentData.papers.length > 0;
+    const hasPapers  = currentData.papers && currentData.papers.length > 0;
+    const isNursery  = !!currentData.is_nursery;
+    const activities = (isNursery && currentData.activities) ? currentData.activities : [];
     let html = '';
 
-    /* [NEW] Every score field now has a matching comment textarea
-       underneath it — this is what report_card_service.py reads to
-       populate the "Comment" column on the nursery report card next
-       to each Learning Area score. Optional: leaving it blank is fine. */
+    /* Every score field has a matching comment textarea underneath it
+       — this is what report_card_service.py reads to populate the
+       "Comment" column on the nursery report card next to each
+       Learning Area score. Optional: leaving it blank is fine. */
     if (hasPapers) {
         currentData.papers.forEach(p => {
             const existingScore   = currentStudent.saved_marks    && currentStudent.saved_marks[String(p.id)];
@@ -550,6 +603,26 @@ function openModal(studentId) {
                 <div class="comment-hint">Shown on the report card next to this subject's score.</div>
             </div>
         </div>`;
+    }
+
+    // [NEW] Learning Activities — nursery streams only. Comment-only
+    // fields (no score), saved separately via `activity_comments` in
+    // the /marks-entry/save payload. Not subject-specific, so shown
+    // regardless of which subject is currently selected.
+    if (activities.length) {
+        html += `<div class="activity-section">
+            <div class="activity-section-title">🧸 Learning Activities</div>`;
+        activities.forEach(a => {
+            const existing = currentStudent.activity_comments ? currentStudent.activity_comments[String(a.id)] : "";
+            html += `
+            <div class="activity-field">
+                <label>${a.name}</label>
+                <textarea class="activity-textarea modal-activity-comment"
+                    data-activity="${a.id}"
+                    placeholder="e.g. Enjoys group play, still building confidence">${escHtml(existing || "")}</textarea>
+            </div>`;
+        });
+        html += `</div>`;
     }
 
     document.getElementById('modalBody').innerHTML = html;
@@ -607,7 +680,7 @@ async function submitModalMarks() {
             hasError = true; break;
         }
 
-        // [NEW] Pull the matching comment textarea for this paper (same
+        // Pull the matching comment textarea for this paper (same
         // data-paper value links them) and include it in the payload.
         const commentEl = document.querySelector(
             `.modal-comment[data-paper="${paperId || ''}"]`
@@ -618,11 +691,32 @@ async function submitModalMarks() {
             student_id: currentStudent.id,
             paper_id:   paperId ? parseInt(paperId) : null,
             score,
-            comment,   // [NEW] backend treats "" as "leave existing unchanged"
+            comment,   // backend treats "" as "leave existing unchanged"
         });
     }
 
-    if (hasError || !marks.length) return;
+    if (hasError) return;
+
+    // [NEW] Learning Activity remarks — only present in the DOM for
+    // nursery streams (see openModal()). Backend re-checks is_nursery
+    // itself and silently ignores these otherwise.
+    const activityComments = [];
+    document.querySelectorAll('.modal-activity-comment').forEach(ta => {
+        activityComments.push({
+            activity_id: parseInt(ta.dataset.activity),
+            student_id:  currentStudent.id,
+            comment:     ta.value.trim(),   // backend treats "" as "leave existing unchanged"
+        });
+    });
+    const hasAnyActivityComment = activityComments.some(a => a.comment !== "");
+
+    // A save is valid if it carries at least one score OR at least one
+    // non-blank activity remark (nursery teachers may only be leaving
+    // Learning Activity notes this visit, with no score changes).
+    if (!marks.length && !hasAnyActivityComment) {
+        toast('Enter a score or a learning-activity remark before saving', 'error');
+        return;
+    }
 
     const btn = document.getElementById('submitBtn');
     btn.classList.add('loading'); btn.disabled = true;
@@ -631,7 +725,14 @@ async function submitModalMarks() {
         const resp = await fetch('/api/teachers/marks-entry/save', {
             method : 'POST',
             headers: authHdr(),
-            body   : JSON.stringify({ stream_id: parseInt(stream_id), subject_id: parseInt(subject_id), exam_type, marks }),
+            body   : JSON.stringify({
+                stream_id:  parseInt(stream_id),
+                subject_id: parseInt(subject_id),
+                exam_type,
+                student_id: currentStudent.id,        // [NEW] fallback owner for activity_comments
+                marks,
+                activity_comments: activityComments,  // [NEW]
+            }),
         });
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.message || 'Save failed');
@@ -671,6 +772,9 @@ async function filterMarks() {
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.message || 'Filter failed');
 
+        // [FIX] The backend returns an object — { records, activity_columns,
+        // is_nursery } — not a bare array. Pass the whole object through;
+        // renderSavedMarks() destructures it.
         renderSavedMarks(data);
 
     } catch (e) {
@@ -681,8 +785,10 @@ async function filterMarks() {
 }
 
 /* ── Render saved marks table ── */
-function renderSavedMarks(records) {
-    const badge = document.getElementById('histBadge');
+function renderSavedMarks(data) {
+    const records          = data.records || [];
+    const activityColumns  = data.activity_columns || [];   // [NEW] nursery only
+    const badge             = document.getElementById('histBadge');
 
     if (!records.length) {
         badge.style.display = 'none';
@@ -714,6 +820,10 @@ function renderSavedMarks(records) {
     } else {
         html += `<th>Score</th>`;
     }
+
+    // [NEW] Learning Activity columns — nursery streams only.
+    activityColumns.forEach(col => { html += `<th class="th-activity">${col.label}</th>`; });
+
     html += `</tr></thead><tbody>`;
 
     records.forEach(r => {
@@ -739,6 +849,14 @@ function renderSavedMarks(records) {
             const flag = r.comment ? `<span class="comment-flag" title="${escHtml(r.comment)}">💬</span>` : "";
             html += `<td><span class="score-display ${r.score != null ? 'has-score' : 'no-score'}">${r.score != null ? r.score : '—'}</span>${flag}</td>`;
         }
+
+        // [NEW] Learning Activity remark cells — comment-only, nursery only.
+        activityColumns.forEach(col => {
+            const comment = r.activities ? (r.activities[col.key] || "") : "";
+            const has     = comment.trim() !== "";
+            const title   = has ? escHtml(comment) : "No remark yet";
+            html += `<td><span class="activity-pill ${has ? "filled" : "empty"}" title="${title}">${has ? escHtml(activityPreview(comment)) : "—"}</span></td>`;
+        });
 
         html += `</tr>`;
     });

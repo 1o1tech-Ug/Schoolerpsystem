@@ -14,6 +14,7 @@ from app.models.academic_structure import (
     AcademicConfig, AcademicYear, Term,
     Assessment, AssessmentType,
     StudentMark, GradeScale,
+    NurseryActivity, StudentActivityComment,   # [NEW]
 )
 from app.core.rate_limit import (
     READ_LIMIT, WRITE_LIMIT, MARKS_SAVE_LIMIT,
@@ -103,6 +104,65 @@ def _get_or_create_assessment(
 
 
 # ═══════════════════════════════════════════════════════════════
+#  [NEW] NURSERY DETECTION & LEARNING-ACTIVITY HELPERS
+#
+#  "Nursery" here means the stream's parent Class is one of the
+#  school's early-years classes (Daycare, KG1, KG2, KG3). Everything
+#  below is only ever consulted when a request's stream resolves to
+#  one of these — every other class is completely untouched, so
+#  Subject/Assessment/StudentMark behaviour for Primary/Secondary
+#  streams is unchanged.
+# ═══════════════════════════════════════════════════════════════
+
+NURSERY_CLASS_NAMES = {"daycare", "kg1", "kg2", "kg3"}
+
+
+def _normalize_class_name(name):
+    return (name or "").strip().lower().replace(" ", "").replace("-", "").replace("_", "")
+
+
+def _is_nursery_stream(stream_id, school_id):
+    """
+    True only if `stream_id` belongs (via its Class) to one of the
+    school's nursery classes. Used to gate every nursery-only branch
+    below — non-nursery streams never look at NurseryActivity /
+    StudentActivityComment at all.
+    """
+    if not stream_id:
+        return False
+
+    stream = (
+        Stream.query
+        .options(joinedload(Stream.class_))
+        .join(Class)
+        .filter(Stream.id == stream_id, Class.school_id == school_id)
+        .first()
+    )
+    if not stream or not stream.class_:
+        return False
+
+    return _normalize_class_name(stream.class_.name) in NURSERY_CLASS_NAMES
+
+
+def _get_nursery_activities(school_id):
+    return (
+        NurseryActivity.query
+        .filter_by(school_id=school_id)
+        .order_by(NurseryActivity.position, NurseryActivity.id)
+        .all()
+    )
+
+
+def _serialize_activity(activity):
+    return {
+        "id":        activity.id,
+        "name":      activity.name,
+        "icon_path": activity.icon_path,
+        "position":  activity.position,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════
 #  MARKS ENTRY PAGE  —  GET /api/academics2/marks-entry
 # ═══════════════════════════════════════════════════════════════
 
@@ -178,12 +238,19 @@ def load_marks_students():
     if not Stream.query.get(stream_id):
         return jsonify({"message": "Stream not found"}), 404
 
+    # [NEW] Only Nursery (Daycare/KG1/KG2/KG3) streams carry Learning
+    # Activities — every other class is handled exactly as before.
+    is_nursery = _is_nursery_stream(stream_id, school_id)
+
     try:
         ss_rows     = StudentStream.query.filter_by(stream_id=stream_id, school_id=school_id).all()
         student_ids = [ss.student_id for ss in ss_rows]
 
         if not student_ids:
-            return jsonify({"students": [], "subjects": []}), 200
+            return jsonify({
+                "students": [], "subjects": [],
+                "activities": [], "is_nursery": is_nursery,
+            }), 200
 
         students = (
             Student.query
@@ -202,23 +269,24 @@ def load_marks_students():
 
         visible_subject_ids = list({ss.subject_id for ss in student_subject_rows})
 
-        if not visible_subject_ids:
-            return jsonify({"students": [], "subjects": []}), 200
+        subjects = []
+        if visible_subject_ids:
+            subjects = (
+                Subject.query
+                .filter(Subject.id.in_(visible_subject_ids))
+                .order_by(Subject.name)
+                .all()
+            )
 
-        subjects = (
-            Subject.query
-            .filter(Subject.id.in_(visible_subject_ids))
-            .order_by(Subject.name)
-            .all()
-        )
-
-        assessments = Assessment.query.filter(
-            Assessment.school_id  == school_id,
-            Assessment.stream_id  == stream_id,
-            Assessment.subject_id.in_(visible_subject_ids),
-            Assessment.term_id    == term_id,
-            Assessment.type       == exam_enum,
-        ).all()
+        assessments = []
+        if visible_subject_ids:
+            assessments = Assessment.query.filter(
+                Assessment.school_id  == school_id,
+                Assessment.stream_id  == stream_id,
+                Assessment.subject_id.in_(visible_subject_ids),
+                Assessment.term_id    == term_id,
+                Assessment.type       == exam_enum,
+            ).all()
 
         asmt_to_subj_paper = {
             asmt.id: (asmt.subject_id, asmt.paper_id)
@@ -226,7 +294,7 @@ def load_marks_students():
         }
 
         saved_scores   = {}
-        saved_comments = {}   # [NEW] (subject_id, paper_id, student_id) -> comment
+        saved_comments = {}   # (subject_id, paper_id, student_id) -> comment
         if assessments:
             for mark in StudentMark.query.filter(
                 StudentMark.assessment_id.in_([a.id for a in assessments]),
@@ -253,6 +321,24 @@ def load_marks_students():
                 ],
             })
 
+        # [NEW] Nursery Learning Activities for this school, plus any
+        # comments already saved for this exact term/exam_type.
+        activities_data = []
+        activity_comments_by_student = {}
+        if is_nursery:
+            activities = _get_nursery_activities(school_id)
+            activities_data = [_serialize_activity(a) for a in activities]
+
+            if activities:
+                activity_ids = [a.id for a in activities]
+                for c in StudentActivityComment.query.filter(
+                    StudentActivityComment.activity_id.in_(activity_ids),
+                    StudentActivityComment.student_id.in_(student_ids),
+                    StudentActivityComment.term_id == term_id,
+                    StudentActivityComment.exam_type == exam_enum,
+                ).all():
+                    activity_comments_by_student.setdefault(c.student_id, {})[c.activity_id] = c.comment
+
         student_data = []
         for student in students:
             my_subjects = student_subject_ids_map.get(student.id, set())
@@ -261,7 +347,7 @@ def load_marks_students():
                 "student_code": student.student_code,
                 "name":         f"{student.first_name} {student.last_name}",
                 "scores":       {},
-                "comments":     {},   # [NEW]
+                "comments":     {},
             }
             for subject in subjects:
                 if subject.id not in my_subjects:
@@ -272,7 +358,7 @@ def load_marks_students():
                 papers = papers_by_subject[subject.id]
                 if papers:
                     paper_scores   = {}
-                    paper_comments = {}   # [NEW]
+                    paper_comments = {}
                     for p in papers:
                         s = saved_scores.get((subject.id, p.id, student.id))
                         if s is not None:
@@ -284,15 +370,28 @@ def load_marks_students():
                     row["comments"][str(subject.id)] = paper_comments
                 else:
                     s = saved_scores.get((subject.id, None, student.id))
-                    c = saved_comments.get((subject.id, None, student.id))   # [NEW]
+                    c = saved_comments.get((subject.id, None, student.id))
                     row["scores"][str(subject.id)]   = s
                     row["comments"][str(subject.id)] = c
+
+            # [NEW] activity_comments keyed by activity id, mirroring
+            # the shape of `comments` above. Empty dict for non-nursery
+            # streams so the frontend never has to special-case it.
+            if is_nursery:
+                row["activity_comments"] = {
+                    str(a["id"]): activity_comments_by_student.get(student.id, {}).get(a["id"]) or ""
+                    for a in activities_data
+                }
+            else:
+                row["activity_comments"] = {}
 
             student_data.append(row)
 
         return jsonify({
-            "students": student_data,
-            "subjects": subject_data,
+            "students":   student_data,
+            "subjects":   subject_data,
+            "activities": activities_data,   # [NEW]
+            "is_nursery": is_nursery,         # [NEW]
         }), 200
 
     except Exception:
@@ -336,29 +435,35 @@ def get_student_marks_entry():
     if not Student.query.get(student_id):
         return jsonify({"message": "Student not found"}), 404
 
+    # [NEW] Resolved once up front so we can still return activities
+    # even for a nursery student who (unusually) has no StudentSubject
+    # rows yet.
+    is_nursery = _is_nursery_stream(stream_id, school_id)
+
     try:
         student_subject_ids = [
             ss.subject_id
             for ss in StudentSubject.query.filter_by(student_id=student_id).all()
         ]
 
-        if not student_subject_ids:
-            return jsonify({"subjects": []}), 200
+        subjects = []
+        if student_subject_ids:
+            subjects = (
+                Subject.query
+                .filter(Subject.id.in_(student_subject_ids))
+                .order_by(Subject.name)
+                .all()
+            )
 
-        subjects = (
-            Subject.query
-            .filter(Subject.id.in_(student_subject_ids))
-            .order_by(Subject.name)
-            .all()
-        )
-
-        assessments = Assessment.query.filter(
-            Assessment.school_id  == school_id,
-            Assessment.stream_id  == stream_id,
-            Assessment.subject_id.in_(student_subject_ids),
-            Assessment.term_id    == term_id,
-            Assessment.type       == exam_enum,
-        ).all()
+        assessments = []
+        if student_subject_ids:
+            assessments = Assessment.query.filter(
+                Assessment.school_id  == school_id,
+                Assessment.stream_id  == stream_id,
+                Assessment.subject_id.in_(student_subject_ids),
+                Assessment.term_id    == term_id,
+                Assessment.type       == exam_enum,
+            ).all()
 
         assessment_map = {
             (asmt.subject_id, asmt.paper_id): asmt
@@ -366,7 +471,7 @@ def get_student_marks_entry():
         }
 
         marks_by_assessment    = {}
-        comments_by_assessment = {}   # [NEW]
+        comments_by_assessment = {}
         if assessments:
             for mark in StudentMark.query.filter(
                 StudentMark.assessment_id.in_([a.id for a in assessments]),
@@ -384,13 +489,13 @@ def get_student_marks_entry():
                 for paper in papers:
                     asmt    = assessment_map.get((subject.id, paper.id))
                     score   = marks_by_assessment.get(asmt.id, "") if asmt else ""
-                    comment = comments_by_assessment.get(asmt.id, "") if asmt else ""   # [NEW]
+                    comment = comments_by_assessment.get(asmt.id, "") if asmt else ""
                     paper_data.append({
                         "id":        paper.id,
                         "name":      paper.paper_name,
                         "max_marks": paper.max_marks,
                         "score":     score,
-                        "comment":   comment or "",   # [NEW]
+                        "comment":   comment or "",
                     })
                 results.append({
                     "id":     subject.id,
@@ -400,16 +505,44 @@ def get_student_marks_entry():
             else:
                 asmt    = assessment_map.get((subject.id, None))
                 score   = marks_by_assessment.get(asmt.id, "") if asmt else ""
-                comment = comments_by_assessment.get(asmt.id, "") if asmt else ""   # [NEW]
+                comment = comments_by_assessment.get(asmt.id, "") if asmt else ""
                 results.append({
                     "id":      subject.id,
                     "name":    subject.name,
                     "score":   score,
-                    "comment": comment or "",   # [NEW]
+                    "comment": comment or "",
                     "papers":  [],
                 })
 
-        return jsonify({"subjects": results}), 200
+        # [NEW] Learning Activities + this student's saved comments for
+        # this term/exam_type — nursery streams only.
+        activities_result = []
+        if is_nursery:
+            activities = _get_nursery_activities(school_id)
+            if activities:
+                activity_ids   = [a.id for a in activities]
+                comments_map = {
+                    c.activity_id: c.comment
+                    for c in StudentActivityComment.query.filter(
+                        StudentActivityComment.activity_id.in_(activity_ids),
+                        StudentActivityComment.student_id == student_id,
+                        StudentActivityComment.term_id == term_id,
+                        StudentActivityComment.exam_type == exam_enum,
+                    ).all()
+                }
+                for a in activities:
+                    activities_result.append({
+                        "id":        a.id,
+                        "name":      a.name,
+                        "icon_path": a.icon_path,
+                        "comment":   comments_map.get(a.id, "") or "",
+                    })
+
+        return jsonify({
+            "subjects":   results,
+            "activities": activities_result,   # [NEW]
+            "is_nursery": is_nursery,           # [NEW]
+        }), 200
 
     except Exception:
         logger.exception("get_student_marks_entry failed | student_id=%s", student_id)
@@ -433,11 +566,12 @@ def save_student_marks():
     school_id = claims.get("school_id")
     data      = request.get_json(force=True) or {}
 
-    student_id = data.get("student_id")
-    stream_id  = data.get("stream_id")
-    term_id    = data.get("term_id")
-    exam_type  = data.get("exam_type")
-    marks      = data.get("marks", [])
+    student_id        = data.get("student_id")
+    stream_id         = data.get("stream_id")
+    term_id           = data.get("term_id")
+    exam_type         = data.get("exam_type")
+    marks             = data.get("marks", [])
+    activity_comments = data.get("activity_comments", [])   # [NEW]
 
     if not student_id or not stream_id or not term_id or not exam_type:
         return jsonify({"message": "student_id, stream_id, term_id and exam_type are required"}), 400
@@ -455,8 +589,14 @@ def save_student_marks():
     ).all()
     assignment_by_subject = {a.subject_id: a for a in assignments}
 
-    saved   = 0
-    skipped = 0
+    # [NEW] Activity comments are only ever persisted for nursery
+    # streams — if a non-nursery request somehow includes them, they
+    # are silently ignored rather than erroring the whole save.
+    is_nursery = _is_nursery_stream(stream_id, school_id)
+
+    saved             = 0
+    skipped           = 0
+    activities_saved  = 0   # [NEW]
 
     try:
         for item in marks:
@@ -500,10 +640,9 @@ def save_student_marks():
                         )
                     }), 400
 
-            # [NEW] Optional per-mark comment — trim, cap length, blank → None
+            # Optional per-mark comment — trim, cap length, blank → None
             # so we don't store empty strings that would otherwise render as
-            # a populated-but-blank comment cell on the report. Mirrors
-            # teachers_api.save_marks() handling.
+            # a populated-but-blank comment cell on the report.
             raw_comment = item.get("comment")
             comment = (str(raw_comment).strip()[:1000] or None) if raw_comment else None
 
@@ -526,7 +665,7 @@ def save_student_marks():
 
             if existing:
                 existing.score = score
-                # [NEW] Only overwrite the comment if one was actually
+                # Only overwrite the comment if one was actually
                 # submitted this time — leaving the field blank in the
                 # UI on a later save shouldn't silently wipe a comment
                 # a teacher left earlier for this same assessment.
@@ -538,18 +677,68 @@ def save_student_marks():
                     assessment_id = assessment.id,
                     student_id    = student_id,
                     score         = score,
-                    comment       = comment,   # [NEW]
+                    comment       = comment,
                 ))
             saved += 1
 
+        # [NEW] Persist Learning Activity remarks (nursery only). Each
+        # comment lands directly in StudentActivityComment, keyed on
+        # (activity_id, student_id, term_id, exam_type) — no Assessment
+        # or StudentMark row is created for these, since activities are
+        # comment-only and don't carry a score.
+        if is_nursery:
+            for item in activity_comments:
+                activity_id = item.get("activity_id")
+                raw_comment = item.get("comment")
+
+                if not activity_id:
+                    continue
+
+                comment_val = str(raw_comment).strip()[:1000] if raw_comment else ""
+                if not comment_val:
+                    # Blank submission = "leave whatever is already saved
+                    # alone", mirroring the mark-comment behaviour above.
+                    continue
+
+                activity = NurseryActivity.query.filter_by(
+                    id=activity_id, school_id=school_id
+                ).first()
+                if not activity:
+                    continue  # unknown/foreign activity id — skip quietly
+
+                existing = StudentActivityComment.query.filter_by(
+                    activity_id=activity_id,
+                    student_id=student_id,
+                    term_id=term_id,
+                    exam_type=exam_enum,
+                ).first()
+
+                if existing:
+                    existing.comment = comment_val
+                else:
+                    db.session.add(StudentActivityComment(
+                        school_id=school_id,
+                        activity_id=activity_id,
+                        student_id=student_id,
+                        term_id=term_id,
+                        exam_type=exam_enum,
+                        comment=comment_val,
+                    ))
+                activities_saved += 1
+
         db.session.commit()
+
+        message = f"{saved} mark(s) saved successfully"
+        if activities_saved:
+            message += f", {activities_saved} activity comment(s) saved"
+        if skipped:
+            message += f" ({skipped} skipped)"
+
         return jsonify({
-            "message": (
-                f"{saved} mark(s) saved successfully"
-                + (f" ({skipped} skipped)" if skipped else "")
-            ),
-            "saved":   saved,
-            "skipped": skipped,
+            "message":          message,
+            "saved":            saved,
+            "skipped":          skipped,
+            "activities_saved": activities_saved,   # [NEW]
         }), 200
 
     except Exception:
@@ -584,12 +773,17 @@ def load_saved_marks():
     if exam_enum is None:
         return jsonify({"message": f"Invalid exam_type '{exam_type}'. Use BOT, MID or EOT"}), 400
 
+    is_nursery = _is_nursery_stream(stream_id, school_id)   # [NEW]
+
     try:
         ss_rows     = StudentStream.query.filter_by(stream_id=stream_id, school_id=school_id).all()
         student_ids = [ss.student_id for ss in ss_rows]
 
         if not student_ids:
-            return jsonify({"columns": [], "students": []}), 200
+            return jsonify({
+                "columns": [], "students": [],
+                "activity_columns": [], "is_nursery": is_nursery,
+            }), 200
 
         students = (
             Student.query
@@ -608,15 +802,14 @@ def load_saved_marks():
 
         visible_subject_ids = list({ss.subject_id for ss in student_subject_rows})
 
-        if not visible_subject_ids:
-            return jsonify({"columns": [], "students": []}), 200
-
-        subjects = (
-            Subject.query
-            .filter(Subject.id.in_(visible_subject_ids))
-            .order_by(Subject.name)
-            .all()
-        )
+        subjects = []
+        if visible_subject_ids:
+            subjects = (
+                Subject.query
+                .filter(Subject.id.in_(visible_subject_ids))
+                .order_by(Subject.name)
+                .all()
+            )
 
         papers_by_subject = {
             subject.id: Papers.query
@@ -649,13 +842,15 @@ def load_saved_marks():
                     "max_marks":    None,
                 })
 
-        assessments = Assessment.query.filter(
-            Assessment.school_id  == school_id,
-            Assessment.stream_id  == stream_id,
-            Assessment.subject_id.in_(visible_subject_ids),
-            Assessment.term_id    == term_id,
-            Assessment.type       == exam_enum,
-        ).all()
+        assessments = []
+        if visible_subject_ids:
+            assessments = Assessment.query.filter(
+                Assessment.school_id  == school_id,
+                Assessment.stream_id  == stream_id,
+                Assessment.subject_id.in_(visible_subject_ids),
+                Assessment.term_id    == term_id,
+                Assessment.type       == exam_enum,
+            ).all()
 
         assessment_ids_map = {
             (asmt.subject_id, asmt.paper_id): asmt.id
@@ -663,7 +858,7 @@ def load_saved_marks():
         }
 
         marks_map    = {}
-        comments_map = {}   # [NEW]
+        comments_map = {}
         if assessment_ids_map:
             for mark in StudentMark.query.filter(
                 StudentMark.assessment_id.in_(list(assessment_ids_map.values())),
@@ -672,11 +867,34 @@ def load_saved_marks():
                 marks_map.setdefault(mark.assessment_id, {})[mark.student_id]    = mark.score
                 comments_map.setdefault(mark.assessment_id, {})[mark.student_id] = mark.comment
 
+        # [NEW] Learning Activity columns + saved comments, nursery only.
+        activity_columns = []
+        activity_comments_map = {}
+        if is_nursery:
+            activities = _get_nursery_activities(school_id)
+            activity_columns = [
+                {
+                    "key":         f"activity_{a.id}",
+                    "label":       a.name,
+                    "activity_id": a.id,
+                }
+                for a in activities
+            ]
+            if activities:
+                activity_ids = [a.id for a in activities]
+                for c in StudentActivityComment.query.filter(
+                    StudentActivityComment.activity_id.in_(activity_ids),
+                    StudentActivityComment.student_id.in_(student_ids),
+                    StudentActivityComment.term_id == term_id,
+                    StudentActivityComment.exam_type == exam_enum,
+                ).all():
+                    activity_comments_map.setdefault(c.activity_id, {})[c.student_id] = c.comment
+
         student_rows = []
         for student in students:
             my_subjects = student_subject_map.get(student.id, set())
             scores   = {}
-            comments = {}   # [NEW]
+            comments = {}
 
             for col in columns:
                 subj_id  = col["subject_id"]
@@ -695,18 +913,31 @@ def load_saved_marks():
                 else:
                     val = marks_map.get(asmt_id, {}).get(student.id)
                     scores[key] = val if val is not None else "-"
-                    comments[key] = comments_map.get(asmt_id, {}).get(student.id) or ""   # [NEW]
+                    comments[key] = comments_map.get(asmt_id, {}).get(student.id) or ""
+
+            # [NEW] activity remarks for this student, keyed the same
+            # way as `comments` above so the frontend can treat them
+            # the same way it treats subject comments.
+            activities_row = {}
+            if is_nursery:
+                for col in activity_columns:
+                    activities_row[col["key"]] = (
+                        activity_comments_map.get(col["activity_id"], {}).get(student.id) or ""
+                    )
 
             student_rows.append({
                 "student_code": student.student_code,
                 "name":         f"{student.first_name} {student.last_name}",
                 "scores":       scores,
-                "comments":     comments,   # [NEW]
+                "comments":     comments,
+                "activities":   activities_row,   # [NEW]
             })
 
         return jsonify({
-            "columns":  columns,
-            "students": student_rows,
+            "columns":          columns,
+            "students":         student_rows,
+            "activity_columns": activity_columns,   # [NEW]
+            "is_nursery":       is_nursery,           # [NEW]
         }), 200
 
     except Exception:

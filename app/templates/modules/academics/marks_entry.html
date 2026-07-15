@@ -59,6 +59,7 @@ thead tr{background:var(--border-soft)}
 th,td{border:1px solid var(--border);padding:11px 13px;text-align:center;vertical-align:middle;color:var(--txt)}
 th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-2)}
 .th-subject{background:var(--blue-soft);color:var(--blue-dark)}
+.th-activity{background:#fef3c7;color:var(--amber-dark)}
 .paper-hint{display:block;font-size:10px;color:var(--txt-3);font-weight:400;text-transform:none;letter-spacing:0;margin-top:2px}
 tbody tr:hover{background:#f8fafc}
 .score-pill{display:inline-block;background:var(--border-soft);border-radius:999px;padding:2px 10px;font-family:'DM Mono',monospace;font-size:13px;color:var(--txt-2)}
@@ -68,6 +69,13 @@ tbody tr:hover{background:#f8fafc}
 /* Small comment/remark indicator shown next to a score once a
    teacher has left a remark for that mark. Hovering shows the remark. */
 .comment-flag{display:inline-block;margin-left:6px;font-size:12px;cursor:help}
+
+/* Learning-activity comment pill — nursery streams only. Activities
+   are comment-only (no score), so this is the primary cell content
+   rather than a flag next to a score. */
+.activity-pill{display:inline-block;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;background:var(--border-soft);border-radius:999px;padding:2px 10px;font-size:12px;color:var(--txt-2);cursor:help}
+.activity-pill.filled{background:#fef3c7;color:#92400e}
+.activity-pill.empty{color:var(--txt-3);font-style:italic}
 
 .empty-state{padding:40px 20px;text-align:center;color:var(--txt-3);font-size:14px}
 .spinner{display:inline-block;width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
@@ -109,6 +117,22 @@ tbody tr:hover{background:#f8fafc}
 }
 .comment-textarea:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .comment-hint{font-size:10.5px;color:var(--txt-3);margin-top:4px}
+
+/* Nursery "Learning Activities" section in the edit modal — comment
+   only, no score input, so it gets its own lighter box + grid rather
+   than reusing .subject-box / .paper-grid. */
+.activity-box{border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;background:#fffbeb}
+.activity-box-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.activity-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.activity-item label{display:block;font-size:12px;font-weight:600;color:var(--txt-2);margin-bottom:6px}
+.activity-item textarea{
+  width:100%;min-height:56px;resize:vertical;
+  border:1.5px solid var(--border);border-radius:var(--r-sm);
+  padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;
+  color:var(--txt);background:var(--surface);outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.activity-item textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.12)}
 </style>
 
 <div class="me-wrap">
@@ -267,6 +291,14 @@ function escHtml(str) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c]);
 }
 
+/* Short preview text for an activity-comment pill in the table view —
+   the tooltip (title attr) always carries the full remark. */
+function activityPreview(comment) {
+  const c = (comment || "").trim();
+  if (!c) return "";
+  return c.length > 24 ? c.slice(0, 24) + "…" : c;
+}
+
 function getEntryFilters() {
   return {
     termId:   document.getElementById("entry_term_id").value,
@@ -309,6 +341,11 @@ async function loadStudents() {
 
 function renderStudentTable(data) {
   const { students, subjects } = data;
+  // [NEW] Only present (and only ever non-empty) for nursery streams —
+  // see backend `_is_nursery_stream()`. Every other class keeps the
+  // exact table it had before.
+  const isNursery  = !!data.is_nursery;
+  const activities = (isNursery && data.activities) ? data.activities : [];
 
   if (!students || !students.length) {
     document.getElementById("studentsTable").innerHTML =
@@ -335,6 +372,10 @@ function renderStudentTable(data) {
     const hint = c.subjectName ? `<span class="paper-hint">${c.subjectName}</span>` : "";
     const mx   = c.max_marks   ? `<span class="paper-hint">/${c.max_marks}</span>` : "";
     html += `<th class="th-subject">${c.label}${hint}${mx}</th>`;
+  });
+  // [NEW] Learning Activity columns — nursery only
+  activities.forEach(a => {
+    html += `<th class="th-activity">${a.name}</th>`;
   });
   html += `<th>Edit</th></tr></thead><tbody>`;
 
@@ -369,6 +410,14 @@ function renderStudentTable(data) {
       html += `<td><span class="score-pill ${has ? "entered" : ""}">${has ? score : "—"}</span>${flag}</td>`;
     });
 
+    // [NEW] Learning Activity cells — comment-only, no score. Nursery only.
+    activities.forEach(a => {
+      const comment = st.activity_comments ? (st.activity_comments[String(a.id)] || "") : "";
+      const has     = comment.trim() !== "";
+      const title   = has ? escHtml(comment) : "No remark yet";
+      html += `<td><span class="activity-pill ${has ? "filled" : "empty"}" title="${title}">${has ? escHtml(activityPreview(comment)) : "—"}</span></td>`;
+    });
+
     html += `<td><button class="btn btn-amber btn-icon" title="Edit marks"
       onclick="editStudent(${st.id},'${st.name.replace(/'/g,"\\'")}')">✎</button></td></tr>`;
   });
@@ -400,74 +449,100 @@ async function editStudent(studentId, studentName) {
     const data = await res.json();
     if (!res.ok) { toast(data.message || "Error.", false); closeModal(); return; }
 
-    if (!data.subjects || !data.subjects.length) {
+    const hasSubjects   = data.subjects && data.subjects.length;
+    // [NEW] Activities only ever come back populated for nursery streams
+    const hasActivities = !!data.is_nursery && data.activities && data.activities.length;
+
+    if (!hasSubjects && !hasActivities) {
       document.getElementById("modalBody").innerHTML =
-        `<div class="empty-state">No subjects found for this student.</div>`;
+        `<div class="empty-state">No subjects or activities found for this student.</div>`;
       return;
     }
 
     let html = "";
-    data.subjects.forEach(subject => {
-      const hasPapers = subject.papers && subject.papers.length > 0;
-      html += `<div class="subject-box">
-        <div class="subject-box-title">${subject.name}
-          ${hasPapers
-            ? `<span class="badge">${subject.papers.length} paper${subject.papers.length > 1 ? "s" : ""}</span>`
-            : ""}
-        </div>
-        <div class="paper-grid">`;
 
-      if (hasPapers) {
-        subject.papers.forEach(paper => {
-          const maxVal  = paper.max_marks != null ? parseFloat(paper.max_marks) : "";
-          const maxAttr = maxVal !== "" ? `max="${maxVal}"` : "";
-          const maxLbl  = maxVal !== "" ? `<span class="max-hint">/ ${maxVal}</span>` : "";
-          const val     = (paper.score !== "" && paper.score !== null) ? paper.score : "";
-          const commentVal = paper.comment || "";
+    if (hasSubjects) {
+      data.subjects.forEach(subject => {
+        const hasPapers = subject.papers && subject.papers.length > 0;
+        html += `<div class="subject-box">
+          <div class="subject-box-title">${subject.name}
+            ${hasPapers
+              ? `<span class="badge">${subject.papers.length} paper${subject.papers.length > 1 ? "s" : ""}</span>`
+              : ""}
+          </div>
+          <div class="paper-grid">`;
+
+        if (hasPapers) {
+          subject.papers.forEach(paper => {
+            const maxVal  = paper.max_marks != null ? parseFloat(paper.max_marks) : "";
+            const maxAttr = maxVal !== "" ? `max="${maxVal}"` : "";
+            const maxLbl  = maxVal !== "" ? `<span class="max-hint">/ ${maxVal}</span>` : "";
+            const val     = (paper.score !== "" && paper.score !== null) ? paper.score : "";
+            const commentVal = paper.comment || "";
+            html += `<div class="paper-item">
+              <label>${paper.name}${maxLbl}</label>
+              <input type="number" min="0" ${maxAttr} step="0.5"
+                class="mark-input"
+                data-subject-id="${subject.id}"
+                data-paper-id="${paper.id}"
+                data-max="${maxVal}"
+                value="${val}"
+                oninput="validateScore(this)">
+              <div class="comment-field">
+                <label>Remark (optional)</label>
+                <textarea class="comment-textarea"
+                  data-subject-id="${subject.id}"
+                  data-paper-id="${paper.id}"
+                  placeholder="e.g. Needs more practice with this area">${escHtml(commentVal)}</textarea>
+                <div class="comment-hint">Shown on the report card next to this score.</div>
+              </div>
+            </div>`;
+          });
+        } else {
+          const val = (subject.score !== "" && subject.score !== null) ? subject.score : "";
+          const commentVal = subject.comment || "";
           html += `<div class="paper-item">
-            <label>${paper.name}${maxLbl}</label>
-            <input type="number" min="0" ${maxAttr} step="0.5"
+            <label>Score</label>
+            <input type="number" min="0" step="0.5"
               class="mark-input"
               data-subject-id="${subject.id}"
-              data-paper-id="${paper.id}"
-              data-max="${maxVal}"
+              data-paper-id=""
+              data-max=""
               value="${val}"
               oninput="validateScore(this)">
             <div class="comment-field">
               <label>Remark (optional)</label>
               <textarea class="comment-textarea"
                 data-subject-id="${subject.id}"
-                data-paper-id="${paper.id}"
-                placeholder="e.g. Needs more practice with this area">${escHtml(commentVal)}</textarea>
+                data-paper-id=""
+                placeholder="e.g. Excellent participation this term">${escHtml(commentVal)}</textarea>
               <div class="comment-hint">Shown on the report card next to this score.</div>
             </div>
           </div>`;
-        });
-      } else {
-        const val = (subject.score !== "" && subject.score !== null) ? subject.score : "";
-        const commentVal = subject.comment || "";
-        html += `<div class="paper-item">
-          <label>Score</label>
-          <input type="number" min="0" step="0.5"
-            class="mark-input"
-            data-subject-id="${subject.id}"
-            data-paper-id=""
-            data-max=""
-            value="${val}"
-            oninput="validateScore(this)">
-          <div class="comment-field">
-            <label>Remark (optional)</label>
-            <textarea class="comment-textarea"
-              data-subject-id="${subject.id}"
-              data-paper-id=""
-              placeholder="e.g. Excellent participation this term">${escHtml(commentVal)}</textarea>
-            <div class="comment-hint">Shown on the report card next to this score.</div>
-          </div>
-        </div>`;
-      }
+        }
 
+        html += `</div></div>`;
+      });
+    }
+
+    // [NEW] Learning Activities — nursery only. Comment-only fields,
+    // no score input, saved separately via activity_comments[] in the
+    // /marks-entry/save payload.
+    if (hasActivities) {
+      html += `<div class="activity-box">
+        <div class="activity-box-title">🧸 Learning Activities</div>
+        <div class="activity-grid">`;
+      data.activities.forEach(a => {
+        const commentVal = a.comment || "";
+        html += `<div class="activity-item">
+          <label>${a.name}</label>
+          <textarea class="activity-comment-textarea"
+            data-activity-id="${a.id}"
+            placeholder="e.g. Enjoys group play, still building confidence">${escHtml(commentVal)}</textarea>
+        </div>`;
+      });
       html += `</div></div>`;
-    });
+    }
 
     document.getElementById("modalBody").innerHTML = html;
 
@@ -526,7 +601,23 @@ async function submitMarks() {
     });
   });
 
-  if (!marks.length) { toast("No scores entered.", false); return; }
+  // [NEW] Learning Activity remarks — only present in the DOM for
+  // nursery streams (see editStudent()). Backend re-checks is_nursery
+  // itself and silently ignores these otherwise, but we only collect
+  // them here if the section was actually rendered.
+  const activityComments = [];
+  document.querySelectorAll(".activity-comment-textarea").forEach(ta => {
+    activityComments.push({
+      activity_id: parseInt(ta.dataset.activityId),
+      comment:     ta.value.trim(),   // backend treats "" as "leave existing unchanged"
+    });
+  });
+
+  const hasAnyActivityComment = activityComments.some(a => a.comment !== "");
+
+  if (!marks.length && !hasAnyActivityComment) {
+    toast("No scores or activity remarks entered.", false); return;
+  }
 
   const btn = document.getElementById("saveBtn");
   btn.disabled = true;
@@ -541,6 +632,7 @@ async function submitMarks() {
         term_id:    parseInt(termId),
         exam_type:  examType,
         marks,
+        activity_comments: activityComments,   // [NEW]
       }),
     });
     const data = await res.json();
@@ -593,6 +685,8 @@ async function loadSavedMarks() {
     }
 
     const columns = data.columns || [];
+    // [NEW] Only populated for nursery streams
+    const activityColumns = data.activity_columns || [];
 
     let html = `
       <div class="table-wrap">
@@ -620,6 +714,11 @@ async function loadSavedMarks() {
           ${maxMarks}
         </th>
       `;
+    });
+
+    // [NEW] Learning Activity headers
+    activityColumns.forEach(col => {
+      html += `<th class="th-activity">${col.label}</th>`;
     });
 
     html += `</tr></thead><tbody>`;
@@ -666,6 +765,20 @@ async function loadSavedMarks() {
             <span class="${cls}">
               ${display}
             </span>${flag}
+          </td>
+        `;
+      });
+
+      // [NEW] Learning Activity remark cells — comment-only, nursery only.
+      activityColumns.forEach(col => {
+        const comment = st.activities ? (st.activities[col.key] || "") : "";
+        const has     = comment.trim() !== "";
+        const title   = has ? escHtml(comment) : "No remark yet";
+        html += `
+          <td>
+            <span class="activity-pill ${has ? "filled" : "empty"}" title="${title}">
+              ${has ? escHtml(activityPreview(comment)) : "—"}
+            </span>
           </td>
         `;
       });

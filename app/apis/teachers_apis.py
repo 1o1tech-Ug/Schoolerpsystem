@@ -9,16 +9,23 @@ CHANGES vs original:
     No str(e) / str(exc) ever reaches the client.
   - Removed bare print() calls.
   - Pagination added to /attendance/students and /attendance/history.
-  - [NEW] Marks entry now supports an optional per-mark `comment`
-    alongside the score. This is what report_card_service.py reads to
-    populate the "Comment" column on the nursery report card next to
-    each Learning Area score (previously always left blank). Teachers
-    can leave a short remark ("Needs more practice", "Excellent
-    participation") when entering marks, same as they enter the score.
-    load_marks_entry() now returns saved_comments alongside saved_marks
-    so the UI can pre-fill existing comments when reopening the form;
-    save_marks() accepts an optional "comment" key per row in the
-    `marks` payload and persists it to StudentMark.comment.
+  - Marks entry supports an optional per-mark `comment` alongside the
+    score. This is what report_card_service.py reads to populate the
+    "Comment" column on the nursery report card next to each Learning
+    Area score. load_marks_entry() returns saved_comments alongside
+    saved_marks so the UI can pre-fill existing comments when
+    reopening the form; save_marks() accepts an optional "comment" key
+    per row in the `marks` payload and persists it to
+    StudentMark.comment.
+  - [NEW] Nursery Learning Activities. Mirrors app/apis/academics_api_2.py:
+    for streams whose parent Class is Daycare/KG1/KG2/KG3, the teacher
+    marks-entry flow also surfaces NurseryActivity rows and lets the
+    teacher leave a per-activity remark per student, persisted to
+    StudentActivityComment. Activities are NOT subject-specific (they
+    apply to the whole nursery stream), so they're gated purely on
+    `_is_nursery_stream()` and are shown regardless of which subject
+    the teacher is currently marking. Every non-nursery class is
+    completely untouched by this — see the helpers below.
 """
 
 import logging
@@ -38,6 +45,7 @@ from app.models.academic_structure import (
     Assessment, AssessmentType, StudentMark,
     AcademicConfig, Term, AcademicYear,
     LessonSession, StudentAttendance,StudentDailyAttendance,
+    NurseryActivity, StudentActivityComment,   # [NEW]
 )
 from app.core.rate_limit import (
     READ_LIMIT, WRITE_LIMIT, MARKS_SAVE_LIMIT,
@@ -56,6 +64,65 @@ ALL_ROLES = {"staff", "admin"}
 # Pagination defaults
 _STUDENTS_PER_PAGE  = 30
 _HISTORY_PER_PAGE   = 25
+
+
+# ═══════════════════════════════════════════════════════════════
+#  [NEW] NURSERY DETECTION & LEARNING-ACTIVITY HELPERS
+#
+#  Mirrors app/apis/academics_api_2.py's helpers of the same name —
+#  "Nursery" means the stream's parent Class is one of the school's
+#  early-years classes (Daycare, KG1, KG2, KG3). Everything below is
+#  only ever consulted when a request's stream resolves to one of
+#  these; every other class is completely untouched, so subject marks
+#  entry for Primary/Secondary streams behaves exactly as before.
+# ═══════════════════════════════════════════════════════════════
+
+NURSERY_CLASS_NAMES = {"daycare", "kg1", "kg2", "kg3"}
+
+
+def _normalize_class_name(name):
+    return (name or "").strip().lower().replace(" ", "").replace("-", "").replace("_", "")
+
+
+def _is_nursery_stream(stream_id, school_id):
+    """
+    True only if `stream_id` belongs (via its Class) to one of the
+    school's nursery classes. Gates every nursery-only branch below —
+    non-nursery streams never look at NurseryActivity /
+    StudentActivityComment at all.
+    """
+    if not stream_id:
+        return False
+
+    stream = (
+        Stream.query
+        .options(joinedload(Stream.class_))
+        .join(Class)
+        .filter(Stream.id == stream_id, Class.school_id == school_id)
+        .first()
+    )
+    if not stream or not stream.class_:
+        return False
+
+    return _normalize_class_name(stream.class_.name) in NURSERY_CLASS_NAMES
+
+
+def _get_nursery_activities(school_id):
+    return (
+        NurseryActivity.query
+        .filter_by(school_id=school_id)
+        .order_by(NurseryActivity.position, NurseryActivity.id)
+        .all()
+    )
+
+
+def _serialize_activity(activity):
+    return {
+        "id":        activity.id,
+        "name":      activity.name,
+        "icon_path": activity.icon_path,
+        "position":  activity.position,
+    }
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -189,6 +256,48 @@ def _sync_daily_attendance(school_id, student_ids, att_date):
                 date=att_date, status=status,
             ))
 
+def _get_or_create_assessment(
+    school_id,
+    stream_id,
+    subject_id,
+    term_id,
+    exam_type_enum,
+    paper_id=None,
+    assignment=None,
+):
+    assessment = Assessment.query.filter_by(
+        school_id=school_id,
+        stream_id=stream_id,
+        subject_id=subject_id,
+        term_id=term_id,
+        type=exam_type_enum,
+        paper_id=paper_id,
+    ).first()
+
+    if not assessment:
+        max_score = 100
+
+        if paper_id:
+            paper = Papers.query.get(paper_id)
+            if paper and paper.max_marks:
+                max_score = float(paper.max_marks)
+
+        assessment = Assessment(
+            school_id=school_id,
+            assignment_id=assignment.id if assignment else None,
+            stream_id=stream_id,
+            subject_id=subject_id,
+            term_id=term_id,
+            type=exam_type_enum,
+            paper_id=paper_id,
+            max_score=max_score,
+        )
+
+        db.session.add(assessment)
+        db.session.flush()
+
+    return assessment
+
 
 def _serialize_assignment(a):
     subject = a.subject or Subject.query.get(a.subject_id)
@@ -288,6 +397,11 @@ def load_marks_entry():
     except ValueError:
         return jsonify({"message": f"Invalid exam_type '{exam_type}'. Use BOT, MID or EOT"}), 400
 
+    # [NEW] Only Nursery (Daycare/KG1/KG2/KG3) streams carry Learning
+    # Activities. Activities aren't subject-specific, so this is
+    # resolved purely from the stream, independent of subject_id below.
+    is_nursery = _is_nursery_stream(stream_id, school_id)
+
     assignment = TeachAssignment.query.filter_by(
         school_id=school_id,
         staff_id=staff.id,
@@ -319,7 +433,7 @@ def load_marks_entry():
         term_id = config.current_term_id if config else None
 
         saved_map      = {}
-        saved_comments = {}   # [NEW] (student_id, paper_id) -> comment
+        saved_comments = {}   # (student_id, paper_id) -> comment
         if term_id:
             assessments = Assessment.query.filter_by(
                 school_id=school_id,
@@ -335,6 +449,25 @@ def load_marks_entry():
                 for m in marks:
                     saved_map[(m.student_id, asmt.paper_id)]      = m.score
                     saved_comments[(m.student_id, asmt.paper_id)] = m.comment
+
+        # [NEW] Nursery Learning Activities for this stream, plus any
+        # comments already saved for this exact term/exam_type. Shown
+        # regardless of which subject is currently selected.
+        activities_data = []
+        activity_comments_by_student = {}
+        if is_nursery:
+            activities = _get_nursery_activities(school_id)
+            activities_data = [_serialize_activity(a) for a in activities]
+
+            if activities and term_id and student_ids:
+                activity_ids = [a.id for a in activities]
+                for c in StudentActivityComment.query.filter(
+                    StudentActivityComment.activity_id.in_(activity_ids),
+                    StudentActivityComment.student_id.in_(student_ids),
+                    StudentActivityComment.term_id == term_id,
+                    StudentActivityComment.exam_type == exam_enum,
+                ).all():
+                    activity_comments_by_student.setdefault(c.student_id, {})[c.activity_id] = c.comment
 
         stream = Stream.query.get(stream_id)
         cls    = Class.query.get(stream.class_id) if stream else None
@@ -354,16 +487,28 @@ def load_marks_entry():
                     str(p.id): saved_map.get((s.id, p.id))
                     for p in papers
                 }
-                # [NEW] Parallel map of any comment already left for
-                # each paper, so re-opening the edit form shows it.
+                # Parallel map of any comment already left for each
+                # paper, so re-opening the edit form shows it.
                 row["saved_comments"] = {
                     str(p.id): saved_comments.get((s.id, p.id)) or ""
                     for p in papers
                 }
             else:
                 row["saved_score"]   = saved_map.get((s.id, None))
-                # [NEW]
                 row["saved_comment"] = saved_comments.get((s.id, None)) or ""
+
+            # [NEW] activity_comments keyed by activity id, mirroring
+            # the shape of saved_comments above. Empty dict for
+            # non-nursery streams so the frontend never has to
+            # special-case it.
+            if is_nursery:
+                row["activity_comments"] = {
+                    str(a["id"]): activity_comments_by_student.get(s.id, {}).get(a["id"]) or ""
+                    for a in activities_data
+                }
+            else:
+                row["activity_comments"] = {}
+
             student_data.append(row)
 
         return jsonify({
@@ -378,6 +523,8 @@ def load_marks_entry():
             ],
             "stream_label": stream_label,
             "students":     student_data,
+            "activities":   activities_data,   # [NEW]
+            "is_nursery":   is_nursery,         # [NEW]
         }), 200
 
     except Exception:
@@ -411,9 +558,16 @@ def save_marks():
     exam_type  = payload.get("exam_type")
     marks      = payload.get("marks", [])
 
+    # [NEW] Learning Activity remarks — not subject-specific, so kept
+    # apart from `marks`. `student_id` here identifies who the
+    # activity_comments belong to (the modal only ever edits one
+    # student at a time, same as `marks` above).
+    activity_comments = payload.get("activity_comments", [])
+    student_id_top    = payload.get("student_id")
+
     if not stream_id or not subject_id or not exam_type:
         return jsonify({"message": "stream_id, subject_id and exam_type are required"}), 400
-    if not marks:
+    if not marks and not activity_comments:
         return jsonify({"message": "marks list is empty"}), 400
 
     try:
@@ -433,6 +587,11 @@ def save_marks():
     config = AcademicConfig.query.filter_by(school_id=school_id).first()
     if not config or not config.current_term_id:
         return jsonify({"message": "Current academic term not configured"}), 400
+
+    # [NEW] Activity comments are only ever persisted for nursery
+    # streams — if a non-nursery request somehow includes them, they
+    # are silently ignored rather than erroring the whole save.
+    is_nursery = _is_nursery_stream(stream_id, school_id)
 
     papers_cache = {}
 
@@ -461,7 +620,7 @@ def save_marks():
 
         row["score"] = score
 
-        # [NEW] Optional per-mark comment — trim, cap length, blank → None
+        # Optional per-mark comment — trim, cap length, blank → None
         # so we don't store empty strings that would otherwise render as
         # a populated-but-blank comment cell on the report.
         raw_comment = row.get("comment")
@@ -475,35 +634,23 @@ def save_marks():
             student_id = row.get("student_id")
             paper_id   = row.get("paper_id")
             score      = row.get("score")
-            comment    = row.get("comment")  # [NEW]
+            comment    = row.get("comment")
 
             if student_id is None or score is None:
                 continue
 
             if paper_id not in assessment_cache:
-                asmt = Assessment.query.filter_by(
-                    school_id=school_id,
-                    assignment_id=assignment.id,
-                    term_id=config.current_term_id,
-                    type=exam_enum,
-                    paper_id=paper_id,
-                ).first()
+            	asmt = _get_or_create_assessment(
+        school_id=school_id,
+        stream_id=stream_id,
+        subject_id=subject_id,
+        term_id=config.current_term_id,
+        exam_type_enum=exam_enum,
+        paper_id=paper_id,
+        assignment=assignment,
+    )
 
-                if not asmt:
-                    paper     = papers_cache.get(paper_id)
-                    max_score = paper.max_marks if paper else 100
-                    asmt = Assessment(
-                        school_id=school_id,
-                        assignment_id=assignment.id,
-                        term_id=config.current_term_id,
-                        paper_id=paper_id,
-                        type=exam_enum,
-                        max_score=max_score,
-                    )
-                    db.session.add(asmt)
-                    db.session.flush()
-
-                assessment_cache[paper_id] = asmt
+            assessment_cache[paper_id] = asmt
 
             asmt = assessment_cache[paper_id]
 
@@ -515,7 +662,7 @@ def save_marks():
 
             if existing:
                 existing.score = score
-                # [NEW] Only overwrite the comment if one was actually
+                # Only overwrite the comment if one was actually
                 # submitted this time — leaving the field blank in the
                 # UI on a later save shouldn't silently wipe a comment
                 # a teacher left earlier for this same assessment.
@@ -527,13 +674,71 @@ def save_marks():
                     assessment_id=asmt.id,
                     student_id=student_id,
                     score=score,
-                    comment=comment,  # [NEW]
+                    comment=comment,
                 ))
 
             saved += 1
 
+        # [NEW] Persist Learning Activity remarks (nursery only). Each
+        # comment lands directly in StudentActivityComment, keyed on
+        # (activity_id, student_id, term_id, exam_type) — no Assessment
+        # or StudentMark row is created for these, since activities are
+        # comment-only and don't carry a score. Any teacher assigned to
+        # this nursery stream can leave/update these remarks, same as
+        # the academics-module admin view.
+        activities_saved = 0
+        if is_nursery and activity_comments:
+            for item in activity_comments:
+                activity_id        = item.get("activity_id")
+                target_student_id  = item.get("student_id") or student_id_top
+                raw_comment        = item.get("comment")
+
+                if not activity_id or not target_student_id:
+                    continue
+
+                comment_val = str(raw_comment).strip()[:1000] if raw_comment else ""
+                if not comment_val:
+                    # Blank submission = "leave whatever is already saved
+                    # alone", mirroring the mark-comment behaviour above.
+                    continue
+
+                activity = NurseryActivity.query.filter_by(
+                    id=activity_id, school_id=school_id
+                ).first()
+                if not activity:
+                    continue  # unknown/foreign activity id — skip quietly
+
+                existing_ac = StudentActivityComment.query.filter_by(
+                    activity_id=activity_id,
+                    student_id=target_student_id,
+                    term_id=config.current_term_id,
+                    exam_type=exam_enum,
+                ).first()
+
+                if existing_ac:
+                    existing_ac.comment = comment_val
+                else:
+                    db.session.add(StudentActivityComment(
+                        school_id=school_id,
+                        activity_id=activity_id,
+                        student_id=target_student_id,
+                        term_id=config.current_term_id,
+                        exam_type=exam_enum,
+                        comment=comment_val,
+                    ))
+                activities_saved += 1
+
         db.session.commit()
-        return jsonify({"message": f"{saved} mark(s) saved successfully", "saved": saved}), 200
+
+        message = f"{saved} mark(s) saved successfully"
+        if activities_saved:
+            message += f", {activities_saved} activity comment(s) saved"
+
+        return jsonify({
+            "message":          message,
+            "saved":            saved,
+            "activities_saved": activities_saved,   # [NEW]
+        }), 200
 
     except IntegrityError:
         db.session.rollback()
@@ -608,23 +813,54 @@ def filter_marks():
         papers     = Papers.query.filter_by(subject_id=subject_id, school_id=school_id).all()
         has_papers = len(papers) > 0
 
+        # [NEW] Not subject-specific — surfaced alongside this
+        # subject's saved marks whenever the stream is nursery.
+        is_nursery = _is_nursery_stream(stream_id, school_id)
+
         student_marks = {}
         for asmt in assessments:
             paper_name = asmt.paper.paper_name if asmt.paper else None
             for m in asmt.marks:
                 student_marks.setdefault(m.student_id, {})
-                # [NEW] carry the comment through alongside the score so
-                # the saved-marks browser can show it too if desired.
+                # carry the comment through alongside the score so the
+                # saved-marks browser can show it too if desired.
                 student_marks[m.student_id][paper_name] = {
                     "score": m.score, "comment": m.comment or "",
                 }
 
         if not student_marks:
-            return jsonify([]), 200
+            return jsonify({
+                "records":          [],
+                "activity_columns": [],
+                "is_nursery":       is_nursery,
+            }), 200
 
         student_ids  = list(student_marks.keys())
         student_rows = Student.query.filter(Student.id.in_(student_ids)).all()
         student_map  = {s.id: s for s in student_rows}
+
+        # [NEW] Learning Activity columns + saved comments, nursery only.
+        activity_columns = []
+        activity_comments_map = {}
+        if is_nursery:
+            activities = _get_nursery_activities(school_id)
+            activity_columns = [
+                {
+                    "key":         f"activity_{a.id}",
+                    "label":       a.name,
+                    "activity_id": a.id,
+                }
+                for a in activities
+            ]
+            if activities:
+                activity_ids = [a.id for a in activities]
+                for c in StudentActivityComment.query.filter(
+                    StudentActivityComment.activity_id.in_(activity_ids),
+                    StudentActivityComment.student_id.in_(student_ids),
+                    StudentActivityComment.term_id == term_id,
+                    StudentActivityComment.exam_type == exam_enum,
+                ).all():
+                    activity_comments_map.setdefault(c.activity_id, {})[c.student_id] = c.comment
 
         result = []
         for sid, marks_by_paper in student_marks.items():
@@ -650,10 +886,24 @@ def filter_marks():
                 row["score"]   = data["score"]
                 row["comment"] = data["comment"]
 
+            # [NEW] activity remarks for this student, keyed the same
+            # way as the columns above, nursery streams only.
+            if is_nursery:
+                row["activities"] = {
+                    col["key"]: activity_comments_map.get(col["activity_id"], {}).get(sid) or ""
+                    for col in activity_columns
+                }
+            else:
+                row["activities"] = {}
+
             result.append(row)
 
         result.sort(key=lambda r: r["student_name"])
-        return jsonify(result), 200
+        return jsonify({
+            "records":          result,
+            "activity_columns": activity_columns,   # [NEW]
+            "is_nursery":       is_nursery,           # [NEW]
+        }), 200
 
     except Exception:
         logger.exception("filter_marks failed | stream_id=%s subject_id=%s", stream_id, subject_id)

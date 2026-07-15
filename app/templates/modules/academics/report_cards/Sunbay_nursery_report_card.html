@@ -280,14 +280,20 @@ body {
     object-fit: contain;
     flex-shrink: 0;
 }
+/* [FIX][ACTIVITY-COMMENTS] Was styled for a short bold auto score;
+   now holds a free-text per-activity comment from
+   StudentActivityComment, so it needs to read as a sentence
+   (left-aligned, regular weight, wraps) rather than a single
+   centered bold token. */
 .act-score {
-    font-size: 11px;
-    color: #444;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 400;
+    color: #333;
     border-top: 1px dotted #999;
     margin-top: 2px;
     padding-top: 2px;
-    text-align: center;
+    text-align: left;
+    line-height: 1.25;
     min-height: 14px;
 }
 
@@ -430,30 +436,30 @@ body {
             ('language development ii','Language Development II'),
         ] %}
 
-        {% set activities = [
-            ('Writing',          'writing',  'images/writing.jpg'),
-            ('Listening',        'listening','images/listening.jpg'),
-            ('Reading',          'reading',  'images/reading.jpg'),
-            ('Speaking',         'speaking', 'images/speaking.jpg'),
-            ('Drawing',          'drawing',  'images/drawing.jpg'),
-            ('Games',            'games',    'images/games.jpg'),
-            ('Health Habits',    'health',   'images/health.jpg'),
-            ('Toilet Habits',    'toilet',   'images/toilet.jpg'),
-            ('Rhymes / Stories', 'rhymes',   'images/rhymes.jpg'),
-            ('Religion',         'religion', 'images/religion.jpg'),
-        ] %}
+        {# [NEW][ACTIVITY-COMMENTS] Learning Activities (Writing, Listening,
+           Reading, ...) plus their per-student comments now come from the
+           backend (NurseryActivity / StudentActivityComment), not a
+           hardcoded list — see build_nursery_activity_rows() in
+           report_card_service.py. `nursery_activities` is a list of
+           {"id", "name", "icon_path", "comment"} dicts, already ordered.
+           Falls back to an empty list so older callers that don't pass
+           this context key don't blow up the template. #}
+        {% set nursery_activities = nursery_activities | default([]) %}
 
         {# --- Build a list of every "known" key so we can detect which
-             subject_rows are NOT one of the 5 learning areas or 10 fixed
-             activities. Anything left over (Project 1, Shading, Building,
-             etc.) is rendered automatically as an "extra" activity below,
-             so new subjects never need to be hardcoded here. --- #}
+             subject_rows are NOT one of the 5 learning areas or the
+             configured activities. Anything left over (Project 1, Shading,
+             Building, etc.) is rendered automatically as an "extra"
+             activity below, so new subjects never need to be hardcoded
+             here. The first-word-lowercased rule below reproduces the
+             same keys the old hardcoded activity list used (e.g.
+             'Health Habits' -> 'health', 'Rhymes / Stories' -> 'rhymes'). --- #}
         {% set ns_keys = namespace(known=[]) %}
         {% for k, l in la_keys %}
             {% set ns_keys.known = ns_keys.known + [k] %}
         {% endfor %}
-        {% for l, k, i in activities %}
-            {% set ns_keys.known = ns_keys.known + [k] %}
+        {% for act in nursery_activities %}
+            {% set ns_keys.known = ns_keys.known + [(act.name.split(' ')[0] | lower)] %}
         {% endfor %}
 
         {% set ns_extra = namespace(rows=[]) %}
@@ -540,20 +546,32 @@ body {
                 </td>
 
                 <td>
+                    {# [NEW][ACTIVITY-COMMENTS] Grid now iterates the
+                       backend-supplied `nursery_activities` list instead of
+                       a hardcoded 10-item tuple set, and shows each
+                       activity's StudentActivityComment text (falls back to
+                       a blank cell, same as before, when no comment is on
+                       file). A trailing empty <td> balances the row if a
+                       school ends up with an odd number of activities. #}
                     <table class="activity-grid">
-                        {% for i in range(0, activities|length, 2) %}
+                        {% for i in range(0, nursery_activities|length, 2) %}
                         <tr>
-                            {% for label, key, img in activities[i:i+2] %}
+                            {% for act in nursery_activities[i:i+2] %}
                             <td>
                                 <div class="act-cell">
                                     <div class="act-top">
-                                        <span class="act-label">{{ label }}</span>
-                                        <img class="act-img" src="{{ static_url }}/{{ img }}" alt="{{ label }}">
+                                        <span class="act-label">{{ act.name }}</span>
+                                        {% if act.icon_path %}
+                                        <img class="act-img" src="{{ static_url }}/{{ act.icon_path }}" alt="{{ act.name }}">
+                                        {% endif %}
                                     </div>
-                                    <div class="act-score">&nbsp;</div>
+                                    <div class="act-score">{% if act.comment %}{{ act.comment }}{% else %}&nbsp;{% endif %}</div>
                                 </div>
                             </td>
                             {% endfor %}
+                            {% if nursery_activities[i:i+2]|length < 2 %}
+                            <td></td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </table>

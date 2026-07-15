@@ -64,7 +64,7 @@ def create_app():
         StudentSubject, StudentStream,StudentDailyAttendance, StaffAttendance,
         TeachAssignment,
         LessonSession, StudentAttendance,
-        AssessmentType, Assessment, StudentMark, GradeScale, StudentEnrollment,
+        AssessmentType, Assessment, StudentMark, GradeScale, StudentEnrollment,StudentActivityComment,NurseryActivity,
     )
     from app.models.blocklist import TokenBlocklist
     from app.models.reportcards import SchoolDetail, ReportCard, PrimaryReportSummary

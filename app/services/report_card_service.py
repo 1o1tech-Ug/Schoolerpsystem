@@ -163,6 +163,18 @@ Error-logging notes
   generate() — same data pipeline through positions/attendance, no
   template render, no PDF, no disk write. Powers the "Edit Report
   Card" review screen.
+
+[NEW][ACTIVITY-COMMENTS] Nursery "Performance in the Learning
+Activities" panel:
+- fetch_nursery_activities() returns the school's configured
+  NurseryActivity list (ordered by `position`), merged with this
+  student's StudentActivityComment for the given term/exam type, as
+  a list of {"id", "name", "icon_path", "comment"} dicts.
+- ReportCardService._compute() calls this (nursery report_type only)
+  and threads the result through as "nursery_activities" — consumed
+  by both compute_preview() (for the edit screen) and generate()
+  (added to the Jinja context so the nursery template's activity grid
+  actually has data to render, instead of silently rendering empty).
 """
 
 import os
@@ -187,6 +199,11 @@ from app.models.academic_structure import (
     StudentDailyAttendance,
     GradeScale,
 )
+# [NEW][ACTIVITY-COMMENTS] Nursery "Performance in the Learning
+# Activities" panel — school-configured activity list + per-student
+# comments. See app/models/academic_structure.py for the model
+# definitions (NurseryActivity, StudentActivityComment).
+from app.models.academic_structure import NurseryActivity, StudentActivityComment
 from app.models.reportcards import PrimaryReportSummary
 from app.services.custom_reportcards import get_overrides as get_school_report_overrides
 
@@ -1048,6 +1065,85 @@ def fetch_subject_comments(
         comments[subj_id] = comment
 
     return comments
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  [NEW][ACTIVITY-COMMENTS] NURSERY LEARNING-ACTIVITY ROWS
+#  (icon grid + per-student comment shown on the nursery report's
+#  "Performance in the Learning Activities" panel)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def fetch_nursery_activities(
+    school_id: int,
+    student_id: int,
+    term_id: int,
+    exam_enum,
+) -> list[dict]:
+    """
+    Return the ordered list of Learning Activities (Writing, Listening,
+    Reading, ...) a school has configured under NurseryActivity, each
+    merged with this student's StudentActivityComment for the given
+    term/exam type if one has been entered.
+
+        [{"id": 1, "name": "Writing", "icon_path": "images/activities/writing.png",
+          "comment": "Forms letters neatly" or None}, ...]
+
+    Ordering follows NurseryActivity.position (then name as a tiebreak),
+    matching the "already ordered" contract the nursery template relies
+    on when it lays activities out two-per-row.
+
+    An activity with no comment on file for this student/term/exam is
+    still returned (comment=None) rather than dropped, so the name and
+    icon render on the report even before a teacher has filled anything
+    in — the template already renders a blank cell in that case.
+
+    Returns [] if the school has no activities configured, or on any
+    lookup failure — this panel is supplementary, so a failure here
+    should never block the rest of the report from rendering.
+    """
+    try:
+        activities = (
+            NurseryActivity.query
+            .filter_by(school_id=school_id)
+            .order_by(NurseryActivity.position, NurseryActivity.name)
+            .all()
+        )
+        if not activities:
+            return []
+
+        activity_ids = [a.id for a in activities]
+
+        comment_rows = (
+            StudentActivityComment.query
+            .filter(
+                StudentActivityComment.school_id == school_id,
+                StudentActivityComment.student_id == student_id,
+                StudentActivityComment.term_id == term_id,
+                StudentActivityComment.exam_type == exam_enum,
+                StudentActivityComment.activity_id.in_(activity_ids),
+            )
+            .all()
+        )
+        comments_by_activity = {
+            row.activity_id: row.comment for row in comment_rows if row.comment
+        }
+
+        return [
+            {
+                "id": act.id,
+                "name": act.name,
+                "icon_path": act.icon_path,
+                "comment": comments_by_activity.get(act.id),
+            }
+            for act in activities
+        ]
+
+    except Exception:
+        logger.exception(
+            "fetch_nursery_activities failed for student=%s term=%s school=%s",
+            student_id, term_id, school_id,
+        )
+        return []
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1997,7 +2093,8 @@ class ReportCardService:
     -----------------------
         preview = service.compute_preview(student, stream, term, year, exam_type)
         # -> read-only dict: report_type, subjects (with subject_id/comment),
-        #    aggregates, positions, attendance, default_* comment fields.
+        #    aggregates, positions, attendance, nursery_activities,
+        #    default_* comment fields.
         # No template render, no PDF, no disk write.
 
         result = service.generate(student, stream, term, year, exam_type,
@@ -2065,7 +2162,8 @@ class ReportCardService:
         Returns a dict with keys:
           report_type, class_name, exam_enum, subject_rows, aggregates
           (dict: total/average/aggregate/division/points), position,
-          total_students, attendance (dict), grade_legend.
+          total_students, attendance (dict), grade_legend,
+          nursery_activities (list — nursery only, [] otherwise).
         """
         school_id   = self.school.id
         class_name  = stream.class_.name if stream and stream.class_ else ""
@@ -2109,6 +2207,17 @@ class ReportCardService:
             school_id=school_id, student_id=student.id, term_id=term.id,
             exam_enum=exam_enum, stream_id=stream.id,
         )
+
+        # [NEW][ACTIVITY-COMMENTS] Nursery-only: the "Performance in the
+        # Learning Activities" icon grid + per-activity comments. Empty
+        # list for every other report_type — the nursery template is the
+        # only consumer of this key.
+        nursery_activities: list[dict] = []
+        if report_type == "nursery":
+            nursery_activities = fetch_nursery_activities(
+                school_id=school_id, student_id=student.id, term_id=term.id,
+                exam_enum=exam_enum,
+            )
 
         bulk_kwargs = {}
         if batch_ctx is not None:
@@ -2185,6 +2294,7 @@ class ReportCardService:
             "total_students":    total_students,
             "attendance":        attendance,
             "grade_legend":      grade_legend,
+            "nursery_activities": nursery_activities,  # [NEW]
         }
 
     # ─────────────────────────────────────────────────────────────────────
@@ -2215,6 +2325,7 @@ class ReportCardService:
               "positions": {"stream_position": int|None,
                             "total_students": int},
               "attendance": {"present": int, "total": int},
+              "nursery_activities": [ {id, name, icon_path, comment}, ... ],
               "default_class_teacher_comment": "",
               "default_headteacher_comment": "",
               "default_class_teacher_initials": "",
@@ -2254,6 +2365,7 @@ class ReportCardService:
                 "present": data["attendance"].get("present"),
                 "total":   data["attendance"].get("total"),
             },
+            "nursery_activities": data.get("nursery_activities", []),  # [NEW]
             "default_class_teacher_comment":  "",
             "default_headteacher_comment":    "",
             "default_class_teacher_initials": "",
@@ -2404,6 +2516,11 @@ class ReportCardService:
                 "grade_legend":       data["grade_legend"],
                 "report_type":        report_type,
                 "generated_date":     datetime.utcnow().strftime("%d %B %Y"),
+                # [NEW][ACTIVITY-COMMENTS] Nursery activity grid data —
+                # this is the key the nursery template's
+                # `nursery_activities | default([])` loop was silently
+                # falling back to empty on, since it was never in ctx.
+                "nursery_activities": data.get("nursery_activities", []),
                 # ── file:// URIs for school-specific templates (no url_for needed) ──
                 "sunbay_logo":        sunbay_logo,
                 "children_image":     children_image,

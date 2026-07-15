@@ -464,3 +464,78 @@ class StudentEnrollment(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+    
+    
+
+# ═══════════════════════════════════════════════════════════════
+#  ADD THESE TWO MODELS TO  app/models/academic_structure.py
+#
+#  They deliberately do NOT touch Subject / StudentSubject / Papers /
+#  Assessment / StudentMark. "Learning Activities" (Writing, Listening,
+#  Reading...) are a nursery-only, per-school-configurable list with a
+#  single free-text sentence per student/term/exam — nothing else in
+#  the system (grading rules, other report cards, marks-entry subject
+#  tables) will ever see them.
+#
+#  Adjust the FK target table names below ("schools.id", "students.id",
+#  "terms.id") if your actual __tablename__ values differ.
+# ═══════════════════════════════════════════════════════════════
+
+class NurseryActivity(db.Model):
+    """
+    A single 'Learning Activity' row (e.g. 'Writing', 'Listening') that a
+    school has configured for its Nursery report card. Order on the
+    report/entry table is controlled by `position`.
+    """
+    __tablename__ = "nursery_activities"
+
+    id         = db.Column(db.Integer, primary_key=True)
+    school_id  = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False, index=True)
+    name       = db.Column(db.String(120), nullable=False)
+    # Optional icon shown on the report card next to the activity name.
+    # Existing schools keep their current /images/*.jpg icons; new
+    # activities a school adds themselves can simply omit this.
+    icon_path  = db.Column(db.String(255), nullable=True)
+    position   = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    __table_args__ = (
+        db.UniqueConstraint("school_id", "name", name="uq_nursery_activity_school_name"),
+    )
+
+    def __repr__(self):
+        return f"<NurseryActivity {self.school_id}:{self.name}>"
+
+
+class StudentActivityComment(db.Model):
+    """
+    One sentence-format remark for one student, one Learning Activity,
+    one term, one exam type. Deliberately comment-only — no score field —
+    per how the school actually uses this section of the report card.
+    """
+    __tablename__ = "student_activity_comments"
+
+    id          = db.Column(db.Integer, primary_key=True)
+    school_id   = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False, index=True)
+    activity_id = db.Column(db.Integer, db.ForeignKey("nursery_activities.id", ondelete="CASCADE"),
+                             nullable=False, index=True)
+    student_id  = db.Column(db.Integer, db.ForeignKey("students.id"), nullable=False, index=True)
+    term_id     = db.Column(db.Integer, db.ForeignKey("terms.id"), nullable=False, index=True)
+    exam_type   = db.Column(db.Enum(AssessmentType), nullable=False)
+    comment     = db.Column(db.Text, nullable=False)
+    created_at  = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at  = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    activity = db.relationship("NurseryActivity")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "activity_id", "student_id", "term_id", "exam_type",
+            name="uq_activity_comment_student_term_exam",
+        ),
+    )
+
+    def __repr__(self):
+        return f"<StudentActivityComment student={self.student_id} activity={self.activity_id}>"
+
+
