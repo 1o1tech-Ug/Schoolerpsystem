@@ -87,10 +87,12 @@ CHANGES vs original:
 import requests as http_requests
 from flask import Response, stream_with_context
 import os
+import io
 import uuid
 import threading
 import logging
 from datetime import datetime
+from PIL import Image
 from flask import (
     Blueprint, request, jsonify,
     render_template, current_app, send_from_directory,
@@ -1716,11 +1718,88 @@ def save_school_details():
 
 
 # ═══════════════════════════════════════════════════════════════
+#  SIGNATURE BACKGROUND REMOVAL
+#  [NEW] Signatures are typically a phone photo/scan of ink on a white
+#  (or off-white) piece of paper. Uploading that as-is puts a visible
+#  white/grey rectangle around the signature on the report card. This
+#  strips the background so only the ink strokes render, using a plain
+#  brightness threshold rather than an ML background-remover — no extra
+#  model download/runtime dependency, and it's a good fit for this
+#  specific case (dark ink on a light, fairly uniform background).
+# ═══════════════════════════════════════════════════════════════
+
+# Perceived-brightness (0-255, from grayscale conversion) at/above which
+# a pixel is treated as background paper and made fully transparent.
+_SIGNATURE_BG_THRESHOLD = 235
+# Width of the soft ramp below the threshold over which alpha fades in,
+# so stroke edges anti-alias instead of leaving a hard cutout edge.
+_SIGNATURE_BG_BAND = 25
+
+
+def _strip_signature_background(image_bytes: bytes) -> bytes:
+    """
+    Takes raw image bytes (any Pillow-readable format — jpg/png/webp)
+    of an uploaded signature and returns PNG bytes with the background
+    made transparent, keeping only the ink strokes.
+
+    How it works: the image is converted to grayscale to get a
+    brightness value per pixel, then that's mapped to an alpha value —
+    bright/near-white pixels (paper) become fully transparent, dark
+    pixels (ink) stay fully opaque, and pixels in between fade smoothly
+    so edges aren't jagged. The mapping is applied via PIL's point()
+    with a 256-entry lookup table, so this stays fast regardless of
+    image resolution (no manual per-pixel Python loop).
+
+    The result is then cropped to the bounding box of whatever ink
+    remains, so the signature drops into the report's sign-off box
+    tightly instead of with a large empty transparent margin.
+
+    Returns PNG bytes — PNG is required since JPEG has no alpha
+    channel and can't represent transparency. If anything about the
+    input can't be parsed as an image, this raises and the caller
+    should treat the upload as failed (same as any other image
+    processing error) rather than silently storing an unprocessed file.
+    """
+    img  = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    gray = img.convert("L")
+
+    lower = max(_SIGNATURE_BG_THRESHOLD - _SIGNATURE_BG_BAND, 0)
+
+    def _alpha_from_brightness(b):
+        if b >= _SIGNATURE_BG_THRESHOLD:
+            return 0
+        if b <= lower:
+            return 255
+        # Linear ramp between lower and threshold.
+        return int(255 * (_SIGNATURE_BG_THRESHOLD - b) / (_SIGNATURE_BG_THRESHOLD - lower))
+
+    alpha_mask = gray.point(_alpha_from_brightness)
+
+    rgba = img.convert("RGBA")
+    rgba.putalpha(alpha_mask)
+
+    # Tighten to the actual ink — getbbox() on an RGBA image finds the
+    # bounding box of non-fully-transparent pixels. Falls back to the
+    # untrimmed image on the (degenerate) case of an entirely blank
+    # upload, rather than raising.
+    bbox = rgba.getbbox()
+    if bbox:
+        rgba = rgba.crop(bbox)
+
+    out = io.BytesIO()
+    rgba.save(out, format="PNG")
+    return out.getvalue()
+
+
+# ═══════════════════════════════════════════════════════════════
 #  HEADTEACHER SIGNATURE  —  POST /api/school/headteacher-signature
 #  [NEW][SIGNATURES] One signature per school, uploaded once and reused
 #  on every report card. Same storage pattern as the school logo:
 #  BunnyCDN only, long cache lifetime (rarely changes), replace-in-place
 #  (old file deleted after the new one uploads successfully).
+#  [NEW][BG-REMOVAL] Background is stripped via _strip_signature_background()
+#  before upload — the stored file is always a transparent PNG regardless
+#  of what format was uploaded, so only the ink shows on the report.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/school/headteacher-signature", methods=["POST"])
@@ -1752,9 +1831,21 @@ def upload_headteacher_signature():
     if len(sig_bytes) > MAX_SIGNATURE_SIZE_BYTES:
         return jsonify({"success": False, "message": "Signature file must not exceed 5MB"}), 400
 
+    # [NEW][BG-REMOVAL] Strip the paper/background out of the uploaded
+    # photo so only the ink signature remains, on a transparent PNG.
+    # Size check above runs on the ORIGINAL upload (closer to what the
+    # person actually picked); the processed PNG can end up a different
+    # size after cropping to the ink's bounding box.
+    try:
+        sig_bytes = _strip_signature_background(sig_bytes)
+    except Exception:
+        logger.exception("upload_headteacher_signature: background removal failed | school_id=%s", school_id)
+        return jsonify({"success": False, "message": "Could not process signature image. Please try a different file."}), 400
+
     teacher_name = (request.form.get("teacher_name", "") or "").strip() or None
-    ext = filename.rsplit(".", 1)[1].lower()
-    remote_path = f"uploads/signatures/school_{school_id}_headteacher.{ext}"
+    # Output is always a transparent PNG after background removal,
+    # regardless of the uploaded file's original extension.
+    remote_path = f"uploads/signatures/school_{school_id}_headteacher.png"
 
     try:
         record = HeadteacherSignature.query.filter_by(school_id=school_id).first()
@@ -1885,9 +1976,19 @@ def upload_class_teacher_signature(stream_id: int):
     if len(sig_bytes) > MAX_SIGNATURE_SIZE_BYTES:
         return jsonify({"success": False, "message": "Signature file must not exceed 5MB"}), 400
 
+    # [NEW][BG-REMOVAL] Same treatment as the headteacher signature —
+    # strip the paper/background so only the ink remains, on a
+    # transparent PNG. Size check above runs on the original upload.
+    try:
+        sig_bytes = _strip_signature_background(sig_bytes)
+    except Exception:
+        logger.exception("upload_class_teacher_signature: background removal failed | stream_id=%s", stream_id)
+        return jsonify({"success": False, "message": "Could not process signature image. Please try a different file."}), 400
+
     teacher_name = (request.form.get("teacher_name", "") or "").strip() or None
-    ext = filename.rsplit(".", 1)[1].lower()
-    remote_path = f"uploads/signatures/stream_{stream_id}_teacher.{ext}"
+    # Output is always a transparent PNG after background removal,
+    # regardless of the uploaded file's original extension.
+    remote_path = f"uploads/signatures/stream_{stream_id}_teacher.png"
 
     try:
         record  = ClassTeacherSignature.query.filter_by(stream_id=stream_id).first()

@@ -5,9 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sunbay Junior School Nursery Report Card</title>
 <style>
+/*
+  [FIX][ONE-PAGE] The report was overflowing onto a second page, so
+  sizing was tightened. A first pass tightened too aggressively and
+  left ~a quarter of the page blank — this pass dials sizes back up
+  (roughly midway between the original and the over-compact first
+  pass) so the content spreads out to fill one full A4 page without
+  spilling onto a second. No content was removed; only spacing/size.
+*/
 @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 7mm;
 }
 
 * { box-sizing: border-box; }
@@ -16,8 +24,8 @@ body {
     font-family: Arial, sans-serif;
     background: #e0e0e0;
     margin: 0;
-    padding: 16px;
-    font-size: 14px;
+    padding: 14px;
+    font-size: 13px;
 }
 
 .report {
@@ -26,7 +34,7 @@ body {
     margin: auto;
     background: white;
     border: 4px solid #cc0000;
-    padding: 10px;
+    padding: 9px;
     position: relative;
 }
 
@@ -36,9 +44,9 @@ body {
     width: 100%; height: 100%;
     background-image: url('{{ school_detail.school_logo_url if school_detail and school_detail.school_logo_url else sunbay_logo }}');
     background-repeat: no-repeat;
-    background-position: center 280px;
-    background-size: 520px 520px;
-    opacity: 0.09;
+    background-position: center 270px;
+    background-size: 460px 460px;
+    opacity: 0.08;
     z-index: 0;
     pointer-events: none;
 }
@@ -51,19 +59,19 @@ body {
 .header {
     display: flex;
     align-items: center;
-    padding: 6px 10px 5px;
+    padding: 5px 9px 4px;
 }
-.hdr-logo { flex: 0 0 160px; text-align: center; }
-.hdr-logo img { width: 150px; height: 150px; object-fit: contain; }
+.hdr-logo { flex: 0 0 120px; text-align: center; }
+.hdr-logo img { width: 112px; height: 112px; object-fit: contain; }
 
-.hdr-center { flex: 1; text-align: center; padding: 0 10px; }
+.hdr-center { flex: 1; text-align: center; padding: 0 9px; }
 
-.hdr-right { flex: 0 0 145px; text-align: center; }
+.hdr-right { flex: 0 0 112px; text-align: center; }
 .hdr-right img {
-    width: 125px;
-    height: 145px;
+    width: 98px;
+    height: 114px;
     object-fit: cover;
-    border: 4px solid green;
+    border: 3px solid green;
     border-radius: 4px;
     padding: 2px;
     background: #fff;
@@ -72,45 +80,44 @@ body {
 
 .school-name {
     color: green;
-    font-size: 25px;
+    font-size: 21px;
     font-weight: 900;
     text-transform: uppercase;
     line-height: 1.2;
     text-align: center;
 }
 .school-details {
-    font-size: 12.5px;
-    line-height: 1.6;
+    font-size: 11.5px;
+    line-height: 1.5;
     text-align: center;
-    margin-top: 4px;
+    margin-top: 3px;
     color: #111;
 }
 
-.line-green { border-bottom: 4px solid green; margin-top: 6px; }
-.line-red   { border-bottom: 4px solid red;   margin-bottom: 6px; }
+.line-green { border-bottom: 4px solid green; margin-top: 4px; }
+.line-red   { border-bottom: 4px solid red;   margin-bottom: 4px; }
 
 .title {
     background: black;
     color: white;
     text-align: center;
     font-weight: bold;
-    padding: 8px;
-    margin-top: 8px;
-    font-size: 17px;
-    letter-spacing: 0.5px;
+    padding: 6px;
+    margin-top: 6px;
+    font-size: 15px;
+    letter-spacing: 0.4px;
 }
 
 /* --- info-rows: matches the Primary report's coloured value-field
-   layout (val-red / val-blue underlines) with proper grid spacing,
-   instead of the old plain-black table cells. --- */
+   layout (val-red / val-blue underlines) with proper grid spacing. --- */
 .info-rows {
-    font-size: 14px;
-    margin-top: 8px;
-    margin-bottom: 4px;
+    font-size: 12.5px;
+    margin-top: 6px;
+    margin-bottom: 3px;
     display: grid;
     grid-template-columns: 1.5fr 1.1fr 0.7fr 0.6fr;
-    column-gap: 10px;
-    row-gap: 8px;
+    column-gap: 9px;
+    row-gap: 6px;
     align-items: baseline;
 }
 .info-cell {
@@ -124,36 +131,36 @@ body {
     display: inline-block;
     color: #0044cc;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 13.5px;
     border-bottom: 1.5px solid #0044cc;
-    min-width: 110px;
-    height: 20px;
-    padding: 0 4px 2px;
-    margin-right: 18px;
+    min-width: 100px;
+    height: 18px;
+    padding: 0 3px 1px;
+    margin-right: 15px;
     vertical-align: bottom;
 }
 .val-red {
     display: inline-block;
     color: #cc0000;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 13.5px;
     border-bottom: 1.5px solid #cc0000;
-    min-width: 90px;
-    height: 20px;
-    padding: 0 4px 2px;
-    margin-right: 18px;
+    min-width: 80px;
+    height: 18px;
+    padding: 0 3px 1px;
+    margin-right: 15px;
     vertical-align: bottom;
 }
 .val-red-sm {
     display: inline-block;
     color: #cc0000;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 13.5px;
     border-bottom: 1.5px solid #cc0000;
-    min-width: 48px;
-    height: 20px;
-    padding: 0 4px 2px;
-    margin-right: 14px;
+    min-width: 42px;
+    height: 18px;
+    padding: 0 3px 1px;
+    margin-right: 12px;
     text-align: center;
     vertical-align: bottom;
 }
@@ -165,34 +172,34 @@ body {
 .main-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 8px;
-    font-size: 14px;
+    margin-top: 6px;
+    font-size: 12.5px;
 }
 .main-table th {
     background: black;
     color: white;
     border: 1px solid black;
-    padding: 6px 8px;
-    font-size: 14px;
+    padding: 5px 7px;
+    font-size: 13px;
 }
 .main-table td {
     border: 1px solid black;
     padding: 0;
     vertical-align: top;
-    height: 1px; /* NEW: lets height:100% children fill the true row height */
+    height: 1px; /* lets height:100% children fill the true row height */
 }
 
 .score-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13.5px;
+    font-size: 12px;
 }
 .score-table th {
     background: #333;
     color: white;
     border: 1px solid black;
-    padding: 5px 6px;
-    font-size: 13px;
+    padding: 4px 6px;
+    font-size: 12px;
 }
 .score-table td {
     border: 1px solid black;
@@ -201,54 +208,52 @@ body {
 }
 
 .la-cell {
-    padding: 4px 6px;
-    min-height: 60px;
-    height: 68px;
+    padding: 3px 6px;
+    min-height: 50px;
+    height: 56px;
     vertical-align: middle;
 }
-.la-cell .la-label { font-weight: bold; font-size: 13px; }
-.la-cell .la-sub   { font-size: 12px; color: #333; }
+.la-cell .la-label { font-weight: bold; font-size: 12px; }
+.la-cell .la-sub   { font-size: 11px; color: #333; }
 
 .score-cell {
-    width: 65px;
+    width: 56px;
     text-align: center;
     border-left: 1px solid black;
-    min-height: 60px;
-    height: 68px;
+    min-height: 50px;
+    height: 56px;
     font-weight: 700;
     vertical-align: middle;
 }
 .comment-cell {
-    min-height: 60px;
-    height: 68px;
+    min-height: 50px;
+    height: 56px;
     border-left: 1px solid black;
-    padding: 4px 6px;
-    font-size: 12.5px;
+    padding: 3px 6px;
+    font-size: 11px;
     vertical-align: middle;
 }
 .total-row td {
     font-weight: bold;
-    padding: 5px 6px;
-    height: 30px;
+    padding: 4px 6px;
+    height: 26px;
     color: #cc0000;
 }
 
-/* --- activity-grid: now stretches to fill the height of its
-   parent td (which matches the left/score table's height),
-   and its rows no longer have a fixed height so they can grow
-   or shrink evenly to stay level with however many Learning
-   Areas end up on the left. --- */
+/* --- activity-grid: stretches to fill the height of its parent td
+   (matches the left/score table's height); rows have no fixed height
+   so they flex evenly to stay level with however many Learning Areas
+   end up on the left. --- */
 .activity-grid {
     width: 100%;
-    height: 100%;              /* NEW: fill the td, matching left column height */
+    height: 100%;
     border-collapse: collapse;
 }
 .activity-grid td {
     border: 1px solid black;
     width: 50%;
-    /* height removed (was fixed 78px) so rows flex to match left table */
     vertical-align: top;
-    padding: 4px 5px;
+    padding: 3px 5px;
     position: relative;
 }
 
@@ -256,7 +261,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    justify-content: space-between; /* NEW: balances content when row grows */
+    justify-content: space-between;
 }
 .act-top {
     display: flex;
@@ -266,74 +271,81 @@ body {
 }
 .act-label {
     font-weight: bold;
-    font-size: 13px;
+    font-size: 12px;
     flex: 1;
 }
 .act-img {
-    width: 55px;
-    height: 55px;
+    width: 46px;
+    height: 46px;
     object-fit: contain;
     flex-shrink: 0;
 }
 .act-score {
-    font-size: 12px;
+    font-size: 11px;
     color: #444;
     font-weight: 700;
     border-top: 1px dotted #999;
     margin-top: 2px;
     padding-top: 2px;
     text-align: center;
-    min-height: 16px;
+    min-height: 14px;
 }
 
 .comments-section {
-    margin-top: 14px;
-    font-size: 12px;
+    margin-top: 10px;
+    font-size: 11px;
 }
 .comment-block {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 .comment-label {
     font-weight: bold;
-    font-size: 12px;
+    font-size: 11px;
     color: #1a5e1a;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 .dotted-line {
     border-bottom: 1px dotted #555;
-    height: 22px;
-    margin-bottom: 4px;
+    height: 18px;
+    margin-bottom: 3px;
 }
 .comment-text {
-    min-height: 22px;
-    margin-bottom: 4px;
-    font-size: 12.5px;
+    min-height: 18px;
+    margin-bottom: 3px;
+    font-size: 11px;
     color: #111;
     border-bottom: 1px dotted #555;
     padding-bottom: 2px;
 }
 .sign-line {
     text-align: right;
-    font-size: 11px;
+    font-size: 10.5px;
     color: #333;
-    margin-top: 6px;
-    padding-right: 10px;
+    margin-top: 5px;
+    padding-right: 9px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 7px;
 }
 .sign-box {
     display: inline-block;
     border-bottom: 1px solid #000;
-    width: 160px;
+    width: 130px;
     margin-left: 6px;
-    height: 22px;
+    height: 19px;
 }
 .sign-img {
-    height: 34px;
-    max-width: 120px;
+    height: 28px;
+    max-width: 100px;
     object-fit: contain;
+}
+.sign-placeholder {
+    display: inline-block;
+    height: 28px;
+    width: 100px;
+    border-bottom: 1px dotted #555;
+    vertical-align: bottom;
 }
 
 @media print {
@@ -385,11 +397,11 @@ body {
         <div class="info-rows">
             <div class="info-cell" style="grid-column: 1 / 3;">
                 <span class="lbl">NAME:</span>
-                <span class="val-red" style="flex: 1; margin-right: 0; text-align: center; font-size: 19px;">{{ student.first_name | upper }} {{ student.last_name | upper }}</span>
+                <span class="val-red" style="flex: 1; margin-right: 0; text-align: center; font-size: 16px;">{{ student.first_name | upper }} {{ student.last_name | upper }}</span>
             </div>
             <div class="info-cell" style="grid-column: 3 / 4;">
                 <span class="lbl">CLASS:</span>
-                <span class="val-blue" style="margin-right:0; min-width:0; width:auto; padding-right: 40px;">{{ class_name }} {{ stream_name }}</span>
+                <span class="val-blue" style="margin-right:0; min-width:0; width:auto; padding-right: 34px;">{{ class_name }} {{ stream_name }}</span>
             </div>
 
             <div class="info-cell" style="grid-column: 1 / 2;">
@@ -490,10 +502,8 @@ body {
                                 </div>
                             </td>
                             <td class="score-cell">{{ ns.la_row.total_score if ns.la_row and ns.la_row.total_score is not none else '' }}</td>
-                            <!-- [FIX][item 6] Comment column now shows the
-                                 teacher's remark left during Marks Entry
-                                 (StudentMark.comment), instead of always
-                                 being blank. -->
+                            <!-- Comment column shows the teacher's remark
+                                 left during Marks Entry (StudentMark.comment). -->
                             <td class="comment-cell">{{ ns.la_row.comment if ns.la_row and ns.la_row.comment else '' }}</td>
                         </tr>
                         {% endfor %}
@@ -510,21 +520,21 @@ body {
                                 </div>
                             </td>
                             <td class="score-cell">{{ row.total_score if row.total_score is not none else '' }}</td>
-                            <!-- [FIX][item 6] same as above, for any
-                                 subject not in the fixed 5 Learning Areas. -->
+                            <!-- same as above, for any subject not in the
+                                 fixed 5 Learning Areas. -->
                             <td class="comment-cell">{{ row.comment if row.comment else '' }}</td>
                         </tr>
                         {% endfor %}
 
                         <tr class="total-row">
-                            <td style="padding:5px 6px; font-weight:bold;">Total:</td>
-                            <td style="padding:5px 6px; text-align:center;">{{ ns_sum.total | round(1) if ns_sum.count > 0 else '' }}</td>
-                          
+                            <td style="padding:4px 6px; font-weight:bold;">Total:</td>
+                            <td style="padding:4px 6px; text-align:center;">{{ ns_sum.total | round(1) if ns_sum.count > 0 else '' }}</td>
+                            <td style="padding:4px 6px;"></td>
                         </tr>
                         <tr class="total-row">
-                            <td style="padding:5px 6px; font-weight:bold;">Average:</td>
-                            <td style="padding:5px 6px; text-align:center;">{{ (ns_sum.total / ns_sum.count) | round(1) if ns_sum.count > 0 else '' }}</td>
-                            <td style="padding:5px 6px;"></td>
+                            <td style="padding:4px 6px; font-weight:bold;">Average:</td>
+                            <td style="padding:4px 6px; text-align:center;">{{ (ns_sum.total / ns_sum.count) | round(1) if ns_sum.count > 0 else '' }}</td>
+                            <td style="padding:4px 6px;"></td>
                         </tr>
                     </table>
                 </td>
@@ -558,15 +568,18 @@ body {
                 {% if class_teacher_comment %}
                 <div class="comment-text">{{ class_teacher_comment }}</div>
                 <div class="dotted-line"></div>
+                <div class="dotted-line"></div>
                 {% else %}
                 <div class="dotted-line"></div>
                 <div class="dotted-line"></div>
                 <div class="dotted-line"></div>
                 {% endif %}
                 <div class="sign-line">
-                    
+
                     Signature: <span >{% if class_teacher_signature_url %}
                     <img class="sign-img" src="{{ class_teacher_signature_url }}" alt="Class teacher signature">
+                    {% else %}
+                    <span class="sign-placeholder"></span>
                     {% endif %} </span>
                     {% if class_teacher_initials %}({{ class_teacher_initials }}){% endif %}
                     &nbsp;&nbsp; Date: <span class="sign-box" style="width:100px;">{{ generated_date }}</span>
@@ -578,22 +591,23 @@ body {
                 {% if headteacher_comment %}
                 <div class="comment-text">{{ headteacher_comment }}</div>
                 <div class="dotted-line"></div>
+                <div class="dotted-line"></div>
                 {% else %}
                 <div class="dotted-line"></div>
                 <div class="dotted-line"></div>
                 <div class="dotted-line"></div>
                 {% endif %}
                 <div class="sign-line">
-         
+
                     Signature: <span >                    {% if headteacher_signature_url %}
                     <img class="sign-img" src="{{ headteacher_signature_url }}" alt="Headteacher signature">
+                    {% else %}
+                    <span class="sign-placeholder"></span>
                     {% endif %}</span>
                     {% if headteacher_initials %}({{ headteacher_initials }}){% endif %}
                     &nbsp;&nbsp; Date: <span class="sign-box" style="width:100px;">{{ generated_date }}</span>
                 </div>
             </div>
-
-            
 
         </div>
 

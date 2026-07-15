@@ -222,3 +222,1245 @@ OSError: [Errno 5] I/O error
 [2026-07-14 17:28:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
 [2026-07-14 17:28:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
 [2026-07-14 17:29:13] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 282:55, unknown property.
+[2026-07-15 11:32:38] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-15 11:32:38] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-07-15 11:40:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 11:40:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 11:42:52] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 338:9, unknown property.
+[2026-07-15 11:51:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 11:51:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 11:52:03] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 348:9, unknown property.
+[2026-07-15 11:55:51] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 11:55:51] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 11:56:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 343:9, unknown property.
+[2026-07-15 12:09:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:09:40] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:10:29] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 350:9, unknown property.
+[2026-07-15 12:11:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 291:55, unknown property.
+[2026-07-15 12:12:35] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 278:55, unknown property.
+[2026-07-15 12:27:33] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:27:33] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:28:10] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 278:55, unknown property.
+[2026-07-15 12:28:56] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 291:55, unknown property.
+[2026-07-15 12:30:22] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 350:9, unknown property.
+[2026-07-15 12:31:24] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:31:24] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:31:31] ERROR | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-07-15 12:31:31] ERROR | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-07-15 12:31:37] ERROR | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-07-15 12:31:37] ERROR | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | POST /api/report-cards/auto-generate | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-07-15 12:31:42] ERROR | GET /api/report-cards/students | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /api/report-cards/students | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-07-15 12:31:42] ERROR | GET /api/report-cards/students | IP=127.0.0.1 | USER=9 | app.core.error_handlers | UNHANDLED EXCEPTION | GET /api/report-cards/students | IP=127.0.0.1 | USER=9 | OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask/app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/middleware/before_request.py", line 21, in silent_refresh_logic
+    verify_jwt_in_request(optional=True)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 94, in verify_jwt_in_request
+    jwt_data, jwt_header, jwt_location = _decode_jwt_from_request(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~^
+        locations,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        skip_revocation_check=skip_revocation_check,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/view_decorators.py", line 368, in _decode_jwt_from_request
+    verify_token_not_blocklisted(jwt_header, decoded_token)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/flask_jwt_extended/internal_utils.py", line 58, in verify_token_not_blocklisted
+    if jwt_manager._token_in_blocklist_callback(jwt_header, jwt_data):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/jwt_handler.py", line 139, in check_if_token_revoked
+    token = TokenBlocklist.query.filter_by(jti=jti).first()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+        params,
+        ^^^^^^^
+        execution_options={"_sa_orm_load_options": self.load_options},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+    conn = self._connection_for_bind(bind)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in _connection_for_bind
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+    conn = bind.connect()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/pool/base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.41.250.251), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (35.177.127.187), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (13.43.29.36), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:2824:4bbb:d4f1:a71e:2c1f), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:280c:ad0b:9757:1116:bcab), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+connection to server at "ep-raspy-poetry-ab49ug13.eu-west-2.aws.neon.tech" (2a05:d01c:c65:281b:bcfb:93a:daab:e0ce), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-07-15 12:32:27] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 350:9, unknown property.
+[2026-07-15 12:33:17] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 291:55, unknown property.
+[2026-07-15 12:34:00] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 278:55, unknown property.
+[2026-07-15 12:39:18] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:39:18] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 12:39:48] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 278:55, unknown property.
+[2026-07-15 12:40:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 291:55, unknown property.
+[2026-07-15 12:41:31] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 350:9, unknown property.
+[2026-07-15 13:39:34] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 13:39:34] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-07-15 13:40:15] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 290:55, unknown property.
+[2026-07-15 13:41:07] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 277:55, unknown property.
+[2026-07-15 13:42:20] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 350:9, unknown property.

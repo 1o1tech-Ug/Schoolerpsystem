@@ -6,7 +6,7 @@
 <title>Sunbay Junior School Primary level reportcard</title>
 <style>
 
-@page { size: A4 portrait; margin: 6mm; }
+@page { size: A4 portrait; margin: 5.5mm; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,7 +18,6 @@ body {
 
 .report {
     width: 210mm;
-    min-height: 297mm;
     margin: 0 auto;
     background: #fff;
     border: 5px solid #cc0000;
@@ -43,47 +42,47 @@ body {
 .header {
     display: flex;
     align-items: center;
-    padding: 8px 10px 5px;
+    padding: 6.5px 10px 4px;
 }
-.hdr-logo { flex: 0 0 105px; text-align: center; }
-.hdr-logo img { width: 175px; height: 175px; object-fit: contain; }
+.hdr-logo { flex: 0 0 97px; text-align: center; }
+.hdr-logo img { width: 138px; height: 138px; object-fit: contain; }
 .hdr-center { flex: 1; text-align: center; padding: 0 8px; }
 .school-name {
-    color: #006400; font-size: 22px; font-weight: 900;
-    text-transform: uppercase; line-height: 1.15;
+    color: #006400; font-size: 20.5px; font-weight: 900;
+    text-transform: uppercase; line-height: 1.12;
 }
-.school-details { font-size: 10.5px; color: #111; line-height: 1.6; margin-top: 4px; }
-.hdr-right { flex: 0 0 145px; text-align: center; }
+.school-details { font-size: 10px; color: #111; line-height: 1.45; margin-top: 3.5px; }
+.hdr-right { flex: 0 0 127px; text-align: center; }
 .hdr-right img {
-    width: 125px;
-    height: 145px;
+    width: 108px;
+    height: 126px;
     object-fit: cover;
-    border: 4px solid #006400;
+    border: 3px solid #006400;
     border-radius: 4px;
     padding: 2px;
     background: #fff;
     box-sizing: border-box;
 }
 
-.line-green { height: 4px; background: #006400; }
-.line-red   { height: 4px; background: #cc0000; }
+.line-green { height: 3.5px; background: #006400; }
+.line-red   { height: 3.5px; background: #cc0000; }
 
-.body { padding: 6px 10px 12px; }
+.body { padding: 5px 10px 10px; }
 
 .title-bar {
     background: #000; color: #fff;
     text-align: center; font-weight: bold;
-    font-size: 15px; letter-spacing: 0.5px;
-    padding: 8px 6px; margin: 7px 0 10px;
+    font-size: 14.2px; letter-spacing: 0.45px;
+    padding: 6.5px 6px; margin: 5.5px 0 8px;
 }
 
 .info-rows {
-    font-size: 14px;
-    margin-bottom: 10px;
+    font-size: 13px;
+    margin-bottom: 8px;
     display: grid;
     grid-template-columns: 1.5fr 1.1fr 0.7fr 0.6fr;
-    column-gap: 10px;
-    row-gap: 8px;
+    column-gap: 9.5px;
+    row-gap: 6.5px;
     align-items: baseline;
 }
 
@@ -100,36 +99,36 @@ body {
     display: inline-block;
     color: #0044cc;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
     border-bottom: 1.5px solid #0044cc;
-    min-width: 110px;
-    height: 20px;
-    padding: 0 4px 2px;
-    margin-right: 18px;
+    min-width: 105px;
+    height: 18.5px;
+    padding: 0 4px 1.5px;
+    margin-right: 16px;
     vertical-align: bottom;
 }
 .val-red {
     display: inline-block;
     color: #cc0000;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
     border-bottom: 1.5px solid #cc0000;
-    min-width: 90px;
-    height: 20px;
-    padding: 0 4px 2px;
-    margin-right: 18px;
+    min-width: 86px;
+    height: 18.5px;
+    padding: 0 4px 1.5px;
+    margin-right: 16px;
     vertical-align: bottom;
 }
 .val-red-sm {
     display: inline-block;
     color: #cc0000;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
     border-bottom: 1.5px solid #cc0000;
-    min-width: 48px;
-    height: 20px;
-    padding: 0 4px 2px;
-    margin-right: 14px;
+    min-width: 46px;
+    height: 18.5px;
+    padding: 0 4px 1.5px;
+    margin-right: 13px;
     text-align: center;
     vertical-align: bottom;
 }
@@ -137,27 +136,27 @@ body {
 .marks-tbl {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12.5px;
+    font-size: 11px;
 }
 .marks-tbl thead th {
     background: #006400; color: #fff;
     border: 1px solid #333;
-    padding: 5px 3px;
-    text-align: center; font-size: 11px;
-    line-height: 1.25; font-weight: 800;
+    padding: 4px 3px;
+    text-align: center; font-size: 10px;
+    line-height: 1.2; font-weight: 800;
 }
 .marks-tbl thead th.th-subj { text-align: left; padding-left: 7px; }
 
 .marks-tbl tbody td {
     border: 1px solid #777;
-    padding: 6px 3px;
+    padding: 4.5px 3px;
     text-align: center;
     vertical-align: middle;
-    height: 28px;
+    height: 24px;
 }
 .marks-tbl tbody td.td-subj {
     text-align: left; padding-left: 7px;
-    font-weight: 700; font-size: 12.5px;
+    font-weight: 700; font-size: 11.5px;
 }
 
 /* ── Coloured mark-table cells ── */
@@ -173,33 +172,33 @@ body {
     background: #b6f0b6;
     border: 1.5px solid #444;
     font-weight: 900;
-    padding: 6px 3px;
+    padding: 4.5px 3px;
 }
 .tr-totals .td-subj {
-    color: #006400; font-size: 11.5px;
-    letter-spacing: 0.4px; text-transform: uppercase;
+    color: #006400; font-size: 11px;
+    letter-spacing: 0.35px; text-transform: uppercase;
 }
-.agg-lbl { color: #006400; font-weight: 900; font-size: 13px; }
-.agg-val  { color: #cc0000; font-weight: 900; font-size: 18px; }
+.agg-lbl { color: #006400; font-weight: 900; font-size: 12.25px; }
+.agg-val  { color: #cc0000; font-weight: 900; font-size: 16.5px; }
 
 .avg-div {
     display: flex;
     border: 1.5px solid #777;
     border-top: none;
-    font-size: 13px; font-weight: 600;
+    font-size: 12.25px; font-weight: 600;
 }
-.avg-div > div { flex: 1; padding: 7px 10px; }
+.avg-div > div { flex: 1; padding: 5.5px 10px; }
 .avg-div > div:first-child { border-right: 1.5px solid #777; }
 
-.grading { margin-top: 18px; border: 1.5px solid #777; }
+.grading { margin-top: 13px; border: 1.5px solid #777; }
 .grading-title {
-    font-weight: 900; font-size: 13px;
-    padding: 5px 9px; background: #f0f0f0;
+    font-weight: 900; font-size: 12.25px;
+    padding: 4px 9px; background: #f0f0f0;
     border-bottom: 1.5px solid #777;
 }
-.grading-tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.grading-tbl { width: 100%; border-collapse: collapse; font-size: 10.75px; }
 .grading-tbl th, .grading-tbl td {
-    border: 1px solid #bbb; padding: 4px 5px; text-align: center;
+    border: 1px solid #bbb; padding: 3px 4.5px; text-align: center;
 }
 .grading-tbl .g-lbl {
     text-align: left; font-weight: 800;
@@ -207,44 +206,46 @@ body {
 }
 .row-marks th { color: #cc0000; font-weight: 900; background: #fff; }
 .row-grade td { color: #0044cc; font-weight: 900; }
-.row-div   td { color: #222; font-size: 11px; }
+.row-div   td { color: #222; font-size: 10.25px; }
 .grading-note {
-    color: #cc0000; font-size: 11px; font-style: italic;
-    font-weight: 600; padding: 4px 9px; border-top: 1px solid #bbb;
+    color: #cc0000; font-size: 10.25px; font-style: italic;
+    font-weight: 600; padding: 3.5px 9px; border-top: 1px solid #bbb;
 }
 
-/* ══ COMMENTS — clean line style, float-based (no flex-grow, no literal dots) ══ */
-.comments { margin-top: 14px; font-size: 13px; }
-.cmt-block { margin-bottom: 26px; }
+/* ══ COMMENTS — dotted-line style matching the Nursery report card ══ */
+.comments { margin-top: 11px; font-size: 12.25px; }
+.cmt-block { margin-bottom: 19px; }
 .cmt-lbl {
     display: block;
     font-weight: 800;
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: 12.25px;
+    margin-bottom: 5px;
 }
 .cmt-text {
-    font-size: 12.5px;
+    font-size: 11.75px;
     color: #111;
-    margin-bottom: 8px;
-    min-height: 18px;
+    margin-bottom: 6.5px;
+    min-height: 16px;
+    border-bottom: 1.5px dotted #555;
+    padding-bottom: 2px;
 }
 .cmt-line {
     display: block;
     width: 100%;
-    height: 18px;
-    border-bottom: 1.5px solid #555;
-    margin-bottom: 10px;
+    height: 16px;
+    border-bottom: 1.5px dotted #555;
+    margin-bottom: 8px;
 }
 .cmt-row-2 {
-    margin-top: 12px;
+    margin-top: 9px;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
 }
 .cmt-row-2 .cmt-line-70 {
     flex: 0 0 62%;
-    height: 18px;
-    border-bottom: 1.5px solid #555;
+    height: 16px;
+    border-bottom: 1.5px dotted #555;
 }
 .cmt-row-2 .sign-box {
     flex: 0 0 34%;
@@ -258,18 +259,25 @@ body {
 }
 .sign-uline {
     display: inline-block;
-    width: 110px;
-    height: 16px;
-    margin-left: 6px;
+    width: 105px;
+    height: 15px;
+    margin-left: 5.5px;
     border-bottom: 1.5px solid #555;
     vertical-align: bottom;
 }
-.sign-img { height: 30px; max-width: 100px; object-fit: contain; }
+.sign-img { height: 27px; max-width: 92px; object-fit: contain; }
+.sign-placeholder {
+    display: inline-block;
+    height: 27px;
+    width: 92px;
+    border-bottom: 1.5px dotted #555;
+    vertical-align: bottom;
+}
 
 .next-term {
-    margin-top: 16px; padding-top: 6px;
-    border-top: 2.5px solid #004080;
-    font-size: 11.5px; color: #003366; line-height: 1.5;
+    margin-top: 12px; padding-top: 5px;
+    border-top: 2.25px solid #004080;
+    font-size: 10.75px; color: #003366; line-height: 1.4;
 }
 .next-term b { font-weight: 900; }
 
@@ -277,9 +285,9 @@ body {
     display: flex;
     border: 1.5px solid #777;
     border-top: none;
-    font-size: 12.5px; font-weight: 600;
+    font-size: 11px; font-weight: 600;
 }
-.pos-bar > div { flex: 1; padding: 6px 10px; }
+.pos-bar > div { flex: 1; padding: 4px 10px; }
 .pos-bar > div:first-child { border-right: 1.5px solid #777; }
 .pos-val { color: #cc0000; font-weight: 900; }
 
@@ -458,15 +466,19 @@ body {
                     <span class="cmt-lbl">General Class Teacher's Comment:</span>
                     {% if class_teacher_comment %}
                     <div class="cmt-text">{{ class_teacher_comment }}</div>
+                    <div class="cmt-line"></div>
                     {% else %}
+                    <div class="cmt-line"></div>
                     <div class="cmt-line"></div>
                     {% endif %}
                     <div class="cmt-row-2">
                         <div class="cmt-line-70"></div>
                         <div class="sign-box">
                             
-                            Sign:<span c>{% if class_teacher_signature_url %}
+                            Sign:<span>{% if class_teacher_signature_url %}
                             <img class="sign-img" src="{{ class_teacher_signature_url }}" alt="Class teacher signature">
+                            {% else %}
+                            <span class="sign-placeholder"></span>
                             {% endif %}</span>
                             {% if class_teacher_initials %}({{ class_teacher_initials }}){% endif %}
                         </div>
@@ -477,7 +489,9 @@ body {
                     <span class="cmt-lbl">Head Teacher's Comment:</span>
                     {% if headteacher_comment %}
                     <div class="cmt-text">{{ headteacher_comment }}</div>
+                    <div class="cmt-line"></div>
                     {% else %}
+                    <div class="cmt-line"></div>
                     <div class="cmt-line"></div>
                     {% endif %}
                     <div class="cmt-row-2">
@@ -486,6 +500,8 @@ body {
                             
                             Sign:<span >{% if headteacher_signature_url %}
                             <img class="sign-img" src="{{ headteacher_signature_url }}" alt="Headteacher signature">
+                            {% else %}
+                            <span class="sign-placeholder"></span>
                             {% endif %}</span>
                             {% if headteacher_initials %}({{ headteacher_initials }}){% endif %}
                         </div>
