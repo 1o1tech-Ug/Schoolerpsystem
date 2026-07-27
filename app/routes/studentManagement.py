@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, jsonify, request, Response
 from flask_jwt_extended import jwt_required, get_jwt
 from app.models.core import School, UserModule
-from app.models.user import StudentAuth
 from app.models.people import Student, Guardian, MedicalRecord, Document, StudentAcademic
 from app.models.academic_structure import Class, StudentStream, Stream
 from app.extensions import db, limiter
 from app.core.rate_limit import READ_LIMIT, WRITE_LIMIT
+from app.utils.bunny import bunny_public_url
 import io
 import csv
 import logging
@@ -122,7 +122,8 @@ def registration_page():
         school=school,
         modules=modules,
         role=role,
-        classes=classes
+        classes=classes,
+        bunny_public_url=bunny_public_url,
     )
 
 
@@ -222,6 +223,7 @@ def student_profiles_page():
         class_map=class_map,
         student_stream_map=student_stream_map,
         current_filters=_current_filters(),
+        bunny_public_url=bunny_public_url,
     )
 
 
@@ -265,7 +267,8 @@ def student_profile_page(student_id):
             class_obj=class_obj,
             school_id=school_id,
             school=school,
-            modules=modules
+            modules=modules,
+            bunny_public_url=bunny_public_url,
         )
 
     except Exception:

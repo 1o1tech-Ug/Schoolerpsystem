@@ -11,16 +11,25 @@ CHANGES vs original:
   - delete_student now clears the finance chain (Receipt -> Payment ->
     InvoiceItem -> Invoice) before deleting the student, fixing the
     ForeignKeyViolation on invoice_items_invoice_id_fkey.
+  - [FIX][STORAGE] _upload_image()/_upload_document() now store the
+    relative remote_path returned alongside the upload, not the full
+    CDN URL — so a future change of BUNNY_BASE_URL never requires a
+    data migration. bunny_upload() already raises on failure, so
+    reaching the return line means the file is confirmed on Bunny.
+    Templates resolve the stored value to a renderable URL via the new
+    bunny_public_url() helper (passed into render_template() below),
+    which is idempotent for the full-URL values already sitting in
+    existing rows — no backfill needed. bunny_remote_path_from_url()
+    (used by _delete_cdn_file()) already passed relative paths through
+    unchanged, so deletion needed no changes.
 """
 
 import logging
 from flask import Blueprint, request, jsonify, render_template, Response
 from flask_jwt_extended import jwt_required, get_jwt
-from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload
 from app.extensions import db, limiter
 from app.models.core import School, UserModule
 from app.models.people import (
@@ -35,9 +44,9 @@ from app.models.academic_structure import (
 )
 from app.models.reportcards import PrimaryReportSummary
 from app.utils.utilities import check_student_limit
-from app.utils.bunny import bunny_upload, bunny_delete, bunny_remote_path_from_url
+from app.utils.bunny import bunny_upload, bunny_delete, bunny_remote_path_from_url, bunny_public_url
 from app.core.rate_limit import (
-    READ_LIMIT, WRITE_LIMIT, BULK_LIMIT, SEARCH_LIMIT,
+    READ_LIMIT, WRITE_LIMIT, BULK_LIMIT,
     PASSWORD_RESET_LIMIT,
 )
 import os
@@ -108,21 +117,29 @@ def _sanitise_student_type(raw):
 
 
 def _upload_image(file_storage, school_id, student_code, prefix="student"):
-    ext   = file_storage.filename.rsplit(".", 1)[1].lower()
-    fname = f"{school_id}_{student_code}_{uuid.uuid4().hex}.{ext}"
+    ext         = file_storage.filename.rsplit(".", 1)[1].lower()
+    fname       = f"{school_id}_{student_code}_{uuid.uuid4().hex}.{ext}"
     remote_path = f"uploads/images/{fname}"
-    data  = file_storage.read()
+    data        = file_storage.read()
     file_storage.seek(0)
-    return bunny_upload(data=data, remote_path=remote_path)
+
+    # bunny_upload() raises RuntimeError on failure, so reaching the next
+    # line means the file is confirmed on Bunny. Store the relative path
+    # only — bunny_public_url() resolves it to a full CDN URL at render
+    # time, so DB rows never hardcode a base URL.
+    bunny_upload(data=data, remote_path=remote_path)
+    return remote_path
 
 
 def _upload_document(file_storage, school_id, student_code):
-    ext   = file_storage.filename.rsplit(".", 1)[1].lower()
-    fname = f"{school_id}_{student_code}_{uuid.uuid4().hex}.{ext}"
+    ext         = file_storage.filename.rsplit(".", 1)[1].lower()
+    fname       = f"{school_id}_{student_code}_{uuid.uuid4().hex}.{ext}"
     remote_path = f"uploads/documents/{fname}"
-    data  = file_storage.read()
+    data        = file_storage.read()
     file_storage.seek(0)
-    return bunny_upload(data=data, remote_path=remote_path)
+
+    bunny_upload(data=data, remote_path=remote_path)
+    return remote_path
 
 
 def _delete_cdn_file(url):
@@ -207,6 +224,7 @@ def list_students():
         class_map=class_map,
         school=school,
         modules=modules,
+        bunny_public_url=bunny_public_url,
         current_filters={
             "search":       request.args.get("search",       ""),
             "class":        request.args.get("class",        ""),
@@ -616,8 +634,6 @@ def delete_student(student_id):
             InvoiceItem.query.filter(InvoiceItem.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
             Invoice.query.filter(Invoice.id.in_(invoice_ids)).delete(synchronize_session=False)
 
-      
-        
         # ── Academic records tied to this student ──
         StudentMark.query.filter_by(student_id=student.id).delete(synchronize_session=False)
         StudentAttendance.query.filter_by(student_id=student.id).delete(synchronize_session=False)
@@ -872,6 +888,7 @@ def edit_student_page(student_id):
         school=school,
         modules=modules,
         edit_mode=True,
+        bunny_public_url=bunny_public_url,
     )
 
 
@@ -997,4 +1014,4 @@ def change_password():
     except Exception:
         db.session.rollback()
         logger.exception("change_password failed | user_id=%s", user_id)
-        return jsonify({"message": "Failed to update password. Please try again."}), 500
+        return jsonify({"message": "Failed to update password. Please try again."}), 500;

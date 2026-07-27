@@ -82,6 +82,22 @@ CHANGES vs original:
     derives pronouns from the student's gender via _pronoun(), falling
     back to gender-neutral "they/their/them" when gender is missing or
     unrecognized. See auto_generate_report_card() for the call site.
+  - [STORAGE-ARCHITECTURE] Every uploaded asset in this module (school
+    logo, headteacher signature, class teacher signature, report card
+    PDFs) now follows the exact same relative-path architecture as the
+    student-photo system:
+      * app.utils.bunny.bunny_upload() returns a RELATIVE path (e.g.
+        "/uploads/signatures/school_1_headteacher.png") — that is the
+        only thing ever written to the database. No column stores a
+        full BunnyCDN URL.
+      * app.utils.bunny.public_file_url() is the single helper that
+        turns a stored relative path into a full public URL, built
+        from current_app.config["CDN_BASE_URL"]. It's called at every
+        read site: template rendering, JSON responses, and the data
+        handed to ReportCardService for HTML/PDF generation.
+      * Deletes use the stored relative path directly as the Bunny
+        object key — no URL parsing is involved anymore, since there's
+        no full URL to parse in the first place.
 """
 
 import requests as http_requests
@@ -131,7 +147,7 @@ from app.services.report_card_service import (
     html_to_pdf_bytes,
     ensure_report_dir,
 )
-from app.utils.bunny import bunny_upload, bunny_delete, bunny_remote_path_from_url
+from app.utils.bunny import bunny_upload, bunny_delete, public_file_url
 from app.core.rate_limit import READ_LIMIT, WRITE_LIMIT, REPORT_GEN_LIMIT, REPORT_ALL_LIMIT
 
 logger = logging.getLogger(__name__)
@@ -318,19 +334,29 @@ def _validate_image_extension(filename: str, allowed: set) -> bool:
     return filename.rsplit(".", 1)[1].lower() in allowed
 
 
-def _bust(url: str, generated_at: datetime) -> str:
-    if not url:
-        return url
+def _bust(path: str, generated_at: datetime) -> str | None:
+    """
+    Convert a STORED RELATIVE path into a fresh, cache-busted PUBLIC
+    URL for client consumption. This is a read-time conversion only —
+    it never touches the database value.
+    """
+    if not path:
+        return path
     ts = int(generated_at.timestamp()) if generated_at else int(datetime.utcnow().timestamp())
-    return f"{url}?v={ts}"
+    return f"{public_file_url(path)}?v={ts}"
 
 
-def _delete_cdn_file(url):
-    if url:
+def _delete_cdn_file(path):
+    """
+    Delete a file from BunnyCDN using its STORED RELATIVE path directly
+    as the object key — there is no full URL to parse anymore, so no
+    URL-parsing helper is needed here.
+    """
+    if path:
         try:
-            bunny_delete(bunny_remote_path_from_url(url))
+            bunny_delete(path)
         except Exception:
-            logger.warning("CDN delete failed for URL: %s", url)
+            logger.warning("CDN delete failed for path: %s", path)
 
 
 def _delete_local_file(path):
@@ -369,7 +395,14 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream, unique_toke
     path sidesteps the problem entirely: there is nothing stale for
     the edge to have cached at a URL it has never seen before.
 
-    Returns (cdn_url, remote_path).
+    [STORAGE-ARCHITECTURE] Returns (relative_path, remote_path):
+      * relative_path — what bunny_upload() returns (e.g.
+        "/uploads/report_cards/2026/Term_1/S1A/report_..._<token>.pdf").
+        This is what gets stored in ReportCard.firebase_url and later
+        turned into a public URL via public_file_url() at read time.
+      * remote_path — the same path without the leading slash, i.e.
+        exactly the Bunny object key. Stored in ReportCard.firebase_path
+        and used directly (no URL parsing) when the file needs deleting.
     """
     with open(local_path, "rb") as fh:
         pdf_bytes = fh.read()
@@ -393,7 +426,7 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream, unique_toke
         # Explicit no-cache Cache-Control on upload — belt-and-suspenders
         # on top of the path versioning above, so this specific file is
         # also never held onto indefinitely by an intermediary.
-        cdn_url = bunny_upload(
+        relative_path = bunny_upload(
             data=pdf_bytes,
             remote_path=remote_path,
             cache_control=_REPORT_CACHE_CONTROL,
@@ -402,12 +435,12 @@ def _upload_report_pdf(local_path: str, academic_year, term, stream, unique_toke
         logger.warning("_upload_report_pdf: upload failed for %s", local_path)
         raise RuntimeError("Failed to upload report card to storage") from exc
 
-    if not cdn_url:
-        logger.warning("_upload_report_pdf: bunny_upload returned no URL for %s", local_path)
+    if not relative_path:
+        logger.warning("_upload_report_pdf: bunny_upload returned no path for %s", local_path)
         raise RuntimeError("Failed to upload report card to storage")
 
-    logger.info("_upload_report_pdf: uploaded %s → %s", versioned_filename, cdn_url)
-    return cdn_url, remote_path
+    logger.info("_upload_report_pdf: uploaded %s → %s", versioned_filename, relative_path)
+    return relative_path, remote_path
 
 
 def _get_academic_year_for_term(term: Term):
@@ -436,6 +469,14 @@ def report_cards_page():
             return err
 
         school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
+
+        # [STORAGE-ARCHITECTURE] school_detail.school_logo_url holds a
+        # RELATIVE path in the database. The template renders it as an
+        # <img> src, so it needs the full public URL. We overwrite the
+        # attribute only on this in-memory instance (never committed),
+        # so the database value stays a relative path.
+        if school_detail and school_detail.school_logo_url:
+            school_detail.school_logo_url = public_file_url(school_detail.school_logo_url)
 
         classes   = Class.query.filter_by(school_id=school_id).all()
         class_ids = [c.id for c in classes]
@@ -544,6 +585,9 @@ def get_students_for_generation():
                 "section_label":    _SECTION_LABELS.get(report_type, report_type.title()),
                 "report_generated": report is not None,
                 "report_id":        report.id if report else None,
+                # _bust() reads report.firebase_url (a stored relative
+                # path) and converts it to a full, cache-busted public
+                # URL for the client — the DB value itself is untouched.
                 "report_url": (
                     _bust(report.firebase_url, report.generated_at)
                     if report and report.firebase_url else None
@@ -1321,11 +1365,12 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                 ).first()
 
                 # [NEW][SIGNATURES] Headteacher signature is school-wide;
-                # class teacher signature is per-stream. Both are just
-                # CDN URLs to drop into the report's sign-off block —
-                # neither is regenerated per report, they're fetched
-                # fresh here so a signature update takes effect on the
-                # very next generation without any other code changing.
+                # class teacher signature is per-stream. Both are stored
+                # in the DB as RELATIVE paths — service.generate() needs
+                # actual public URLs it can drop into <img> tags for
+                # WeasyPrint/the browser to fetch, so we convert with
+                # public_file_url() here, at the point of use, rather
+                # than anywhere the value gets persisted.
                 _headteacher_sig = HeadteacherSignature.query.filter_by(
                     school_id=school_id
                 ).first()
@@ -1349,10 +1394,14 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                     # section (omit gracefully when a signature is unset).
                     overrides=_override.to_dict() if _override else {},
                     signatures={
-                        "headteacher_signature_url": _headteacher_sig.signature_url if _headteacher_sig else None,
-                        "headteacher_name":          _headteacher_sig.teacher_name  if _headteacher_sig else None,
-                        "class_teacher_signature_url": _class_teacher_sig.signature_url if _class_teacher_sig else None,
-                        "class_teacher_name":          _class_teacher_sig.teacher_name  if _class_teacher_sig else None,
+                        "headteacher_signature_url": (
+                            public_file_url(_headteacher_sig.signature_url) if _headteacher_sig else None
+                        ),
+                        "headteacher_name": _headteacher_sig.teacher_name if _headteacher_sig else None,
+                        "class_teacher_signature_url": (
+                            public_file_url(_class_teacher_sig.signature_url) if _class_teacher_sig else None
+                        ),
+                        "class_teacher_name": _class_teacher_sig.teacher_name if _class_teacher_sig else None,
                     },
                 )
 
@@ -1377,19 +1426,26 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                 # Upload to Bunny FIRST. If this raises, we fall straight
                 # into the except block below — no DB row is touched and
                 # the previous report card (if any) stays untouched.
-                cdn_url, remote_path = _upload_report_pdf(local_path, _ay, _term, _stream, unique_token)
+                # [STORAGE-ARCHITECTURE] relative_path is what gets
+                # stored in firebase_url; remote_path (no leading slash,
+                # the exact Bunny object key) is stored in firebase_path
+                # and used directly for deletion — no URL parsing.
+                relative_path, remote_path = _upload_report_pdf(local_path, _ay, _term, _stream, unique_token)
 
                 # Only now that the new file is safely on Bunny — at a
                 # path the CDN edge has never served before, so there is
                 # nothing stale to worry about — do we remove the
                 # previous CDN file. This ordering means a failed
                 # re-generation never leaves a report card with no file
-                # at all.
-                if existing_report and existing_report.firebase_url:
+                # at all. Deletion uses the stored relative path
+                # (firebase_path) directly as the Bunny object key.
+                if existing_report and existing_report.firebase_path:
+                    _delete_cdn_file(existing_report.firebase_path)
+                elif existing_report and existing_report.firebase_url:
                     _delete_cdn_file(existing_report.firebase_url)
 
                 if existing_report:
-                    existing_report.firebase_url  = cdn_url
+                    existing_report.firebase_url  = relative_path
                     existing_report.firebase_path = remote_path
                     existing_report.local_path    = None
                     existing_report.generated_at  = now
@@ -1406,7 +1462,7 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                         academic_year=_ay.name if _ay else None,
                         generated_at=now,
                         generated_by=int(user_id) if user_id else None,
-                        firebase_url=cdn_url,
+                        firebase_url=relative_path,
                         firebase_path=remote_path,
                         local_path=None,
                         status="generated",
@@ -1420,7 +1476,9 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                     "student_name":  f"{_student.first_name} {_student.last_name}",
                     "report_type":   report_type,
                     "section_label": _SECTION_LABELS.get(report_type, report_type.title()),
-                    "file_url":      _bust(cdn_url, now),
+                    # _bust() converts the stored relative path into a
+                    # full, cache-busted public URL for the client.
+                    "file_url":      _bust(relative_path, now),
                     "report_id":     report.id,
                 })
 
@@ -1519,6 +1577,8 @@ def get_report_cards():
                 "report_type":   report_type,
                 "section_label": _SECTION_LABELS.get(report_type, report_type.title()),
                 "generated_at":  rc.generated_at.isoformat() if rc.generated_at else None,
+                # _bust() converts the stored relative path into a full,
+                # cache-busted public URL — the DB value stays relative.
                 "file_url": (
                     _bust(rc.firebase_url, rc.generated_at) if rc.firebase_url else ""
                 ),
@@ -1552,7 +1612,10 @@ def delete_report_card(report_id: int):
             return jsonify({"message": "Report card not found"}), 404
 
         # Bunny is the sole storage location — nothing else to clean up.
-        _delete_cdn_file(report.firebase_url)
+        # firebase_path (no leading slash) is the exact Bunny object
+        # key; fall back to firebase_url (leading slash) for older rows
+        # that only ever had that field populated.
+        _delete_cdn_file(report.firebase_path or report.firebase_url)
 
         db.session.delete(report)
         db.session.commit()
@@ -1572,7 +1635,8 @@ def delete_report_card(report_id: int):
 # ═══════════════════════════════════════════════════════════════
 #  SAVE SCHOOL CONFIGURATION  —  POST /api/school/details
 #  (Logos are a separate concern from report cards, but they too are
-#  stored solely on BunnyCDN — no local disk copy is kept here either.)
+#  stored solely on BunnyCDN as a RELATIVE path — no local disk copy,
+#  no full URL in the database — here either.)
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/school/details", methods=["POST"])
@@ -1590,7 +1654,7 @@ def save_school_details():
         return err
 
     try:
-        logo_url = None
+        logo_relative_path = None
 
         logo_file = request.files.get("school_logo")
         if logo_file and logo_file.filename:
@@ -1617,6 +1681,8 @@ def save_school_details():
 
             detail_check = SchoolDetail.query.filter_by(school_id=school_id).first()
 
+            # detail_check.school_logo_url is a stored RELATIVE path —
+            # pass it straight to _delete_cdn_file, no URL parsing.
             if detail_check and detail_check.school_logo_url:
                 _delete_cdn_file(detail_check.school_logo_url)
 
@@ -1624,7 +1690,7 @@ def save_school_details():
             # gets its own filename via school_id, so a long-lived cache
             # is safe (and desirable) here — unlike report card PDFs.
             try:
-                logo_url = bunny_upload(
+                logo_relative_path = bunny_upload(
                     data=logo_bytes,
                     remote_path=remote_path,
                     cache_control="public, max-age=2592000",
@@ -1636,14 +1702,14 @@ def save_school_details():
                     "message": "Failed to upload logo. Please try again.",
                 }), 502
 
-            if not logo_url:
-                logger.warning("save_school_details: logo upload returned no URL | school_id=%s", school_id)
+            if not logo_relative_path:
+                logger.warning("save_school_details: logo upload returned no path | school_id=%s", school_id)
                 return jsonify({
                     "success": False,
                     "message": "Failed to upload logo. Please try again.",
                 }), 502
 
-            logger.info("save_school_details: logo uploaded to CDN → %s", logo_url)
+            logger.info("save_school_details: logo uploaded to CDN → %s", logo_relative_path)
 
         po_box_number  = (request.form.get("po_box_number",  "") or "").strip() or None
         district       = (request.form.get("district",       "") or "").strip() or None
@@ -1690,8 +1756,10 @@ def save_school_details():
         detail.website_domain = website_domain
         detail.email          = email
 
-        if logo_url:
-            detail.school_logo_url = logo_url
+        # [STORAGE-ARCHITECTURE] Only the relative path is ever written
+        # to the database column.
+        if logo_relative_path:
+            detail.school_logo_url = logo_relative_path
         if gp_min_mark is not None:
             detail.gp_min_mark = gp_min_mark
         if ict_min_mark is not None:
@@ -1701,10 +1769,13 @@ def save_school_details():
 
         db.session.commit()
 
+        # [STORAGE-ARCHITECTURE] The JSON response is a read — convert
+        # to a public URL here, at the point of use, without touching
+        # the (already-committed) stored value.
         return jsonify({
             "success": True,
             "message": "School configuration saved successfully",
-            "logo_url": logo_url or detail.school_logo_url,
+            "logo_url": public_file_url(logo_relative_path or detail.school_logo_url),
         }), 200
 
     except SQLAlchemyError:
@@ -1796,7 +1867,8 @@ def _strip_signature_background(image_bytes: bytes) -> bytes:
 #  [NEW][SIGNATURES] One signature per school, uploaded once and reused
 #  on every report card. Same storage pattern as the school logo:
 #  BunnyCDN only, long cache lifetime (rarely changes), replace-in-place
-#  (old file deleted after the new one uploads successfully).
+#  (old file deleted after the new one uploads successfully), stored in
+#  the database as a RELATIVE path only.
 #  [NEW][BG-REMOVAL] Background is stripped via _strip_signature_background()
 #  before upload — the stored file is always a transparent PNG regardless
 #  of what format was uploaded, so only the ink shows on the report.
@@ -1848,40 +1920,45 @@ def upload_headteacher_signature():
     remote_path = f"uploads/signatures/school_{school_id}_headteacher.png"
 
     try:
-        record = HeadteacherSignature.query.filter_by(school_id=school_id).first()
-        old_url = record.signature_url if record else None
+        record  = HeadteacherSignature.query.filter_by(school_id=school_id).first()
+        old_path = record.signature_url if record else None
 
-        sig_url = bunny_upload(
+        # [STORAGE-ARCHITECTURE] bunny_upload() returns a RELATIVE path.
+        sig_relative_path = bunny_upload(
             data=sig_bytes, remote_path=remote_path, cache_control=_SIGNATURE_CACHE_CONTROL,
         )
     except Exception:
         logger.exception("upload_headteacher_signature: upload failed | school_id=%s", school_id)
         return jsonify({"success": False, "message": "Failed to upload signature. Please try again."}), 502
 
-    if not sig_url:
-        logger.warning("upload_headteacher_signature: bunny_upload returned no URL | school_id=%s", school_id)
+    if not sig_relative_path:
+        logger.warning("upload_headteacher_signature: bunny_upload returned no path | school_id=%s", school_id)
         return jsonify({"success": False, "message": "Failed to upload signature. Please try again."}), 502
 
     try:
         if record:
-            if old_url and old_url != sig_url:
-                _delete_cdn_file(old_url)
-            record.signature_url = sig_url
+            # old_path is already a stored relative path — passed
+            # straight to _delete_cdn_file, no URL parsing needed.
+            if old_path and old_path != sig_relative_path:
+                _delete_cdn_file(old_path)
+            record.signature_url = sig_relative_path
             if teacher_name:
                 record.teacher_name = teacher_name
             record.updated_by = int(user_id) if user_id else None
         else:
             record = HeadteacherSignature(
                 school_id=school_id, teacher_name=teacher_name,
-                signature_url=sig_url, updated_by=int(user_id) if user_id else None,
+                signature_url=sig_relative_path, updated_by=int(user_id) if user_id else None,
             )
             db.session.add(record)
         db.session.commit()
 
+        # [STORAGE-ARCHITECTURE] JSON response converts to a public URL
+        # at the point of use; the DB row keeps the relative path.
         return jsonify({
             "success": True,
             "message": "Headteacher signature saved",
-            "signature_url": sig_url,
+            "signature_url": public_file_url(sig_relative_path),
             "teacher_name": record.teacher_name,
         }), 200
 
@@ -1932,7 +2009,10 @@ def list_class_signatures():
                 "class_name":    stream.class_.name if stream.class_ else "",
                 "stream_name":   stream.name or "",
                 "teacher_name":  sig.teacher_name if sig else None,
-                "signature_url": sig.signature_url if sig else None,
+                # [STORAGE-ARCHITECTURE] sig.signature_url is a stored
+                # relative path — converted to a public URL here, at
+                # the point this is sent to the client.
+                "signature_url": public_file_url(sig.signature_url) if sig else None,
                 "has_signature": sig is not None and bool(sig.signature_url),
             })
 
@@ -1991,39 +2071,44 @@ def upload_class_teacher_signature(stream_id: int):
     remote_path = f"uploads/signatures/stream_{stream_id}_teacher.png"
 
     try:
-        record  = ClassTeacherSignature.query.filter_by(stream_id=stream_id).first()
-        old_url = record.signature_url if record else None
+        record   = ClassTeacherSignature.query.filter_by(stream_id=stream_id).first()
+        old_path = record.signature_url if record else None
 
-        sig_url = bunny_upload(
+        # [STORAGE-ARCHITECTURE] bunny_upload() returns a RELATIVE path.
+        sig_relative_path = bunny_upload(
             data=sig_bytes, remote_path=remote_path, cache_control=_SIGNATURE_CACHE_CONTROL,
         )
     except Exception:
         logger.exception("upload_class_teacher_signature: upload failed | stream_id=%s", stream_id)
         return jsonify({"success": False, "message": "Failed to upload signature. Please try again."}), 502
 
-    if not sig_url:
+    if not sig_relative_path:
         return jsonify({"success": False, "message": "Failed to upload signature. Please try again."}), 502
 
     try:
         if record:
-            if old_url and old_url != sig_url:
-                _delete_cdn_file(old_url)
-            record.signature_url = sig_url
+            # old_path is already a stored relative path — passed
+            # straight to _delete_cdn_file, no URL parsing needed.
+            if old_path and old_path != sig_relative_path:
+                _delete_cdn_file(old_path)
+            record.signature_url = sig_relative_path
             if teacher_name:
                 record.teacher_name = teacher_name
             record.updated_by = int(user_id) if user_id else None
         else:
             record = ClassTeacherSignature(
                 school_id=school_id, stream_id=stream_id, teacher_name=teacher_name,
-                signature_url=sig_url, updated_by=int(user_id) if user_id else None,
+                signature_url=sig_relative_path, updated_by=int(user_id) if user_id else None,
             )
             db.session.add(record)
         db.session.commit()
 
+        # [STORAGE-ARCHITECTURE] JSON response converts to a public URL
+        # at the point of use; the DB row keeps the relative path.
         return jsonify({
             "success": True,
             "message": "Class teacher signature saved",
-            "signature_url": sig_url,
+            "signature_url": public_file_url(sig_relative_path),
             "teacher_name": record.teacher_name,
         }), 200
 
@@ -2049,6 +2134,8 @@ def delete_class_teacher_signature(stream_id: int):
         if not record:
             return jsonify({"message": "No signature on file for this stream"}), 404
 
+        # record.signature_url is a stored relative path — used
+        # directly as the Bunny object key, no URL parsing needed.
         _delete_cdn_file(record.signature_url)
         db.session.delete(record)
         db.session.commit()
@@ -2065,6 +2152,10 @@ def delete_class_teacher_signature(stream_id: int):
 #  SHARED: RESOLVE REPORT FILE (used by both /view and /download)
 #  [STORAGE] Bunny is the ONLY source of truth. There is no local-disk
 #  branch — if firebase_url is missing, the report simply has no file.
+#  [STORAGE-ARCHITECTURE] report.firebase_url is a stored RELATIVE
+#  path — this is the one place it gets turned into a full, fetchable
+#  public URL (via public_file_url()) for the server's own outbound
+#  request to Bunny.
 # ═══════════════════════════════════════════════════════════════
 
 def _resolve_report_source(report) -> str:
@@ -2072,18 +2163,18 @@ def _resolve_report_source(report) -> str:
     Returns a fresh, cache-busted CDN URL for the report's PDF.
     Raises FileNotFoundError if no file is on record.
     """
-    cdn_url = report.firebase_url
-    if not cdn_url:
+    stored_path = report.firebase_url
+    if not stored_path:
         raise FileNotFoundError("No file available for this report")
 
-    # Strip any existing querystring and add a fresh cache-busting
-    # timestamp on every request. This is a server-side outbound request
-    # (not the user's browser hitting the CDN edge directly), so it
-    # naturally avoids the stale-edge-cache problem that direct CDN links
-    # in the browser can hit — but we still bust the query string in case
-    # this server process's own outbound requests get routed through a
-    # caching proxy at some point.
-    cdn_url = cdn_url.split("?")[0]
+    # Convert the stored relative path into a full public URL, then add
+    # a fresh cache-busting timestamp on every request. This is a
+    # server-side outbound request (not the user's browser hitting the
+    # CDN edge directly), so it naturally avoids the stale-edge-cache
+    # problem that direct CDN links in the browser can hit — but we
+    # still bust the query string in case this server process's own
+    # outbound requests get routed through a caching proxy at some point.
+    cdn_url = public_file_url(stored_path)
     cdn_url = f"{cdn_url}?v={int(datetime.utcnow().timestamp())}"
     return cdn_url
 
