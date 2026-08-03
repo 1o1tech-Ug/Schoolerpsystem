@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 _ZONE     = os.getenv("BUNNY_STORAGE_ZONE",     "")
 _PASSWORD = os.getenv("BUNNY_STORAGE_PASSWORD", "")
 
-_STORAGE_ENDPOINT = "https://jh.storage.bunnycdn.com/schoolerpsys"
+_STORAGE_ENDPOINT = "https://jh.storage.bunnycdn.com/schoolerpsystem"
 
 
 # ─────────────────────────────────────────────────────────────
