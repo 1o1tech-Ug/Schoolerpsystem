@@ -1,76 +1,22 @@
-[2026-07-27 12:39:12] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:39:12] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:39:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:39:43] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:40:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 290:55, unknown property.
-[2026-07-27 12:40:25] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:42:16] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 277:55, unknown property.
-[2026-07-27 12:42:22] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:45:21] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 277:55, unknown property.
-[2026-07-27 12:45:27] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:46:24] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:46:24] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:46:51] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 277:55, unknown property.
-[2026-07-27 12:47:04] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:47:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://jh.storage.bunnycdn.com/schoolerpsys/schoolerpsys/uploads/report_cards/2026/Term_2/./student_154_eot_1785134825_dac6e8b2.pdf → HTTP 400  body={"HttpCode":400,"Message":"Unable to upload file: "}
-[2026-07-27 12:47:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.utils.bunny | bunny_upload: PUT https://jh.storage.bunnycdn.com/schoolerpsys/schoolerpsys/uploads/report_cards/2026/Term_2/./student_154_eot_1785134825_dac6e8b2.pdf → HTTP 400  body={"HttpCode":400,"Message":"Unable to upload file: "}
-[2026-07-27 12:47:13] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_2/unknown/student_154_eot.pdf
-[2026-07-27 12:47:13] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | _upload_report_pdf: upload failed for /storage/emulated/0/Download/Schoolerpsystem/app/static/report_cards/2026/Term_2/unknown/student_154_eot.pdf
-[2026-07-27 12:47:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=154
+[2026-08-03 09:57:17] ERROR | GET /api/report-cards/247/view | IP=127.0.0.1 | USER=9 | app.apis.reportcardgeneration | view_report_card failed | report_id=247
 Traceback (most recent call last):
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 429, in _upload_report_pdf
-    relative_path = bunny_upload(
-        data=pdf_bytes,
-        remote_path=remote_path,
-        cache_control=_REPORT_CACHE_CONTROL,
-    )
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/utils/bunny.py", line 207, in bunny_upload
-    raise RuntimeError(
-        f"BunnyCDN upload failed (HTTP {response.status_code}): {response.text[:200]}"
-    )
-RuntimeError: BunnyCDN upload failed (HTTP 400): {"HttpCode":400,"Message":"Unable to upload file: "}
-
-The above exception was the direct cause of the following exception:
-
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 2206, in view_report_card
+    upstream.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/requests/models.py", line 1028, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://schoolerpsystem.b-cdn.net/uploads/report_cards/2026/Term_2/student_154_bot_1785248270_6c4f29a3.pdf?v=1785729436
+[2026-08-03 09:57:17] ERROR | GET /api/report-cards/247/view | IP=127.0.0.1 | USER=9 | app.apis.reportcardgeneration | view_report_card failed | report_id=247
 Traceback (most recent call last):
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 1433, in _do_generate
-    relative_path, remote_path = _upload_report_pdf(local_path, _ay, _term, _stream, unique_token)
-                                 ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 436, in _upload_report_pdf
-    raise RuntimeError("Failed to upload report card to storage") from exc
-RuntimeError: Failed to upload report card to storage
-[2026-07-27 12:47:13] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | app.apis.reportcardgeneration | generate thread failed | student_id=154
-Traceback (most recent call last):
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 429, in _upload_report_pdf
-    relative_path = bunny_upload(
-        data=pdf_bytes,
-        remote_path=remote_path,
-        cache_control=_REPORT_CACHE_CONTROL,
-    )
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/utils/bunny.py", line 207, in bunny_upload
-    raise RuntimeError(
-        f"BunnyCDN upload failed (HTTP {response.status_code}): {response.text[:200]}"
-    )
-RuntimeError: BunnyCDN upload failed (HTTP 400): {"HttpCode":400,"Message":"Unable to upload file: "}
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 1433, in _do_generate
-    relative_path, remote_path = _upload_report_pdf(local_path, _ay, _term, _stream, unique_token)
-                                 ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 436, in _upload_report_pdf
-    raise RuntimeError("Failed to upload report card to storage") from exc
-RuntimeError: Failed to upload report card to storage
-[2026-07-27 12:47:50] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 290:55, unknown property.
-[2026-07-27 12:47:56] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:48:11] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 290:55, unknown property.
-[2026-07-27 12:48:16] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:48:42] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 290:55, unknown property.
-[2026-07-27 12:48:46] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:50:42] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:50:42] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
-[2026-07-27 12:51:09] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 290:55, unknown property.
-[2026-07-27 12:51:14] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
-[2026-07-27 12:52:07] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 277:55, unknown property.
-[2026-07-27 12:52:12] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://schoolerp.b-cdn.net/schoolerp/uploads/signatures/school_6_headteacher.jpg': HTTPError: HTTP Error 403: Forbidden
+  File "/storage/emulated/0/Download/Schoolerpsystem/app/apis/reportcardgeneration.py", line 2206, in view_report_card
+    upstream.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/requests/models.py", line 1028, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://schoolerpsystem.b-cdn.net/uploads/report_cards/2026/Term_2/student_154_bot_1785248270_6c4f29a3.pdf?v=1785729436
+[2026-08-03 09:57:57] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-03 09:57:57] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-17 18:17:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-17 18:17:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-17 18:20:56] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-08-17 18:20:56] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
