@@ -2,13 +2,13 @@
 app/apis/studentportal.py
 """
 
-import os
 import logging
 
+import requests as http_requests
 from flask import (
     Blueprint, render_template, jsonify,
-    redirect, url_for, request, send_file,
-    current_app, make_response,
+    redirect, url_for, current_app,
+    Response, stream_with_context,
 )
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
@@ -19,6 +19,7 @@ from app.models.people import Student
 from app.models.reportcards import ReportCard, SchoolDetail
 from app.models.academic_structure import Term, AcademicYear
 from app.models.core import School
+from app.utils.bunny import public_file_url
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,79 @@ def _student_only():
         return None, None, (jsonify({"message": "Invalid token identity"}), 422)
 
     return student_id, school_id, None
+
+
+def _get_active_report(student_id, school_id):
+    """
+    Shared lookup used by the portal page and both file routes.
+    Returns (report, error_response). error_response is a (jsonify, status)
+    tuple on failure, or None on success.
+    """
+    auth = StudentAuth.query.filter_by(
+        student_id=student_id,
+        school_id=school_id,
+        status="active",
+    ).first()
+
+    if not auth:
+        return None, (jsonify({"message": "No active report card access"}), 403)
+
+    report = (
+        ReportCard.query
+        .filter_by(
+            school_id=school_id,
+            student_id=student_id,
+            term_id=auth.term_id,
+            status="generated",
+        )
+        .order_by(ReportCard.generated_at.desc())
+        .first()
+    )
+
+    if not report:
+        report = (
+            ReportCard.query
+            .filter_by(
+                school_id=school_id,
+                student_id=student_id,
+                status="generated",
+            )
+            .order_by(ReportCard.generated_at.desc())
+            .first()
+        )
+
+    if not report:
+        return None, (jsonify({"message": "Report card not found"}), 404)
+
+    return report, None
+
+
+def _resolve_report_cdn_url(report) -> str:
+    """
+    Converts the stored RELATIVE Bunny path (report.firebase_url) into a
+    fresh, cache-busted, fully-qualified CDN URL for the server's own
+    outbound fetch. Raises FileNotFoundError if no file is on record —
+    callers should treat that as a 404.
+    """
+    stored_path = report.firebase_url
+    if not stored_path:
+        raise FileNotFoundError("No file available for this report")
+
+    from datetime import datetime
+    cdn_url = public_file_url(stored_path)
+    return f"{cdn_url}?v={int(datetime.utcnow().timestamp())}"
+
+
+def _report_filename(student_id: int, report) -> str:
+    student   = Student.query.get(student_id)
+    name_slug = (
+        f"{student.first_name}_{student.last_name}".replace(" ", "_")
+        if student else f"student_{student_id}"
+    )
+    exam_type = (report.exam_type or "report").upper()
+    term_obj  = Term.query.get(report.term_id) if report.term_id else None
+    term_slug = (term_obj.name or "term").replace(" ", "_") if term_obj else "term"
+    return f"{name_slug}_{term_slug}_{exam_type}.pdf"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -91,7 +165,7 @@ def student_portal_page():
         school        = School.query.get(school_id)
         school_detail = SchoolDetail.query.filter_by(school_id=school_id).first()
 
-        # ── Active StudentAuth ───────────────────────────────────
+        # ── Active StudentAuth + ReportCard ─────────────────────
         auth = StudentAuth.query.filter_by(
             student_id=student_id,
             school_id=school_id,
@@ -106,31 +180,7 @@ def student_portal_page():
                 school_detail=school_detail,
             )
 
-        # ── Most recently pushed ReportCard ─────────────────────
-        report = (
-            ReportCard.query
-            .filter_by(
-                school_id=school_id,
-                student_id=student_id,
-                term_id=auth.term_id,
-                status="generated",
-            )
-            .order_by(ReportCard.generated_at.desc())
-            .first()
-        )
-
-        # Fallback: any generated report for this student
-        if not report:
-            report = (
-                ReportCard.query
-                .filter_by(
-                    school_id=school_id,
-                    student_id=student_id,
-                    status="generated",
-                )
-                .order_by(ReportCard.generated_at.desc())
-                .first()
-            )
+        report, _ = _get_active_report(student_id, school_id)
 
         if not report:
             return render_template(
@@ -153,7 +203,11 @@ def student_portal_page():
             cache_key = f"{report.id}-{int(report.generated_at.timestamp())}"
 
         viewer_url = url_for(
-            "student_portal.serve_report_file",
+            "student_portal.view_report_file",
+            _=cache_key,
+        )
+        download_url = url_for(
+            "student_portal.download_report_file",
             _=cache_key,
         )
 
@@ -167,6 +221,7 @@ def student_portal_page():
             school=school,
             school_detail=school_detail,
             viewer_url=viewer_url,
+            download_url=download_url,
         )
 
     except Exception:
@@ -180,113 +235,86 @@ def student_portal_page():
 
 
 # ═══════════════════════════════════════════════════════════════
-#  SERVE REPORT FILE  —  GET /student/report-file
+#  VIEW REPORT FILE (INLINE)  —  GET /student/report-file
+#  Proxies the PDF from BunnyCDN through this server rather than
+#  redirecting the student's browser straight to the CDN URL — this
+#  keeps the file behind student JWT auth and avoids a stale-edge-
+#  cache PoP serving an old copy directly to the browser.
 # ═══════════════════════════════════════════════════════════════
 
 @student_portal.route("/student/report-file", methods=["GET"])
 @jwt_required()
 @limiter.limit("10 per minute")
-def serve_report_file():
+def view_report_file():
     student_id, school_id, err = _student_only()
     if err:
         return err
 
     try:
-        auth = StudentAuth.query.filter_by(
-            student_id=student_id,
-            school_id=school_id,
-            status="active",
-        ).first()
+        report, err = _get_active_report(student_id, school_id)
+        if err:
+            return err
 
-        if not auth:
-            return jsonify({"message": "No active report card access"}), 403
+        cdn_url  = _resolve_report_cdn_url(report)
+        upstream = http_requests.get(cdn_url, stream=True, timeout=30)
+        upstream.raise_for_status()
 
-        report = (
-            ReportCard.query
-            .filter_by(
-                school_id=school_id,
-                student_id=student_id,
-                term_id=auth.term_id,
-                status="generated",
-            )
-            .order_by(ReportCard.generated_at.desc())
-            .first()
+        return Response(
+            stream_with_context(upstream.iter_content(chunk_size=8192)),
+            status=200,
+            content_type="application/pdf",
+            headers={
+                "Content-Disposition": "inline",
+                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
         )
 
-        if not report:
-            report = (
-                ReportCard.query
-                .filter_by(
-                    school_id=school_id,
-                    student_id=student_id,
-                    status="generated",
-                )
-                .order_by(ReportCard.generated_at.desc())
-                .first()
-            )
-
-        if not report:
-            return jsonify({"message": "Report card not found"}), 404
-
-        # ── Resolve file path ────────────────────────────────────
-        file_path = report.local_path or report.firebase_path
-
-        if not file_path:
-            rel = (report.firebase_url or "").lstrip("/")
-            if rel.startswith("static/"):
-                rel = rel[len("static/"):]
-            static_folder = current_app.static_folder
-            file_path = os.path.join(static_folder, rel) if rel else None
-
-        if not file_path or not os.path.exists(file_path):
-            logger.error(
-                "serve_report_file: file missing for report=%s path=%s",
-                report.id, file_path,
-            )
-            return jsonify({"message": "Report file not found on server"}), 404
-
-        # ── Path traversal guard ─────────────────────────────────
-        static_folder = current_app.static_folder
-        report_dir    = os.path.realpath(os.path.join(static_folder, "report_cards"))
-        safe_path     = os.path.realpath(file_path)
-
-        if not safe_path.startswith(report_dir):
-            logger.warning(
-                "serve_report_file: path traversal attempt student=%s path=%s",
-                student_id, file_path,
-            )
-            return jsonify({"message": "Forbidden"}), 403
-
-        # ── MIME type & filename ─────────────────────────────────
-        ext      = os.path.splitext(safe_path)[1].lower()
-        mimetype = "application/pdf" if ext == ".pdf" else "text/html"
-
-        student   = Student.query.get(student_id)
-        name_slug = (
-            f"{student.first_name}_{student.last_name}".replace(" ", "_")
-            if student else f"student_{student_id}"
-        )
-        exam_type = (report.exam_type or "report").upper()
-        term_obj  = Term.query.get(report.term_id) if report.term_id else None
-        term_slug = (term_obj.name or "term").replace(" ", "_") if term_obj else "term"
-        filename  = f"{name_slug}_{term_slug}_{exam_type}{ext}"
-
-        # ── Build response with no-cache headers ─────────────────
-        # This prevents the browser from serving a stale cached PDF
-        # in the iframe when a different report card is now active.
-        response = make_response(
-            send_file(
-                safe_path,
-                mimetype=mimetype,
-                as_attachment=False,
-                download_name=filename,
-            )
-        )
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-        response.headers["Pragma"]        = "no-cache"
-        response.headers["Expires"]       = "0"
-        return response
-
+    except FileNotFoundError:
+        return jsonify({"message": "No file available for this report"}), 404
     except Exception:
-        logger.exception("serve_report_file failed | student_id=%s", student_id)
-        return jsonify({"message": "Could not serve report file"}), 500
+        logger.exception("view_report_file failed | student_id=%s", student_id)
+        return jsonify({"message": "Could not retrieve the report file. Please try again."}), 500
+
+
+# ═══════════════════════════════════════════════════════════════
+#  DOWNLOAD REPORT FILE (ATTACHMENT)  —  GET /student/report-file/download
+# ═══════════════════════════════════════════════════════════════
+
+@student_portal.route("/student/report-file/download", methods=["GET"])
+@jwt_required()
+@limiter.limit("10 per minute")
+def download_report_file():
+    student_id, school_id, err = _student_only()
+    if err:
+        return err
+
+    try:
+        report, err = _get_active_report(student_id, school_id)
+        if err:
+            return err
+
+        cdn_url  = _resolve_report_cdn_url(report)
+        upstream = http_requests.get(cdn_url, stream=True, timeout=30)
+        upstream.raise_for_status()
+
+        filename = _report_filename(student_id, report)
+
+        return Response(
+            stream_with_context(upstream.iter_content(chunk_size=8192)),
+            status=200,
+            content_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
+        )
+
+    except FileNotFoundError:
+        return jsonify({"message": "No file available for this report"}), 404
+    except Exception:
+        logger.exception("download_report_file failed | student_id=%s", student_id)
+        return jsonify({"message": "Could not retrieve the report file. Please try again."}), 500
