@@ -68,7 +68,7 @@ def create_app():
     )
     from app.models.blocklist import TokenBlocklist
     from app.models.reportcards import SchoolDetail, ReportCard, PrimaryReportSummary
-    from app.models.finance import Invoice, Payment, Receipt, Expenses, FeeStructure
+    from app.models.finance import Invoice, Payment, Receipt, Expenses, FeeStructure,StudentFeeStructure,StudentFeeItem,FeeItem
 
     # ── Middleware ────────────────────────────────────────────────────────────
     from app.middleware.before_request import register_jwt_refresh

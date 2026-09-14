@@ -197,6 +197,119 @@ class Expenses(db.Model):
 
     payment_method = db.Column(db.String(50))
 
+class StudentFeeStructure(db.Model):
+    __tablename__ = "student_fee_structures"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    school_id = db.Column(
+        db.Integer,
+        db.ForeignKey("schools.id"),
+        nullable=False
+    )
+
+    student_id = db.Column(
+        db.Integer,
+        db.ForeignKey("students.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    term_id = db.Column(
+        db.Integer,
+        db.ForeignKey("terms.id"),
+        nullable=False
+    )
+
+    academic_year_id = db.Column(
+        db.Integer,
+        db.ForeignKey("academic_years.id"),
+        nullable=False
+    )
+
+    total_amount = db.Column(
+        db.Float,
+        nullable=False,
+        default=0
+    )
+
+    status = db.Column(
+        db.String(20),
+        default="draft"
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    student = db.relationship(
+        "Student",
+        backref="fee_structures"
+    )
+
+    term = db.relationship(
+        "Term",
+        backref="student_fee_structures"
+    )
+
+    academic_year = db.relationship(
+        "AcademicYear",
+        backref="student_fee_structures"
+    )
+
+    items = db.relationship(
+        "StudentFeeItem",
+        backref="student_fee_structure",
+        lazy=True,
+        cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "school_id",
+            "student_id",
+            "term_id",
+            name="unique_student_fee_structure"
+        ),
+    )
+    
+class StudentFeeItem(db.Model):
+    __tablename__ = "student_fee_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    student_fee_structure_id = db.Column(
+        db.Integer,
+        db.ForeignKey(
+            "student_fee_structures.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+    fee_type = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    amount = db.Column(
+        db.Float,
+        nullable=False,
+        default=0
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "student_fee_structure_id",
+            "fee_type",
+            name="unique_student_fee_item"
+        ),
+    )   
 
 class FeeStructure(db.Model):
     __tablename__ = 'fee_structures'

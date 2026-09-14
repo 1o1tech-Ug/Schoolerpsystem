@@ -20,3 +20,27 @@ requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://scho
 [2026-08-17 18:17:47] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
 [2026-08-17 18:20:56] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
 [2026-08-17 18:20:56] WARNING | GET /favicon.ico | IP=127.0.0.1 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=127.0.0.1 | USER=-
+[2026-08-20 19:28:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-20 19:28:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-20 19:28:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-20 19:28:26] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-20 19:35:19] WARNING | GET /favicon.ico | IP=41.210.147.232 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=41.210.147.232 | USER=-
+[2026-08-20 19:35:19] WARNING | GET /favicon.ico | IP=41.210.147.232 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=41.210.147.232 | USER=-
+[2026-08-20 19:35:30] WARNING | GET /favicon.ico | IP=41.210.147.232 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=41.210.147.232 | USER=-
+[2026-08-20 19:35:30] WARNING | GET /favicon.ico | IP=41.210.147.232 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=41.210.147.232 | USER=-
+[2026-08-20 19:36:44] WARNING | GET /favicon.ico | IP=102.203.209.79 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=102.203.209.79 | USER=-
+[2026-08-20 19:36:44] WARNING | GET /favicon.ico | IP=102.203.209.79 | USER=- | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=102.203.209.79 | USER=-
+[2026-08-20 20:19:52] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Ignored `box-shadow: none` at 356:9, unknown property.
+[2026-08-20 20:19:54] ERROR | NO_REQUEST NO_REQUEST | IP=- | USER=- | weasyprint | Failed to load image at 'https://1o1erp.b-cdn.net/school2/uploads/images/6_STD-176_fe93f82e16d8494f9c4b67947fe0e380.jpg': HTTPError: HTTP Error 404: Not Found
+[2026-08-20 20:45:42] WARNING | GET /favicon.ico | IP=102.203.209.79 | USER=11 | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=102.203.209.79 | USER=11
+[2026-08-20 20:45:42] WARNING | GET /favicon.ico | IP=102.203.209.79 | USER=11 | app.core.error_handlers | 404 Not Found | GET /favicon.ico | IP=102.203.209.79 | USER=11
+[2026-08-20 21:02:31] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-20 21:02:31] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-20 21:02:32] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-08-20 21:02:32] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-09-12 15:38:22] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-09-12 15:38:22] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-09-12 15:40:06] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-09-12 15:40:06] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-09-12 15:40:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
+[2026-09-12 15:40:44] WARNING | NO_REQUEST NO_REQUEST | IP=- | USER=- | app | Logging system initialised — writing WARNING+ to logs/application.log
