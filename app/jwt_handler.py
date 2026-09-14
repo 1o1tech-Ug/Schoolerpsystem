@@ -84,6 +84,8 @@ def expired_token_callback(jwt_header, jwt_payload):
         and "text/html" in request.headers.get("Accept", "")
     ):
         return redirect(url_for("auth.refresh_get", next=request.url))
+    elif request.endpoint == "auth.logout":
+    	return redirect(url_for("auth.logout",next="auth.login_page"))
 
     return jsonify({
         "success":     False,
@@ -146,4 +148,4 @@ def check_if_token_revoked(jwt_header, jwt_payload):
 
 @jwt.revoked_token_loader
 def revoked_callback(jwt_header, jwt_payload):
-    return jsonify({"message": "Token has been revoked"}), 401
+    return jsonify({"message": "Token has been revoked,Please login again"}), 401
