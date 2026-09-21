@@ -148,4 +148,4 @@ def check_if_token_revoked(jwt_header, jwt_payload):
 
 @jwt.revoked_token_loader
 def revoked_callback(jwt_header, jwt_payload):
-    return jsonify({"message": "Token has been revoked,Please login again"}), 401
+    return redirect(url_for("auth.login_page"))
