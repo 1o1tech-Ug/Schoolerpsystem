@@ -47,6 +47,14 @@ def _get_previous_balance(school_id, student_id, current_term_id):
         - the previous invoice has a negative balance
 
     The previous invoice is determined by Invoice.id descending.
+
+    NOTE: this is now called from the admin fee-structure endpoints
+    (app/routes/admin.py) at fee-structure creation time, when the
+    admin opts to carry a student's balance forward into their new
+    fee structure. generate_invoices_for_term below no longer calls
+    this itself — the carried balance already lives inside the fee
+    structure's total_amount / StudentFeeItem rows by the time an
+    invoice is generated, so applying it again here would double it.
     """
 
     prev_invoice = (
@@ -76,7 +84,7 @@ def generate_invoices_for_term(school_id, term):
     Generate invoices for all students who have a
     StudentFeeStructure for the supplied term.
 
-    Fee structures are now assigned per student.
+    Fee structures are assigned per student.
 
     Flow:
 
@@ -90,8 +98,15 @@ def generate_invoices_for_term(school_id, term):
             ↓
         InvoiceItem
 
-    Any unpaid balance from the student's previous invoice
-    is carried forward into the new invoice.
+    Any carry-forward of a student's previous unpaid balance is now
+    decided when the fee structure itself is created (see
+    create_student_fee_structures in app/routes/admin.py): if the
+    admin opts in, the balance is added into
+    StudentFeeStructure.total_amount and recorded as its own
+    "Carried Forward Balance" StudentFeeItem at that point. This
+    function therefore just mirrors the fee structure's amount and
+    items onto the invoice — it does not add any additional balance
+    of its own, to avoid carrying it forward twice.
 
     Existing invoices are skipped so this function is safe
     to run more than once.
@@ -141,28 +156,16 @@ def generate_invoices_for_term(school_id, term):
             continue
 
         # ------------------------------------------
-        # Carry forward previous unpaid balance
-        # ------------------------------------------
-        carried_balance = _get_previous_balance(
-            school_id,
-            student.id,
-            term.id,
-        )
-
-        total_amount = (
-            float(student_fee.total_amount or 0)
-            + carried_balance
-        )
-
-        # ------------------------------------------
-        # Create invoice
+        # Create invoice — total_amount comes straight from the fee
+        # structure, which already includes any carried-forward
+        # balance the admin chose to apply at creation time.
         # ------------------------------------------
         invoice = Invoice(
             school_id=school_id,
             student_id=student.id,
             term_id=term.id,
             year_id=term.academic_year_id,
-            total_amount=total_amount,
+            total_amount=float(student_fee.total_amount or 0),
         )
 
         db.session.add(invoice)
@@ -170,6 +173,8 @@ def generate_invoices_for_term(school_id, term):
 
         # ------------------------------------------
         # Copy StudentFeeItems → InvoiceItems
+        # (this already includes any "Carried Forward Balance"
+        # item that was added at fee-structure creation time)
         # ------------------------------------------
         fee_items = (
             StudentFeeItem.query
@@ -186,19 +191,6 @@ def generate_invoices_for_term(school_id, term):
                     invoice_id=invoice.id,
                     fee_type=item.fee_type,
                     amount=item.amount,
-                )
-            )
-
-        # ------------------------------------------
-        # Add carried balance as separate line item
-        # ------------------------------------------
-        if carried_balance > 0:
-
-            db.session.add(
-                InvoiceItem(
-                    invoice_id=invoice.id,
-                    fee_type="Carried Forward Balance",
-                    amount=carried_balance,
                 )
             )
 

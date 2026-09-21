@@ -445,6 +445,58 @@ input:focus,select:focus{
 
 .fee-amount-input{max-width:170px;font-weight:600;}
 
+.previous-balance-cell{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.previous-balance-amount{
+    font-weight:700;
+    color:var(--ink-900);
+    font-variant-numeric:tabular-nums;
+}
+
+.previous-balance-amount.zero{
+    color:var(--ink-400);
+    font-weight:500;
+}
+
+.carry-forward-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--ink-500);
+    text-transform:none;
+    letter-spacing:normal;
+    cursor:pointer;
+}
+
+.carry-forward-toggle input[type="checkbox"]{
+    width:auto;
+    margin:0;
+    accent-color:var(--brand-600);
+    cursor:pointer;
+}
+
+.carry-forward-toggle.disabled{
+    color:var(--ink-300);
+    cursor:not-allowed;
+}
+
+.carry-forward-toggle.disabled input[type="checkbox"]{
+    cursor:not-allowed;
+}
+
+.total-with-carry{
+    font-size:11.5px;
+    color:var(--brand-700);
+    font-weight:600;
+    margin-top:4px;
+}
+
 .pagination-bar{
     display:flex;
     justify-content:space-between;
@@ -655,7 +707,9 @@ let hasActiveTerm = false;
 let createPage = 1;
 let createTotalPages = 1;
 let createFiltersApplied = false;
-let feeValues = {}; // student_id -> amount (persists across pages while modal is open)
+let feeValues = {};          // student_id -> tuition amount typed by the admin
+let previousBalances = {};   // student_id -> previous-term outstanding balance (server-computed)
+let carryForwardValues = {}; // student_id -> boolean, whether to carry that balance forward
 
 /* existing-table state */
 let existingPage = 1;
@@ -709,6 +763,8 @@ function openModal(){
         return;
     }
     feeValues = {};
+    previousBalances = {};
+    carryForwardValues = {};
     createPage = 1;
     createFiltersApplied = false;
 
@@ -812,6 +868,80 @@ async function applyCreateFilters(btn){
     }
 }
 
+function formatUGX(amount){
+    return Number(amount || 0).toLocaleString();
+}
+
+function renderFeeRow(s){
+    let existingVal = feeValues[s.id] !== undefined ? feeValues[s.id] : "";
+    let balance = previousBalances[s.id] || 0;
+    let carryChecked = !!carryForwardValues[s.id];
+
+    let balanceCell;
+    if(balance > 0){
+        balanceCell = `
+            <div class="previous-balance-cell">
+                <span class="previous-balance-amount">UGX ${formatUGX(balance)}</span>
+                <label class="carry-forward-toggle">
+                    <input
+                        type="checkbox"
+                        ${carryChecked ? "checked" : ""}
+                        onchange="onCarryForwardToggle(${s.id}, this.checked)">
+                    Carry forward
+                </label>
+            </div>
+        `;
+    }else{
+        balanceCell = `<span class="previous-balance-amount zero">UGX 0</span>`;
+    }
+
+    let tuitionAmount = parseFloat(existingVal) || 0;
+    let totalPreview = carryChecked && balance > 0
+        ? `<div class="total-with-carry" id="totalPreview-${s.id}">Total: UGX ${formatUGX(tuitionAmount + balance)}</div>`
+        : `<div class="total-with-carry" id="totalPreview-${s.id}"></div>`;
+
+    return `
+        <tr>
+            <td>${s.student_code}</td>
+            <td>${s.name}</td>
+            <td>${s.class_stream}</td>
+            <td>${balanceCell}</td>
+            <td>
+                <input
+                    type="number"
+                    class="fee-amount-input"
+                    placeholder="e.g. 300000"
+                    value="${existingVal}"
+                    oninput="onFeeAmountInput(${s.id}, this.value)">
+                ${totalPreview}
+            </td>
+        </tr>
+    `;
+}
+
+function onFeeAmountInput(studentId, value){
+    feeValues[studentId] = value;
+    updateTotalPreview(studentId);
+}
+
+function onCarryForwardToggle(studentId, checked){
+    carryForwardValues[studentId] = checked;
+    updateTotalPreview(studentId);
+}
+
+function updateTotalPreview(studentId){
+    let el = document.getElementById(`totalPreview-${studentId}`);
+    if(!el) return;
+
+    let balance = previousBalances[studentId] || 0;
+    let carryChecked = !!carryForwardValues[studentId];
+    let tuitionAmount = parseFloat(feeValues[studentId]) || 0;
+
+    el.textContent = (carryChecked && balance > 0)
+        ? `Total: UGX ${formatUGX(tuitionAmount + balance)}`
+        : "";
+}
+
 async function loadStudentsForCreate(){
 
     let classId = document.getElementById("classSelect").value;
@@ -820,7 +950,7 @@ async function loadStudentsForCreate(){
     let resultsArea = document.getElementById("createResultsArea");
 
     resultsArea.innerHTML = skeletonTable(
-        ["Student ID", "Name", "Class & Stream", "Fee Amount (UGX)"], 4
+        ["Student ID", "Name", "Class & Stream", "Previous Balance", "Fee Amount (UGX)"], 5
     );
 
     let res = await fetch(
@@ -840,32 +970,19 @@ async function loadStudentsForCreate(){
 
     createTotalPages = data.total_pages || 1;
 
-    // Prefill feeValues with any amount already saved for this term,
-    // without overwriting anything the user has already typed this session.
+    // Prefill feeValues/previousBalances with server data, without
+    // overwriting anything the user has already typed/toggled this session.
     data.students.forEach(s=>{
         if(feeValues[s.id] === undefined && s.existing_amount){
             feeValues[s.id] = s.existing_amount;
         }
+        previousBalances[s.id] = s.previous_balance || 0;
+        if(carryForwardValues[s.id] === undefined){
+            carryForwardValues[s.id] = false;
+        }
     });
 
-    let rows = data.students.map(s=>{
-        let existingVal = feeValues[s.id] !== undefined ? feeValues[s.id] : "";
-        return `
-            <tr>
-                <td>${s.student_code}</td>
-                <td>${s.name}</td>
-                <td>${s.class_stream}</td>
-                <td>
-                    <input
-                        type="number"
-                        class="fee-amount-input"
-                        placeholder="e.g. 300000"
-                        value="${existingVal}"
-                        oninput="feeValues[${s.id}] = this.value">
-                </td>
-            </tr>
-        `;
-    }).join("");
+    let rows = data.students.map(renderFeeRow).join("");
 
     resultsArea.innerHTML = `
         <div class="table-wrap">
@@ -875,6 +992,7 @@ async function loadStudentsForCreate(){
                         <th>Student ID</th>
                         <th>Name</th>
                         <th>Class &amp; Stream</th>
+                        <th>Previous Balance</th>
                         <th>Fee Amount (UGX)</th>
                     </tr>
                 </thead>
@@ -923,7 +1041,8 @@ async function saveStructure(btn){
     let fees = Object.entries(feeValues)
         .map(([student_id, amount]) => ({
             student_id: parseInt(student_id),
-            amount: parseFloat(amount) || 0
+            amount: parseFloat(amount) || 0,
+            carry_forward: !!carryForwardValues[student_id]
         }))
         .filter(f => f.amount > 0);
 

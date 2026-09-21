@@ -17,6 +17,14 @@ CHANGES vs original:
   - Fixed a student_code/id mix-up: "Student ID" columns display
     Student.student_code, but all internal keys (fee payload, deletes)
     use the numeric Student.id / StudentFeeStructure.id.
+  - Fee-structure creation now surfaces each student's previous-term
+    outstanding balance and lets the admin choose, per student, whether
+    to carry it forward into the new fee structure. When carried, the
+    balance is stored as its own StudentFeeItem ("Carried Forward
+    Balance") alongside the tuition item, and folded into
+    StudentFeeStructure.total_amount. The previous-balance amount is
+    always recomputed server-side (via _get_previous_balance) rather
+    than trusted from the client payload.
 """
 
 import os
@@ -40,7 +48,9 @@ from app.models.finance import (
 from app.models.academic_structure import (
     Term, AcademicYear, AcademicConfig, Class, Stream, StudentStream
 )
-from app.utils.utilities import generate_invoices_for_term, generate_staff_code
+from app.utils.utilities import (
+    generate_invoices_for_term, generate_staff_code, _get_previous_balance,
+)
 from app.utils.bunny import bunny_upload, bunny_delete, bunny_remote_path_from_url
 from app.core.rate_limit import (
     READ_LIMIT, WRITE_LIMIT, BULK_LIMIT,
@@ -279,6 +289,13 @@ def activate_term(term_id):
         config.current_term_id          = term.id
         config.current_academic_year_id = term.academic_year_id
 
+        # NOTE: generate_invoices_for_term no longer carries forward a
+        # student's previous-term balance itself — that balance is now
+        # folded into StudentFeeStructure.total_amount (and its own
+        # "Carried Forward Balance" StudentFeeItem) at fee-structure
+        # creation time, when the admin opts to carry it forward. This
+        # call therefore just mirrors each student's fee structure into
+        # an invoice.
         created = generate_invoices_for_term(school_id, term)
 
         db.session.commit()
@@ -407,6 +424,16 @@ def get_students_for_fee():
         ).all()
         existing_amounts = {e.student_id: e.total_amount for e in existing}
 
+    # Each student's outstanding balance from their most recent
+    # non-current-term invoice, so the create screen can offer a
+    # "carry forward" option without a second round trip. Only
+    # meaningful once a term has been picked (we need to know which
+    # term to exclude), so this is skipped otherwise.
+    previous_balances = {}
+    if term_id:
+        for sid in student_ids:
+            previous_balances[sid] = _get_previous_balance(school_id, sid, term_id)
+
     data = []
     for s in students:
         stream = streams_by_student.get(s.id)
@@ -418,6 +445,7 @@ def get_students_for_fee():
             "name": f"{s.first_name} {s.last_name}",
             "class_stream": class_stream,
             "existing_amount": existing_amounts.get(s.id, 0),
+            "previous_balance": previous_balances.get(s.id, 0),
         })
 
     return jsonify({
@@ -563,11 +591,20 @@ def create_student_fee_structures():
         for fee in fees:
             student_id = fee.get("student_id")
             amount = fee.get("amount", 0)
+            carry_forward = bool(fee.get("carry_forward"))
 
             if not student_id or amount <= 0:
                 continue
             if student_id not in valid_student_ids:
                 continue
+
+            # Never trust a client-supplied balance — recompute it
+            # server-side from the student's actual invoice history.
+            carried_balance = 0.0
+            if carry_forward:
+                carried_balance = _get_previous_balance(school_id, student_id, term_id)
+
+            total_amount = amount + carried_balance
 
             existing = StudentFeeStructure.query.filter_by(
                 school_id=school_id,
@@ -576,7 +613,7 @@ def create_student_fee_structures():
             ).first()
 
             if existing:
-                existing.total_amount = amount
+                existing.total_amount = total_amount
                 StudentFeeItem.query.filter_by(
                     student_fee_structure_id=existing.id
                 ).delete()
@@ -585,6 +622,12 @@ def create_student_fee_structures():
                     fee_type="tuition",
                     amount=amount,
                 ))
+                if carried_balance > 0:
+                    db.session.add(StudentFeeItem(
+                        student_fee_structure_id=existing.id,
+                        fee_type="Carried Forward Balance",
+                        amount=carried_balance,
+                    ))
                 continue
 
             structure = StudentFeeStructure(
@@ -592,10 +635,9 @@ def create_student_fee_structures():
                 student_id=student_id,
                 term_id=term_id,
                 academic_year_id=term.academic_year_id,
-                total_amount=amount,
+                total_amount=total_amount,
                 status="draft",
             )
-            #print(f"{student_id} done")
             db.session.add(structure)
             db.session.flush()
 
@@ -604,6 +646,12 @@ def create_student_fee_structures():
                 fee_type="tuition",
                 amount=amount,
             ))
+            if carried_balance > 0:
+                db.session.add(StudentFeeItem(
+                    student_fee_structure_id=structure.id,
+                    fee_type="Carried Forward Balance",
+                    amount=carried_balance,
+                ))
 
         db.session.commit()
         return jsonify({"message": "Fee structures saved"})
