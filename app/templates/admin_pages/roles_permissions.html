@@ -7,10 +7,11 @@
 
 <style>
 .table-card{
-    background:white;
-    border-radius:14px;
+    background:var(--surface);
+    border-radius:var(--radius-lg);
     padding:16px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
 }
 
 table{
@@ -20,187 +21,180 @@ table{
 
 th{
     text-align:left;
-    font-size:12px;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
     padding:12px;
-    color:#64748b;
-    border-bottom:1px solid #e2e8f0;
+    color:var(--ink-500);
+    border-bottom:1px solid var(--border);
 }
 
 td{
     padding:12px;
-    border-bottom:1px solid #f1f5f9;
+    border-bottom:1px solid var(--border-soft);
     font-size:14px;
+    color:var(--ink-800);
 }
 
 .badge{
-    padding:4px 10px;
+    padding:4px 11px;
     border-radius:999px;
-    font-size:12px;
-    font-weight:600;
+    font-size:11.5px;
+    font-weight:700;
 }
 
-.active{ background:#dcfce7; color:#166534; }
-.locked{ background:#fee2e2; color:#991b1b; }
-.none{ background:#e2e8f0; color:#334155; }
+.active{ background:var(--success-bg); color:var(--success-text); }
+.locked{ background:var(--danger-bg); color:var(--danger-text); }
+.none{ background:var(--border); color:var(--ink-700); }
 
 button{
-    padding:6px 10px;
+    padding:8px 12px;
     border:none;
     border-radius:8px;
     cursor:pointer;
     font-size:12px;
+    font-weight:600;
     margin-right:4px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
 }
 
-.edit{ background:#0f172a; color:white; }
-.lock{ background:#f59e0b; color:white; }
-.delete{ background:#dc2626; color:white; }
-.unlock{ background:#16a34a; color:white; }
+button:disabled{opacity:0.65;cursor:not-allowed;}
+
+.edit{ background:linear-gradient(135deg, var(--brand-600), var(--brand-700)); color:white; }
+.lock{ background:var(--warn-dot); color:white; }
+.delete{ background:var(--danger-solid); color:white; }
+.unlock{ background:var(--success-dot); color:white; }
 
 .modal{
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.5);
+    background:rgba(11,17,32,0.6);
     justify-content:center;
     align-items:center;
-    z-index:999;
+    z-index:var(--z-modal);
+    padding:16px;
 }
 
 .modal-content{
-    background:white;
-    padding:20px;
-    border-radius:12px;
+    background:var(--surface);
+    padding:22px;
+    border-radius:var(--radius-lg);
     width:420px;
+    max-width:100%;
+    box-shadow:0 24px 60px rgba(0,0,0,0.3);
 }
 
 .modal-header{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:10px;
+    margin-bottom:12px;
 }
+
+.modal-header h3{ color:var(--ink-900); }
 
 .close{
     background:none;
     border:none;
     font-size:20px;
     cursor:pointer;
+    color:var(--ink-500);
 }
 
 input, select{
     width:100%;
-    padding:10px;
-    margin-bottom:10px;
-    border:1px solid #e2e8f0;
-    border-radius:8px;
+    padding:10px 12px;
+    margin-bottom:12px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
+    font-size:14px;
+    outline:none;
+}
+
+input:focus, select:focus{
+    border-color:var(--brand-500);
+    box-shadow:0 0 0 4px var(--brand-50);
 }
 
 small{
-    color:#64748b;
+    color:var(--ink-500);
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+}
+
+@media(max-width:768px){
+    table{ display:block; overflow-x:auto; }
 }
 </style>
 
 <div class="table-card">
-
-<table>
-    <thead>
-        <tr>
-            <th>Staff Code</th>
-            <th>Name</th>
-            <th>Username</th>
-            <th>Password</th>
-            <th>Access To</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-
-    <tbody>
-    {% for s in staff_list %}
-
-        {% set user = user_map.get(s.staff_code) %}
-
-        <tr>
-
-            <td><b>{{ s.staff_code }}</b></td>
-
-            <td>{{ s.first_name }} {{ s.last_name }}</td>
-
-            <td>
-                {% if user %}
-                    {{ user.username }}
-                {% else %}
-                    <span class="none">Not set</span>
-                {% endif %}
-            </td>
-
-            <td>
-                {% if user %}
-                    ********
-                {% else %}
-                    <span class="none">Not set</span>
-                {% endif %}
-            </td>
-
-            <td>
-                {% if user and user.user_modules %}
-                    {% for m in user.user_modules %}
-                        {{ m.module_name }}{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-
-            <td>
-                {% if not user %}
-                    <span class="badge none">Not created</span>
-                {% elif user.status == "active" %}
-                    <span class="badge active">Active</span>
-                {% else %}
-                    <span class="badge locked">Disabled</span>
-                {% endif %}
-            </td>
-
-            <td>
-                <button class="edit" onclick="openModal('{{ s.staff_code }}')">Edit</button>
-
-                {% if user %}
-                    {% if user.status == "active" %}
-                        <button class="lock" onclick="lockUser('{{ user.id }}')">Lock</button>
-                    {% else %}
-                        <button class="unlock" onclick="unlockUser('{{ user.id }}')">Unlock</button>
-                    {% endif %}
-
-                    <button class="delete" onclick="deleteUser('{{ user.id }}')">Delete</button>
-                {% endif %}
-            </td>
-
-        </tr>
-
-    {% endfor %}
-    </tbody>
-
-</table>
-
+    <div id="rolesTableWrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Staff Code</th><th>Name</th><th>Username</th><th>Password</th>
+                    <th>Access To</th><th>Status</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in staff_list %}
+                {% set user = user_map.get(s.staff_code) %}
+                <tr>
+                    <td><b>{{ s.staff_code }}</b></td>
+                    <td>{{ s.first_name }} {{ s.last_name }}</td>
+                    <td>
+                        {% if user %}{{ user.username }}{% else %}<span class="none">Not set</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if user %}********{% else %}<span class="none">Not set</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if user and user.user_modules %}
+                            {% for m in user.user_modules %}{{ m.module_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if not user %}
+                            <span class="badge none">Not created</span>
+                        {% elif user.status == "active" %}
+                            <span class="badge active">Active</span>
+                        {% else %}
+                            <span class="badge locked">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="edit" onclick="openModal('{{ s.staff_code }}', this)">Edit</button>
+                        {% if user %}
+                            {% if user.status == "active" %}
+                                <button class="lock" onclick="lockUser('{{ user.id }}', this)">Lock</button>
+                            {% else %}
+                                <button class="unlock" onclick="unlockUser('{{ user.id }}', this)">Unlock</button>
+                            {% endif %}
+                            <button class="delete" onclick="deleteUser('{{ user.id }}', this)">Delete</button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
-
     <div class="modal-content">
-
         <div class="modal-header">
             <h3>Create / Edit Account</h3>
             <button class="close" onclick="closeModal()">✕</button>
         </div>
 
         <form id="form">
-
             <input type="hidden" id="staff_code">
 
-           
             <small>Password (leave empty to keep current)</small>
             <input id="password" type="password" placeholder="Enter password">
 
@@ -212,21 +206,19 @@ small{
                 <option value="students">Students</option>
             </select>
 
-            <button type="submit" class="edit">Save Account</button>
-
+            <button type="submit" class="edit" id="saveAccountBtn">Save Account</button>
         </form>
-
     </div>
-
 </div>
 
 <script>
 
-function openModal(code){
+function openModal(code, btn){
+
+    setButtonLoading(btn, true, "");
 
     document.getElementById("staff_code").value = code;
     document.getElementById("password").value = "";
-    
     document.querySelectorAll("#modules option").forEach(o => o.selected = false);
 
     fetch(`/admin/api/staff-account/${code}`)
@@ -234,7 +226,6 @@ function openModal(code){
     .then(data => {
 
         if(data.user){
-            
             let mods = data.modules || [];
             document.querySelectorAll("#modules option").forEach(o=>{
                 o.selected = mods.includes(o.value);
@@ -242,7 +233,8 @@ function openModal(code){
         }
 
         document.getElementById("modal").style.display = "flex";
-    });
+    })
+    .finally(()=> setButtonLoading(btn, false));
 }
 
 function closeModal(){
@@ -253,45 +245,53 @@ document.getElementById("form").addEventListener("submit", async (e)=>{
 
     e.preventDefault();
 
-    let payload = {
-        staff_code: document.getElementById("staff_code").value,
- password: document.getElementById("password").value,
-        modules: Array.from(document.getElementById("modules").selectedOptions).map(o=>o.value)
-    };
+    const saveBtn = document.getElementById("saveAccountBtn");
+    setButtonLoading(saveBtn, true, "Saving...");
 
-    let res = await fetch("/admin/api/staff-account/save", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify(payload)
-    });
+    try{
+        let payload = {
+            staff_code: document.getElementById("staff_code").value,
+            password: document.getElementById("password").value,
+            modules: Array.from(document.getElementById("modules").selectedOptions).map(o=>o.value)
+        };
 
-    let data = await res.json();
+        let res = await fetch("/admin/api/staff-account/save", {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify(payload)
+        });
 
-    alert(data.message || data.error);
+        let data = await res.json();
 
-    if(res.ok){
-        location.reload();
+        alert(data.message || data.error);
+
+        if(res.ok){
+            location.reload();
+        }
+    } finally {
+        setButtonLoading(saveBtn, false);
     }
 });
 
-async function lockUser(id){
+async function lockUser(id, btn){
+    setButtonLoading(btn, true, "");
     await fetch(`/admin/api/staff-account/${id}/lock`, { method:"POST" });
     location.reload();
 }
 
-async function unlockUser(id){
+async function unlockUser(id, btn){
+    setButtonLoading(btn, true, "");
     await fetch(`/admin/api/staff-account/${id}/unlock`, { method:"POST" });
     location.reload();
 }
 
-async function deleteUser(id){
+async function deleteUser(id, btn){
 
     if(!confirm("Delete account permanently?")) return;
 
-    await fetch(`/admin/api/staff-account/${id}`, {
-        method:"DELETE"
-    });
+    setButtonLoading(btn, true, "");
 
+    await fetch(`/admin/api/staff-account/${id}`, { method:"DELETE" });
     location.reload();
 }
 

@@ -13,6 +13,7 @@ CHANGES vs original:
 from flask import Flask
 from app.extensions import db, migrate, login_manager, jwt, limiter
 from flask_cors import CORS
+from sqlalchemy import text
 
 def create_app():
     app = Flask(__name__)
@@ -36,6 +37,19 @@ def create_app():
     # ── Logging — must come early so every subsequent log call is captured ───
     from app.core.logging_config import setup_logging
     setup_logging(app)
+    
+    # ── Database connection test ─────────────────────────────────────────────
+    with app.app_context():
+        try:
+            
+            db.session.execute(text("SELECT 1"))
+            db.session.commit()
+
+            app.logger.info("DATABASE CONNECTION: OK")
+
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("DATABASE CONNECTION: FAILED")
 
     # ── Centralised error handling ────────────────────────────────────────────
     from app.core.error_handlers import register_error_handlers

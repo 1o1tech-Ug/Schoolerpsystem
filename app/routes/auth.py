@@ -69,10 +69,12 @@ def staff_login():
     if not school_id or not username or not password:
         return jsonify({"message": "All fields are required"}), 400
 
+   
     user = User.query.filter_by(
         school_id=school_id,
         username=username,
     ).first()
+   
 
     # Deliberate: same message for "not found" and "wrong password"
     # to prevent username enumeration.

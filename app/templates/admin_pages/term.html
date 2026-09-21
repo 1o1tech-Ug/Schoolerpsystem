@@ -3,46 +3,39 @@
 {% block title %}Academic Terms{% endblock %}
 {% block page_title %}Academic Terms Management{% endblock %}
 
-{% block terms_active %}active{% endblock %}
-
 {% block content %}
 
 <style>
 
-/* ================= HEADER ================= */
-
 .header-card{
-    background:linear-gradient(135deg,#0f172a,#1e293b);
+    background:linear-gradient(135deg, var(--brand-700), var(--ink-900));
     color:white;
     padding:24px;
-    border-radius:16px;
+    border-radius:var(--radius-xl);
     margin-bottom:20px;
+    box-shadow:var(--shadow-lg);
 }
 
 .header-card h1{
     font-size:24px;
-    font-weight:700;
+    font-weight:800;
 }
 
 .header-card p{
     margin-top:8px;
-    
+    color:#c7d2fe;
     font-size:14px;
 }
 
-/* ================= ALERT ================= */
-
 .alert{
-    background:#fef3c7;
-    color:#92400e;
+    background:var(--warn-bg);
+    color:var(--warn-text);
     border:1px solid #fcd34d;
     padding:14px;
     border-radius:12px;
     margin-bottom:20px;
     font-size:14px;
 }
-
-/* ================= REVIEW CARDS ================= */
 
 .review-grid{
     display:grid;
@@ -52,26 +45,24 @@
 }
 
 .review-box{
-    background:white;
+    background:var(--surface);
     padding:18px;
-    border-radius:14px;
-    border:1px solid #e5e7eb;
-    box-shadow:0 5px 15px rgba(0,0,0,0.05);
+    border-radius:var(--radius-lg);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
 }
 
 .review-box h3{
     font-size:14px;
     margin-bottom:10px;
-    color:#64748b;
+    color:var(--ink-500);
 }
 
 .review-box p{
     font-size:18px;
     font-weight:700;
-    color:#0f172a;
+    color:var(--ink-900);
 }
-
-/* ================= ACTION BAR ================= */
 
 .action-bar{
     display:flex;
@@ -82,16 +73,15 @@
 
 .action-left h3{
     font-size:18px;
+    color:var(--ink-900);
 }
 
-/* ================= TABLE ================= */
-
 .table-card{
-    background:white;
-    border-radius:14px;
+    background:var(--surface);
+    border-radius:var(--radius-lg);
     overflow:hidden;
-    border:1px solid #e5e7eb;
-    box-shadow:0 5px 15px rgba(0,0,0,0.05);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
 }
 
 table{
@@ -100,80 +90,85 @@ table{
 }
 
 th{
-    background:#f8fafc;
+    background:var(--surface-soft);
     text-align:left;
-    font-size:12px;
+    font-size:11px;
+    font-weight:700;
     text-transform:uppercase;
-    color:#64748b;
+    letter-spacing:0.05em;
+    color:var(--ink-500);
     padding:14px;
-    border-bottom:1px solid #e5e7eb;
+    border-bottom:1px solid var(--border);
 }
 
 td{
     padding:14px;
-    border-bottom:1px solid #f1f5f9;
+    border-bottom:1px solid var(--border-soft);
     font-size:14px;
+    color:var(--ink-800);
 }
-
-/* ================= STATUS ================= */
 
 .status{
-    padding:6px 12px;
+    padding:5px 12px;
     border-radius:20px;
-    font-size:12px;
+    font-size:11px;
     font-weight:700;
     text-transform:uppercase;
+    letter-spacing:0.03em;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
 }
+.status::before{content:"";width:6px;height:6px;border-radius:50%;}
 
-.status-active{
-    background:#dcfce7;
-    color:#166534;
-}
+.status-active{background:var(--success-bg);color:var(--success-text);}
+.status-active::before{background:var(--success-dot);}
 
-.status-draft{
-    background:#fef3c7;
-    color:#92400e;
-}
+.status-draft{background:var(--warn-bg);color:var(--warn-text);}
+.status-draft::before{background:var(--warn-dot);}
 
-.status-locked{
-    background:#fee2e2;
-    color:#991b1b;
-}
-
-/* ================= BUTTONS ================= */
+.status-locked{background:var(--danger-bg);color:var(--danger-text);}
+.status-locked::before{background:var(--danger-dot);}
 
 .btn{
-    padding:10px 14px;
+    padding:10px 15px;
     border:none;
-    border-radius:10px;
+    border-radius:var(--radius-sm);
     cursor:pointer;
     font-weight:600;
     font-size:13px;
-    transition:0.2s ease;
+    transition:0.15s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
 }
 
 .btn-primary{
-    background:#0f172a;
+    background:linear-gradient(135deg, var(--brand-600), var(--brand-700));
     color:white;
+    box-shadow:var(--shadow-brand);
 }
-
-.btn-primary:hover{
-    opacity:0.92;
-}
+.btn-primary:hover:not(:disabled){filter:brightness(1.06);}
 
 .btn-outline{
-    background:white;
-    border:1px solid #d1d5db;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--ink-700);
 }
+.btn-outline:hover:not(:disabled){background:var(--surface-soft);}
 
 .btn-danger{
-    background:#dc2626;
+    background:var(--danger-solid);
     color:white;
 }
 
+.btn:disabled{cursor:not-allowed;opacity:0.65;}
+
 .btn-disabled{
-    background: grey;
+    background:#e2e8f0 !important;
+    color:#94a3b8 !important;
     cursor:not-allowed;
+    box-shadow:none !important;
 }
 
 .action-btns{
@@ -182,36 +177,35 @@ td{
     flex-wrap:wrap;
 }
 
-/* ================= EMPTY ================= */
-
 .empty{
     padding:30px;
     text-align:center;
-    color:#64748b;
+    color:var(--ink-500);
 }
-
-/* ================= MODAL ================= */
 
 .modal{
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.6);
+    background:rgba(11,17,32,0.6);
     justify-content:center;
     align-items:center;
-    z-index:999;
+    z-index:var(--z-modal);
+    padding:16px;
 }
 
 .modal-content{
-    background:white;
+    background:var(--surface);
     width:90%;
     max-width:700px;
-    border-radius:18px;
+    border-radius:var(--radius-xl);
     padding:24px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.3);
 }
 
 .modal-content h2{
     margin-bottom:18px;
+    color:var(--ink-900);
 }
 
 .form-grid{
@@ -223,17 +217,26 @@ td{
 label{
     display:block;
     margin-bottom:6px;
-    font-size:13px;
-    font-weight:600;
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink-500);
+    text-transform:uppercase;
+    letter-spacing:0.03em;
 }
 
 input,
 select{
     width:100%;
-    padding:12px;
-    border:1px solid #dbe2ea;
-    border-radius:10px;
+    padding:11px 12px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
     outline:none;
+    font-size:14px;
+}
+
+input:focus, select:focus{
+    border-color:var(--brand-500);
+    box-shadow:0 0 0 4px var(--brand-50);
 }
 
 .modal-actions{
@@ -243,472 +246,280 @@ select{
     margin-top:20px;
 }
 
-/* ================= RESPONSIVE ================= */
-
 @media(max-width:768px){
-
-    .review-grid{
-        grid-template-columns:1fr;
-    }
-
-    .form-grid{
-        grid-template-columns:1fr;
-    }
-
-    .action-bar{
-        flex-direction:column;
-        align-items:flex-start;
-        gap:10px;
-    }
-
-    table{
-        display:block;
-        overflow-x:auto;
-    }
+    .review-grid{ grid-template-columns:1fr; }
+    .form-grid{ grid-template-columns:1fr; }
+    .action-bar{ flex-direction:column; align-items:flex-start; gap:10px; }
+    table{ display:block; overflow-x:auto; }
 }
 
 </style>
 
-<!-- HEADER -->
 <div class="header-card">
     <h1>Academic Terms</h1>
-    <p>
-        Manage academic terms, activation workflow, and system lifecycle.
-    </p>
+    <p>Manage academic terms, activation workflow, and system lifecycle.</p>
 </div>
 
-<!-- ALERT -->
 <div class="alert">
     Only one term can remain active at a time.
     Active terms must be ended before another term is created.
 </div>
 
-<!-- REVIEW -->
 <div class="review-grid">
-
     <div class="review-box">
         <h3>Current Academic Year</h3>
         <p id="currentYear">Loading...</p>
     </div>
-
     <div class="review-box">
         <h3>Current Active Term</h3>
         <p id="currentTerm">Loading...</p>
     </div>
-
 </div>
 
-<!-- ACTION BAR -->
 <div class="action-bar">
-
-    <div class="action-left">
-        <h3>Academic Terms</h3>
-    </div>
-
-    <button
-        id="createBtn"
-        class="btn btn-primary"
-        onclick="openModal()">
-
-        + Create Term
-
-    </button>
-
+    <div class="action-left"><h3>Academic Terms</h3></div>
+    <button id="createBtn" class="btn btn-primary" onclick="openModal()">+ Create Term</button>
 </div>
 
-<!-- TABLE -->
 <div class="table-card">
-
-    <table>
-
-        <thead>
-            <tr>
-                <th>Year</th>
-                <th>Term</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody id="termTable"></tbody>
-
-    </table>
-
-    <div id="emptyState" class="empty" style="display:none;">
-        No academic terms created yet.
+    <div id="termTableWrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Year</th><th>Term</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="termTable"></tbody>
+        </table>
     </div>
-
+    <div id="emptyState" class="empty" style="display:none;">No academic terms created yet.</div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="termModal">
-
     <div class="modal-content">
-
         <h2>Create Academic Term</h2>
-
         <form id="termForm">
-
             <div class="form-grid">
-
                 <div>
                     <label>Academic Year</label>
-
                     <select name="academic_year">
                         <option value="1">2026</option>
                     </select>
                 </div>
-
                 <div>
                     <label>Term Name</label>
-
                     <select name="name">
                         <option>Term 1</option>
                         <option>Term 2</option>
                         <option>Term 3</option>
                     </select>
                 </div>
-
                 <div>
                     <label>Start Date</label>
                     <input type="date" name="start_date" required>
                 </div>
-
                 <div>
                     <label>End Date</label>
                     <input type="date" name="end_date" required>
                 </div>
-
             </div>
-
             <div class="modal-actions">
-
-                <button
-                    type="button"
-                    class="btn btn-outline"
-                    onclick="closeModal()">
-
-                    Cancel
-
-                </button>
-
-                <button
-                    type="submit"
-                    class="btn btn-primary">
-
-                    Save Term
-
-                </button>
-
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="saveTermBtn">Save Term</button>
             </div>
-
         </form>
-
     </div>
-
 </div>
 
 <script>
 
 const API = "/admin/api/terms";
 
-/* ================= LOAD TERMS ================= */
-
 async function loadTerms(){
 
-    try{
+    document.getElementById("termTableWrap").innerHTML =
+        skeletonRows(["Year","Term","Start Date","End Date","Status","Actions"], 5);
+    document.getElementById("emptyState").style.display = "none";
 
+    try{
         let res = await fetch(API);
         let data = await res.json();
 
-        document.getElementById("currentYear").innerText =
-            data.current_year || "Not Set";
-        
-
-        document.getElementById("currentTerm").innerText =
-            data.current_term || "No Active Term";
+        document.getElementById("currentYear").innerText = data.current_year || "Not Set";
+        document.getElementById("currentTerm").innerText = data.current_term || "No Active Term";
 
         const createBtn = document.getElementById("createBtn");
 
-        /* LOCK CREATE BUTTON */
-
         if(data.has_active_term){
-
             createBtn.disabled = true;
             createBtn.classList.add("btn-disabled");
             createBtn.innerText = "End Active Term First";
-
         }else{
-
             createBtn.disabled = false;
             createBtn.classList.remove("btn-disabled");
             createBtn.innerText = "+ Create Term";
         }
 
-        let table = document.getElementById("termTable");
-
-        table.innerHTML = "";
-
         if(!data.terms || data.terms.length === 0){
-
+            document.getElementById("termTableWrap").innerHTML = `
+                <table><thead><tr>
+                    <th>Year</th><th>Term</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Actions</th>
+                </tr></thead><tbody></tbody></table>
+            `;
             document.getElementById("emptyState").style.display = "block";
             return;
         }
 
-        document.getElementById("emptyState").style.display = "none";
-
-        data.terms.forEach(t => {
+        let rows = data.terms.map(t=>{
 
             let actions = "";
 
-            /* DRAFT */
-
             if(t.status === "draft"){
-
                 actions = `
                     <div class="action-btns">
-
-                        <button
-                            class="btn btn-primary"
-                            onclick="activateTerm(${t.id})">
-
-                            Activate
-
-                        </button>
-
-                        <button
-                            class="btn btn-outline"
-                            onclick="deleteTerm(${t.id})">
-
-                            Delete
-
-                        </button>
-
+                        <button class="btn btn-primary" onclick="activateTerm(${t.id}, this)">Activate</button>
+                        <button class="btn btn-outline" onclick="deleteTerm(${t.id}, this)">Delete</button>
                     </div>
                 `;
+            }else if(t.status === "active"){
+                actions = `<button class="btn btn-danger" onclick="endTerm(${t.id}, this)">End Term</button>`;
+            }else{
+                actions = `<span style="color:var(--ink-500);font-weight:600;">Locked</span>`;
             }
 
-            /* ACTIVE */
-
-            else if(t.status === "active"){
-
-                actions = `
-                    <button
-                        class="btn btn-danger"
-                        onclick="endTerm(${t.id})">
-
-                        End Term
-
-                    </button>
-                `;
-            }
-
-            /* LOCKED */
-
-            else{
-
-                actions = `
-                    <span style="color:#64748b;font-weight:600;">
-                        Locked
-                    </span>
-                `;
-            }
-
-            table.innerHTML += `
+            return `
                 <tr>
-
                     <td>${t.year}</td>
-
                     <td>${t.name}</td>
-
                     <td>${t.start_date}</td>
-
                     <td>${t.end_date}</td>
-
-                    <td>
-                        <span class="status status-${t.status}">
-                            ${t.status}
-                        </span>
-                    </td>
-
+                    <td><span class="status status-${t.status}">${t.status}</span></td>
                     <td>${actions}</td>
-
                 </tr>
             `;
-        });
+        }).join("");
+
+        document.getElementById("termTableWrap").innerHTML = `
+            <table>
+                <thead><tr>
+                    <th>Year</th><th>Term</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Actions</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
 
     }catch(err){
-
         console.error(err);
-
         alert("Failed to load terms");
     }
 }
 
-/* ================= MODAL ================= */
-
 function openModal(){
-
     document.getElementById("termModal").style.display = "flex";
 }
 
 function closeModal(){
-
     document.getElementById("termModal").style.display = "none";
 }
 
-/* ================= CREATE ================= */
-
-document.getElementById("termForm")
-.addEventListener("submit", async function(e){
+document.getElementById("termForm").addEventListener("submit", async function(e){
 
     e.preventDefault();
 
-    let formData = new FormData(this);
+    const saveBtn = document.getElementById("saveTermBtn");
+    setButtonLoading(saveBtn, true, "Saving...");
 
-    let payload =
-        Object.fromEntries(formData.entries());
+    try{
+        let formData = new FormData(this);
+        let payload = Object.fromEntries(formData.entries());
 
-    let res = await fetch(API, {
+        let res = await fetch(API, {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify(payload)
+        });
 
-        method:"POST",
+        let data = await res.json();
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+        if(data.error){
+            alert(data.error);
+            return;
+        }
 
-        body: JSON.stringify(payload)
-    });
-
-    let data = await res.json();
-
-    if(data.error){
-
-        alert(data.error);
-        return;
+        alert(data.message);
+        this.reset();
+        closeModal();
+        loadTerms();
+    } finally {
+        setButtonLoading(saveBtn, false);
     }
-
-    alert(data.message);
-
-    this.reset();
-
-    closeModal();
-
-    loadTerms();
 });
 
-/* ================= DELETE ================= */
+async function deleteTerm(id, btn){
 
-async function deleteTerm(id){
+    if(!confirm("Delete this draft term?\n\nThis action cannot be undone.")) return;
 
-    if(!confirm(
-        "Delete this draft term?\n\n" +
-        "This action cannot be undone."
-    )) return;
+    setButtonLoading(btn, true, "");
 
-    let res = await fetch(
-        `${API}/${id}`,
-        {
-            method:"DELETE"
-        }
-    );
-
+    let res = await fetch(`${API}/${id}`, { method:"DELETE" });
     let data = await res.json();
 
     if(data.error){
-
         alert(data.error);
+        setButtonLoading(btn, false);
         return;
     }
 
     alert(data.message);
-
     loadTerms();
 }
 
-/* ================= ACTIVATE ================= */
-
-async function activateTerm(id){
+async function activateTerm(id, btn){
 
     const confirmed = confirm(
-
         "Activate this term?\n\n" +
-
-        "Requirements:\n" +
-        "- Fee structure must exist\n\n" +
-
-        "This will:\n" +
-        "- lock other terms\n" +
-        "- initialize invoices\n" +
-        "- begin academic operations"
+        "Requirements:\n- Fee structure must exist\n\n" +
+        "This will:\n- lock other terms\n- initialize invoices\n- begin academic operations"
     );
-
     if(!confirmed) return;
 
-    let res = await fetch(
-        `${API}/${id}/activate`,
-        {
-            method:"POST"
-        }
-    );
+    setButtonLoading(btn, true, "Activating...");
 
+    let res = await fetch(`${API}/${id}/activate`, { method:"POST" });
     let data = await res.json();
 
     if(data.error){
-
         alert(data.error);
+        setButtonLoading(btn, false);
         return;
     }
 
     alert(data.message);
-
     loadTerms();
 }
 
-/* ================= END TERM ================= */
-
-async function endTerm(id){
+async function endTerm(id, btn){
 
     const confirmed = confirm(
-
-        "WARNING\n\n" +
-
-        "Ending this term is irreversible.\n\n" +
-
-        "This will:\n" +
-        "- lock marks\n" +
-        "- freeze attendance\n" +
-        "- finalize invoices\n" +
-        "- prevent editing\n\n" +
-
-        "Continue?"
+        "WARNING\n\nEnding this term is irreversible.\n\n" +
+        "This will:\n- lock marks\n- freeze attendance\n- finalize invoices\n- prevent editing\n\nContinue?"
     );
-
     if(!confirmed) return;
 
-    let res = await fetch(
-        `${API}/${id}/end`,
-        {
-            method:"POST"
-        }
-    );
+    setButtonLoading(btn, true, "Ending...");
 
+    let res = await fetch(`${API}/${id}/end`, { method:"POST" });
     let data = await res.json();
 
     if(data.error){
-
         alert(data.error);
+        setButtonLoading(btn, false);
         return;
     }
 
     alert(data.message);
-
     loadTerms();
 }
-
-/* ================= INIT ================= */
 
 loadTerms();
 

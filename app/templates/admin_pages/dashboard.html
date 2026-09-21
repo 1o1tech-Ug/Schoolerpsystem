@@ -4,7 +4,6 @@
 
 {% block content %}
 <style>
-/* ── KPI CARDS ── */
 .kpi-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(190px,1fr));
@@ -13,17 +12,17 @@
 }
 
 .kpi-card{
-    background:white;
-    border:1px solid #e2e8f0;
-    border-radius:14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
     padding:20px;
-    box-shadow:0 2px 8px rgba(15,23,42,0.05);
+    box-shadow:var(--shadow-sm);
     display:flex;
     flex-direction:column;
     gap:8px;
     transition:.2s ease;
 }
-.kpi-card:hover{ box-shadow:0 6px 20px rgba(15,23,42,0.1); transform:translateY(-2px); }
+.kpi-card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
 
 .kpi-icon{
     width:42px; height:42px;
@@ -32,33 +31,32 @@
     font-size:20px;
     margin-bottom:4px;
 }
-.kpi-icon.blue   { background:#eff6ff; }
-.kpi-icon.green  { background:#f0fdf4; }
-.kpi-icon.amber  { background:#fffbeb; }
-.kpi-icon.red    { background:#fef2f2; }
+.kpi-icon.blue   { background:var(--brand-50); }
+.kpi-icon.green  { background:var(--success-bg); }
+.kpi-icon.amber  { background:var(--warn-bg); }
+.kpi-icon.red    { background:var(--danger-bg); }
 .kpi-icon.purple { background:#faf5ff; }
 
 .kpi-label{
     font-size:11.5px;
-    font-weight:600;
-    color:#64748b;
+    font-weight:700;
+    color:var(--ink-500);
     text-transform:uppercase;
-    letter-spacing:.06em;
+    letter-spacing:.05em;
 }
 
 .kpi-value{
     font-size:26px;
     font-weight:800;
-    color:#0f172a;
+    color:var(--ink-900);
     line-height:1;
 }
 
 .kpi-sub{
     font-size:11.5px;
-    color:#94a3b8;
+    color:var(--ink-400);
 }
 
-/* ── CHARTS GRID ── */
 .charts-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -67,27 +65,26 @@
 }
 
 .chart-card{
-    background:white;
-    border:1px solid #e2e8f0;
-    border-radius:14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
     padding:22px;
-    box-shadow:0 2px 8px rgba(15,23,42,0.05);
+    box-shadow:var(--shadow-sm);
 }
 
 .chart-card h3{
     font-size:14px;
     font-weight:700;
-    color:#0f172a;
+    color:var(--ink-900);
     margin-bottom:16px;
 }
 
 .chart-canvas{ width:100% !important; }
 
-/* ── ACTIVE TERM BANNER ── */
 .term-banner{
-    background:linear-gradient(135deg,#0f172a,#1e3a5f);
+    background:linear-gradient(135deg, var(--brand-700), var(--ink-900));
     color:white;
-    border-radius:14px;
+    border-radius:var(--radius-lg);
     padding:18px 22px;
     display:flex;
     align-items:center;
@@ -95,9 +92,10 @@
     flex-wrap:wrap;
     gap:10px;
     margin-bottom:24px;
+    box-shadow:var(--shadow-brand);
 }
 .term-banner h2{ font-size:16px; font-weight:700; }
-.term-banner span{ font-size:12px; margin-top:2px; display:block; }
+.term-banner span{ font-size:12px; margin-top:2px; display:block; color:#c7d2fe; }
 .term-tag{
     background:rgba(212,160,23,.2);
     border:1px solid rgba(212,160,23,.4);
@@ -117,20 +115,10 @@
     font-weight:700;
 }
 
-/* ── SKELETON ── */
-.skeleton{
-    background:linear-gradient(90deg,#f0f4f8 25%,#e2e8f0 50%,#f0f4f8 75%);
-    background-size:200% 100%;
-    animation:shimmer 1.4s infinite;
-    border-radius:8px;
-}
-@keyframes shimmer{ to{ background-position:-200% 0; } }
-
 @media(max-width:900px){ .charts-grid{ grid-template-columns:1fr; } }
 @media(max-width:600px){ .kpi-grid{ grid-template-columns:1fr 1fr; } }
 </style>
 
-<!-- TERM BANNER -->
 <div class="term-banner">
     <div>
         <h2>School Overview</h2>
@@ -139,17 +127,14 @@
     <span id="termTag" class="term-tag" style="display:none"></span>
 </div>
 
-<!-- KPI CARDS -->
 <div class="kpi-grid" id="kpiGrid">
-    <!-- filled by JS -->
-    <div class="kpi-card"><div class="skeleton" style="height:80px"></div></div>
-    <div class="kpi-card"><div class="skeleton" style="height:80px"></div></div>
-    <div class="kpi-card"><div class="skeleton" style="height:80px"></div></div>
-    <div class="kpi-card"><div class="skeleton" style="height:80px"></div></div>
-    <div class="kpi-card"><div class="skeleton" style="height:80px"></div></div>
+    <div class="kpi-card"><div class="gl-skeleton-line" style="height:80px"></div></div>
+    <div class="kpi-card"><div class="gl-skeleton-line" style="height:80px"></div></div>
+    <div class="kpi-card"><div class="gl-skeleton-line" style="height:80px"></div></div>
+    <div class="kpi-card"><div class="gl-skeleton-line" style="height:80px"></div></div>
+    <div class="kpi-card"><div class="gl-skeleton-line" style="height:80px"></div></div>
 </div>
 
-<!-- CHARTS -->
 <div class="charts-grid">
     <div class="chart-card">
         <h3>📈 Student Enrollment Trend</h3>
@@ -172,7 +157,6 @@ async function loadDashboard(){
         const res  = await fetch("/admin/api/dashboard");
         const data = await res.json();
 
-        /* ── TERM BANNER ── */
         const label = document.getElementById("termLabel");
         const tag   = document.getElementById("termTag");
 
@@ -187,7 +171,6 @@ async function loadDashboard(){
             tag.style.display    = "inline";
         }
 
-        /* ── KPI CARDS ── */
         const kpis = [
             { icon:"🎓", cls:"blue",   label:"Total Students",    value: data.kpis.total_students,                      sub:"registered" },
             { icon:"👨‍🏫", cls:"green",  label:"Teaching Staff",    value: data.kpis.teaching_staff,                      sub:"active" },
@@ -205,7 +188,6 @@ async function loadDashboard(){
             </div>
         `).join("");
 
-        /* ── ENROLLMENT CHART ── */
         const enroll = data.enrollment_trend || [];
         new Chart(document.getElementById("enrollmentChart"), {
             type: "line",
@@ -214,8 +196,8 @@ async function loadDashboard(){
                 datasets: [{
                     label:           "New Students",
                     data:            enroll.map(e => e.count),
-                    borderColor:     "#2563eb",
-                    backgroundColor: "rgba(37,99,235,0.08)",
+                    borderColor:     "#4f46e5",
+                    backgroundColor: "rgba(79,70,229,0.08)",
                     borderWidth:     2.5,
                     pointRadius:     4,
                     tension:         0.4,
@@ -232,7 +214,6 @@ async function loadDashboard(){
             }
         });
 
-        /* ── FINANCE CHART ── */
         const fin = data.financial_summary;
         new Chart(document.getElementById("financeChart"), {
             type: "bar",
@@ -241,7 +222,7 @@ async function loadDashboard(){
                 datasets: [{
                     label:           "UGX",
                     data:            [fin.collected, fin.expenses, fin.outstanding],
-                    backgroundColor: ["#16a34a","#dc2626","#f59e0b"],
+                    backgroundColor: ["#10b981","#ef4444","#f59e0b"],
                     borderRadius:    8,
                     borderSkipped:   false,
                 }]

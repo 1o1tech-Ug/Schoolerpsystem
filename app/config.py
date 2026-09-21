@@ -21,7 +21,7 @@ class Config:
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(minutes=43200)
     JWT_COOKIE_CSRF_PROTECT = False
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
     BUNNY_STORAGE_ZONE = os.getenv("BUNNY_STORAGE_ZONE")

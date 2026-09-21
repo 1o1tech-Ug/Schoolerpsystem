@@ -12,7 +12,7 @@
     gap:10px;
     align-items:center;
     flex-wrap:wrap;
-    margin-bottom:22px;
+    margin-bottom:14px;
 }
 
 .fc-input{
@@ -42,6 +42,24 @@
 .fc-btn.primary:hover{ background:#1e293b; }
 .fc-btn.ghost{ background:#f1f5f9; color:#0f172a; border:1px solid #e2e8f0; }
 .fc-btn.ghost:hover{ background:#e2e8f0; }
+
+/* ── TERM BANNER ── */
+.fc-term-banner{
+    display:none;
+    font-size:12.5px;
+    font-weight:700;
+    color:#475569;
+    background:#f1f5f9;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    padding:10px 16px;
+    margin-bottom:16px;
+}
+.fc-term-banner.locked{
+    background:#fef9c3;
+    border-color:#fde68a;
+    color:#854d0e;
+}
 
 /* ── TABLE CARD ── */
 .fc-card{
@@ -82,10 +100,12 @@ tbody tr:hover td{ background:#fafafa; }
     border-radius:20px;
     font-size:12px;
     font-weight:700;
+    white-space:nowrap;
 }
 .balance-badge.paid   { background:#dcfce7; color:#15803d; }
 .balance-badge.partial{ background:#fef9c3; color:#854d0e; }
 .balance-badge.unpaid { background:#fef2f2; color:#dc2626; }
+.balance-badge.missing{ background:#ffedd5; color:#c2410c; }
 
 .action-btn{
     padding:7px 12px;
@@ -103,6 +123,16 @@ tbody tr:hover td{ background:#fafafa; }
 .btn-pay:hover { background:#bbf7d0; }
 .btn-history { background:#ede9fe; color:#6d28d9; }
 .btn-history:hover { background:#ddd6fe; }
+.btn-setfee  { background:#0f172a; color:#fff; width:100%; }
+.btn-setfee:hover { background:#1e293b; }
+
+.missing-fee-cell{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+}
+.missing-fee-cell input{ width:150px; }
 
 .no-data{ text-align:center; padding:48px; color:#94a3b8; font-size:14px; }
 
@@ -287,8 +317,17 @@ tbody tr:hover td{ background:#fafafa; }
         <select class="fc-input" id="classFilter" onchange="resetAndLoad()">
             <option value="">All Classes</option>
         </select>
+        <select class="fc-input" id="yearFilter" onchange="resetAndLoad()">
+            <option value="">Current Term</option>
+        </select>
+        <select class="fc-input" id="termFilter" onchange="resetAndLoad()">
+            <option value="">Current Term</option>
+        </select>
         <button class="fc-btn ghost" onclick="clearFilters()">Clear</button>
     </div>
+
+    <!-- TERM BANNER -->
+    <div class="fc-term-banner" id="fcTermBanner"></div>
 
     <!-- TABLE -->
     <div class="fc-card">
@@ -298,7 +337,7 @@ tbody tr:hover td{ background:#fafafa; }
                     <tr>
                         <th>Code</th>
                         <th>Name</th>
-                        <th>Class</th>
+                        <th>Class / Stream</th>
                         <th>Total Fees</th>
                         <th>Paid</th>
                         <th>Balance</th>
@@ -371,8 +410,11 @@ document.querySelectorAll(".modal-overlay").forEach(m => {
     m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); });
 });
 
-// ── PAGINATION STATE ───────────────────────────────────────────────
-let fcCurrentPage = 1;
+// ── PAGINATION / TERM STATE ────────────────────────────────────────
+let fcCurrentPage     = 1;
+let fcCurrentTermId   = null;  // the term the currently loaded page is for
+let fcCurrentTermStatus = null; // status of that term ("active" | "locked" | "draft")
+let fcCanPay          = false; // true only when the loaded term is "active"
 
 let _debounceTimer;
 function debounceLoad(){
@@ -388,6 +430,8 @@ function resetAndLoad(){
 function clearFilters(){
     document.getElementById("searchInput").value = "";
     document.getElementById("classFilter").value = "";
+    document.getElementById("yearFilter").value  = "";
+    document.getElementById("termFilter").value  = "";
     fcCurrentPage = 1;
     loadStudents();
 }
@@ -475,10 +519,56 @@ async function loadClasses(){
     } catch(e){ console.error(e); }
 }
 
+// ── LOAD YEAR / TERM FILTER OPTIONS ────────────────────────────────
+// Populated from every term the school has (active, locked, draft),
+// so staff can pick a past or locked term and still view its invoices —
+// not just whichever term happens to be active right now.
+async function loadFeeTerms(){
+    try {
+        const res  = await fetch("/finance/api/fees/terms");
+        const data = await res.json();
+        const terms = data.terms || [];
+
+        const yearSel = document.getElementById("yearFilter");
+        const termSel = document.getElementById("termFilter");
+
+        const years = [...new Set(terms.map(t => t.year_name).filter(Boolean))]
+            .sort((a, b) => b.localeCompare(a));
+        years.forEach(y => {
+            const o = document.createElement("option");
+            o.value = y; o.textContent = y;
+            yearSel.appendChild(o);
+        });
+
+        const termNames = [...new Set(terms.map(t => t.name).filter(Boolean))].sort();
+        termNames.forEach(t => {
+            const o = document.createElement("option");
+            o.value = t; o.textContent = t;
+            termSel.appendChild(o);
+        });
+    } catch(e){ console.error(e); }
+}
+
+// ── TERM BANNER ─────────────────────────────────────────────────────
+function renderTermBanner(data){
+    const el = document.getElementById("fcTermBanner");
+    if (!data.term){
+        el.style.display = "none";
+        return;
+    }
+    el.style.display = "block";
+    el.textContent   = data.term_status
+        ? `Viewing: ${data.term} — ${data.term_status}`
+        : `Viewing: ${data.term}`;
+    el.className = "fc-term-banner" + (data.term_status && data.term_status !== "active" ? " locked" : "");
+}
+
 // ── LOAD STUDENTS ──────────────────────────────────────────────────
 async function loadStudents(){
     const search  = document.getElementById("searchInput").value.trim();
     const classId = document.getElementById("classFilter").value;
+    const year    = document.getElementById("yearFilter").value;
+    const term    = document.getElementById("termFilter").value;
     const tbody   = document.getElementById("studentsTbody");
 
     tbody.innerHTML = `<tr><td colspan="10" class="no-data">Loading…</td></tr>`;
@@ -487,44 +577,129 @@ async function loadStudents(){
     const params = new URLSearchParams({ page: fcCurrentPage });
     if (search)  params.append("search",   search);
     if (classId) params.append("class_id", classId);
+    if (year)    params.append("year",     year);
+    if (term)    params.append("term",     term);
 
     try {
         const res  = await fetch("/finance/api/fees/students?" + params);
         const data = await res.json();
 
+        if (!res.ok){
+            tbody.innerHTML = `<tr><td colspan="10" class="no-data">${data.error || "Failed to load students."}</td></tr>`;
+            renderPagination({page:1, per_page:20, total:0, pages:1});
+            renderTermBanner({});
+            return;
+        }
+
+        fcCurrentTermId     = data.term_id || null;
+        fcCurrentTermStatus = data.term_status || null;
+        fcCanPay            = data.term_status === "active";
+        renderTermBanner(data);
+
         if (!data.students || !data.students.length){
-            tbody.innerHTML = `<tr><td colspan="10" class="no-data">No students found for current term.</td></tr>`;
+            const msg = data.message || "No students found for the selected term.";
+            tbody.innerHTML = `<tr><td colspan="10" class="no-data">${msg}</td></tr>`;
             renderPagination(data.pagination || {page:1, per_page:20, total:0, pages:1});
             return;
         }
 
-        tbody.innerHTML = data.students.map(s => {
-            const status =
-                s.balance <= 0    ? `<span class="balance-badge paid">Paid</span>` :
-                s.amount_paid > 0 ? `<span class="balance-badge partial">Partial</span>` :
-                                    `<span class="balance-badge unpaid">Unpaid</span>`;
-            const payDisabled = s.balance <= 0
-                ? 'disabled style="opacity:.4;cursor:not-allowed"' : "";
-            return `
-            <tr>
-                <td><code>${s.student_code}</code></td>
-                <td>${s.first_name} ${s.last_name}</td>
-                <td>${s.class_name}</td>
-                <td>${fmt(s.total_amount)}</td>
-                <td>${fmt(s.amount_paid)}</td>
-                <td>${fmt(Math.max(s.balance, 0))}</td>
-                <td>${status}</td>
-                <td><button class="action-btn btn-invoice" onclick="openInvoice(${s.invoice_id})">View</button></td>
-                <td><button class="action-btn btn-pay" onclick="openPayment(${s.invoice_id},${s.balance},'${s.first_name} ${s.last_name}')" ${payDisabled}>Pay</button></td>
-                <td><button class="action-btn btn-history" onclick="openHistory(${s.student_id})">History</button></td>
-            </tr>`;
-        }).join("");
+        tbody.innerHTML = data.students.map(renderStudentRow).join("");
 
         renderPagination(data.pagination);
 
     } catch(e){
         tbody.innerHTML = `<tr><td colspan="10" class="no-data">Failed to load students.</td></tr>`;
         console.error(e);
+    }
+}
+
+function renderStudentRow(s){
+    const classStream = s.class_name + (s.stream_name ? ` ${s.stream_name}` : "");
+
+    if (!s.has_fee_structure){
+        // Data integrity: invoices may only be generated into the
+        // currently ACTIVE term — a locked/past term's figures must
+        // stay exactly as they were when it closed.
+        if (!fcCanPay){
+            return `
+            <tr>
+                <td><code>${s.student_code}</code></td>
+                <td>${s.first_name} ${s.last_name}</td>
+                <td>${classStream}</td>
+                <td colspan="7">
+                    <div class="missing-fee-cell">
+                        <span class="balance-badge missing">No Fee Set</span>
+                        <span style="color:#94a3b8;font-size:12.5px">
+                            This term is ${fcCurrentTermStatus || "not active"} —
+                            switch to the active term to generate this student's invoice.
+                        </span>
+                    </div>
+                </td>
+            </tr>`;
+        }
+        return `
+        <tr>
+            <td><code>${s.student_code}</code></td>
+            <td>${s.first_name} ${s.last_name}</td>
+            <td>${classStream}</td>
+            <td colspan="4">
+                <div class="missing-fee-cell">
+                    <span class="balance-badge missing">No Fee Set</span>
+                    <input class="fc-input" type="number" min="1" step="1"
+                           id="feeAmt-${s.student_id}" placeholder="Amount (UGX)">
+                </div>
+            </td>
+            <td colspan="3">
+                <button class="action-btn btn-setfee" onclick="saveMissingFee(${s.student_id})">Generate Invoice</button>
+            </td>
+        </tr>`;
+    }
+
+    const status =
+        s.balance <= 0    ? `<span class="balance-badge paid">Paid</span>` :
+        s.amount_paid > 0 ? `<span class="balance-badge partial">Partial</span>` :
+                            `<span class="balance-badge unpaid">Unpaid</span>`;
+    const payDisabled = (s.balance <= 0 || !fcCanPay)
+        ? 'disabled style="opacity:.4;cursor:not-allowed"' : "";
+    return `
+    <tr>
+        <td><code>${s.student_code}</code></td>
+        <td>${s.first_name} ${s.last_name}</td>
+        <td>${classStream}</td>
+        <td>${fmt(s.total_amount)}</td>
+        <td>${fmt(s.amount_paid)}</td>
+        <td>${fmt(Math.max(s.balance, 0))}</td>
+        <td>${status}</td>
+        <td><button class="action-btn btn-invoice" onclick="openInvoice(${s.invoice_id})">View</button></td>
+        <td><button class="action-btn btn-pay" onclick="openPayment(${s.invoice_id},${s.balance},'${s.first_name} ${s.last_name}')" ${payDisabled}>Pay</button></td>
+        <td><button class="action-btn btn-history" onclick="openHistory(${s.student_id})">History</button></td>
+    </tr>`;
+}
+
+// ── SAVE FEE FOR A STUDENT MISSING ONE ─────────────────────────────
+async function saveMissingFee(studentId){
+    const input  = document.getElementById(`feeAmt-${studentId}`);
+    const amount = parseFloat(input ? input.value : "");
+
+    if (!amount || amount <= 0){ showToast("Enter a valid amount.", "error"); return; }
+    if (!fcCurrentTermId){ showToast("No term selected.", "error"); return; }
+
+    try {
+        const res  = await fetch("/finance/api/fees/set-student-fee", {
+            method:  "POST",
+            headers: {"Content-Type": "application/json"},
+            body:    JSON.stringify({
+                student_id: studentId,
+                term_id:    fcCurrentTermId,
+                amount:     amount,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to save fee");
+        showToast("Fee saved — invoice generated.", "success");
+        loadStudents();
+    } catch(e){
+        showToast(e.message, "error");
     }
 }
 
@@ -752,6 +927,7 @@ function histGoPage(page){
 
 // ── INIT ───────────────────────────────────────────────────────────
 loadClasses();
+loadFeeTerms();
 loadStudents();
 
 </script>

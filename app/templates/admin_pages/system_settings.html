@@ -6,136 +6,156 @@
 {% block content %}
 
 <style>
-/* REUSING YOUR EXISTING DESIGN SYSTEM */
-:root {
-  --navy: #0f2044;
-  --navy-mid: #1a3461;
-  --gray-100: #eef0f5;
-  --gray-200: #dde1eb;
-  --gray-400: #8c96b0;
-  --success: #1a6b3c;
-  --error: #8b1a1a;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-lg: 0 8px 32px rgba(15,32,68,0.13);
+
+.settings-wrapper{
+    max-width:600px;
 }
 
-/* WRAPPER */
-.settings-wrapper {
-  max-width: 650px;
-  margin: 0 auto;
+.settings-card{
+    background:var(--surface);
+    border-radius:var(--radius-xl);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
+    overflow:hidden;
 }
 
-/* CARD */
-.card {
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+.settings-card-header{
+    padding:20px 24px;
+    border-bottom:1px solid var(--border-soft);
 }
 
-/* HEADER */
-.card-header {
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--gray-100);
+.settings-card-header h2{
+    margin:0;
+    font-size:16.5px;
+    font-weight:800;
+    color:var(--ink-900);
 }
 
-.card-header h2 {
-  margin: 0;
-  font-size: 16px;
-  color: var(--navy);
+.settings-card-header p{
+    margin-top:4px;
+    font-size:13px;
+    color:var(--ink-500);
+    font-weight:500;
 }
 
-/* BODY */
-.card-body {
-  padding: 22px;
-  display: grid;
-  gap: 14px;
+.settings-card-body{
+    padding:24px;
+    display:grid;
+    gap:14px;
 }
 
-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #4a5470;
-  text-transform: uppercase;
+.settings-card-body label{
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--ink-500);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
 }
 
-input {
-  width: 100%;
-  padding: 11px;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  outline: none;
+.settings-card-body input{
+    width:100%;
+    padding:11px 13px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
+    outline:none;
+    font-size:14px;
+    font-family:inherit;
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-input:focus {
-  border-color: var(--navy-mid);
+.settings-card-body input:focus{
+    border-color:var(--brand-500);
+    box-shadow:0 0 0 4px var(--brand-50);
 }
 
-/* BUTTON */
-button {
-  background: var(--navy);
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-weight: 600;
+.settings-btn{
+    background:linear-gradient(135deg, var(--brand-600), var(--brand-700));
+    color:white;
+    border:none;
+    padding:12px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    font-weight:700;
+    font-size:14px;
+    font-family:inherit;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    box-shadow:var(--shadow-brand);
+    transition:filter 0.15s ease;
 }
 
-button:hover {
-  background: var(--navy-mid);
+.settings-btn:hover:not(:disabled){
+    filter:brightness(1.06);
 }
 
-/* MESSAGE */
-.msg {
-  font-size: 13px;
-  margin-top: 8px;
+.settings-btn:disabled{
+    opacity:0.7;
+    cursor:not-allowed;
 }
 
-.success { color: var(--success); }
-.error { color: var(--error); }
-
-/* TOAST */
-.toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 12px 16px;
-  background: var(--success);
-  color: white;
-  border-radius: 10px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: 0.3s;
+.msg{
+    font-size:13px;
+    margin-top:4px;
+    font-weight:600;
 }
 
-.toast.show {
-  opacity: 1;
-  transform: translateY(0);
+.msg.success{ color:var(--success-text); }
+.msg.error{ color:var(--danger-text); }
+
+.settings-toast{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    padding:13px 20px;
+    background:var(--success-dot);
+    color:white;
+    border-radius:var(--radius-md);
+    font-weight:700;
+    font-size:13.5px;
+    opacity:0;
+    transform:translateY(16px);
+    transition:0.3s ease;
+    z-index:var(--z-modal);
+    box-shadow:var(--shadow-lg);
+    pointer-events:none;
 }
+
+.settings-toast.show{
+    opacity:1;
+    transform:translateY(0);
+}
+
 </style>
 
 <div class="settings-wrapper">
 
-  <div class="card">
+  <div class="settings-card">
 
-    <div class="card-header">
+    <div class="settings-card-header">
       <h2>System Admin Password</h2>
+      <p>Update the password used to sign in to this admin account</p>
     </div>
 
-    <div class="card-body">
+    <div class="settings-card-body">
 
-      <label>Current Password</label>
-      <input type="password" id="current">
+      <div>
+        <label>Current Password</label>
+        <input type="password" id="current">
+      </div>
 
-      <label>New Password</label>
-      <input type="password" id="new">
+      <div>
+        <label>New Password</label>
+        <input type="password" id="new">
+      </div>
 
-      <label>Confirm Password</label>
-      <input type="password" id="confirm">
+      <div>
+        <label>Confirm Password</label>
+        <input type="password" id="confirm">
+      </div>
 
-      <button onclick="updatePassword()">Update Password</button>
+      <button class="settings-btn" id="updatePwBtn" onclick="updatePassword(this)">Update Password</button>
 
       <div id="msg" class="msg"></div>
 
@@ -145,7 +165,7 @@ button:hover {
 
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="settings-toast" id="toast"></div>
 
 <script>
 
@@ -162,7 +182,7 @@ function showMsg(text, type) {
   el.className = "msg " + type;
 }
 
-async function updatePassword() {
+async function updatePassword(btn) {
 
   const current = document.getElementById("current").value;
   const newPw = document.getElementById("new").value;
@@ -178,22 +198,31 @@ async function updatePassword() {
     return;
   }
 
-  const res = await fetch("/api/students/settings/change-password", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      current_password: current,
-      new_password: newPw
-    })
-  });
+  setButtonLoading(btn, true, "Updating...");
 
-  const data = await res.json();
+  try {
+    const res = await fetch("/api/students/settings/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_password: current,
+        new_password: newPw
+      })
+    });
 
-  if (res.ok) {
-    showMsg("Password updated successfully", "success");
-    showToast("Password changed");
-  } else {
-    showMsg(data.message || "Failed to update password", "error");
+    const data = await res.json();
+
+    if (res.ok) {
+      showMsg("Password updated successfully", "success");
+      showToast("Password changed");
+      document.getElementById("current").value = "";
+      document.getElementById("new").value = "";
+      document.getElementById("confirm").value = "";
+    } else {
+      showMsg(data.message || "Failed to update password", "error");
+    }
+  } finally {
+    setButtonLoading(btn, false);
   }
 }
 

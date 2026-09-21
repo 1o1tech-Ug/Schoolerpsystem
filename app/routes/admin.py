@@ -9,6 +9,14 @@ CHANGES vs original:
     No str(e) or raw exception details reach the client.
   - print() calls removed; replaced with logger calls where appropriate.
   - factory_reset exception handler returns safe message.
+  - Added per-student fee structure endpoints (streams, students-for-fee,
+    student-fee-structures). Class comes directly from Student.class_id;
+    stream comes from the StudentStream join table (both are school-scoped
+    columns — no StudentEnrollment involved, since fee assignment tracks
+    a student's *current* class/stream, not their enrollment history).
+  - Fixed a student_code/id mix-up: "Student ID" columns display
+    Student.student_code, but all internal keys (fee payload, deletes)
+    use the numeric Student.id / StudentFeeStructure.id.
 """
 
 import os
@@ -25,11 +33,13 @@ from app.extensions import db, limiter
 from app.models.core import UserModule
 from app.models.user import User
 from app.models.people import Student, Staff, Guardian, MedicalRecord, Document, StudentAcademic
-from app.models.finance import Invoice, InvoiceItem, Expenses, Payment, Receipt
-from app.models.academic_structure import (
-    Term, AcademicYear, AcademicConfig, Class, Stream
+from app.models.finance import (
+    Invoice, InvoiceItem, Expenses, Payment, Receipt,
+    StudentFeeStructure, StudentFeeItem, FeeStructure, FeeItem,
 )
-from app.models.finance import FeeStructure, FeeItem
+from app.models.academic_structure import (
+    Term, AcademicYear, AcademicConfig, Class, Stream, StudentStream
+)
 from app.utils.utilities import generate_invoices_for_term, generate_staff_code
 from app.utils.bunny import bunny_upload, bunny_delete, bunny_remote_path_from_url
 from app.core.rate_limit import (
@@ -76,6 +86,44 @@ def _delete_cdn_file(url):
             bunny_delete(bunny_remote_path_from_url(url))
         except Exception:
             logger.warning("CDN delete failed for URL: %s", url)
+
+
+def _current_stream_map(school_id, student_ids):
+    """
+    Returns {student_id: Stream} for the given students, based on the
+    StudentStream join table (which carries its own school_id). If a
+    student has more than one StudentStream row, the most recently
+    created one wins — StudentStream has no explicit "current" flag,
+    so this is a best-effort choice.
+    """
+    if not student_ids:
+        return {}
+
+    rows = (
+        StudentStream.query
+        .filter(
+            StudentStream.school_id == school_id,
+            StudentStream.student_id.in_(student_ids),
+        )
+        .order_by(StudentStream.id.desc())
+        .all()
+    )
+
+    stream_ids = {r.stream_id for r in rows}
+    streams_by_id = {s.id: s for s in Stream.query.filter(Stream.id.in_(stream_ids)).all()}
+
+    result = {}
+    for r in rows:
+        if r.student_id not in result:  # keep first hit = most recent (desc order)
+            result[r.student_id] = streams_by_id.get(r.stream_id)
+    return result
+
+
+def _class_stream_label(cls, stream):
+    label = cls.name if cls else ""
+    if stream:
+        label += f" {stream.name}"
+    return label
 
 
 # =====================================================
@@ -213,7 +261,9 @@ def activate_term(term_id):
     term = Term.query.filter_by(id=term_id, school_id=school_id).first_or_404()
 
     fee_exists = FeeStructure.query.filter_by(school_id=school_id, term_id=term.id).first()
-    if not fee_exists:
+    student_fee_exists = StudentFeeStructure.query.filter_by(school_id=school_id, term_id=term.id).first()
+
+    if not fee_exists and not student_fee_exists:
         return jsonify({"error": "Create fee structures before activation"}), 400
 
     try:
@@ -289,20 +339,113 @@ def get_classes():
 
 
 # =====================================================
-# FEE STRUCTURES
+# STREAMS
 # =====================================================
 
-@admin_bp.route("/admin/api/fee-structures")
-@jwt_required()
+@admin_bp.route("/admin/api/streams")
 @admin_required
 @limiter.limit(READ_LIMIT)
-def get_fee_structures():
+def get_streams():
+    school_id = get_school_id()
+    class_id = request.args.get("class_id")
+
+    # Stream has no school_id column of its own — scope via its parent Class.
+    query = Stream.query.join(Class, Stream.class_id == Class.id).filter(
+        Class.school_id == school_id
+    )
+    if class_id:
+        query = query.filter(Stream.class_id == class_id)
+
+    # Exclude soft-deleted streams (Stream.status == "deleted").
+    query = query.filter(db.or_(Stream.status.is_(None), Stream.status != "deleted"))
+
+    streams = query.all()
+    return jsonify({"streams": [{"id": s.id, "name": s.name} for s in streams]})
+
+
+# =====================================================
+# STUDENTS FOR FEE CREATION (paginated)
+# =====================================================
+
+@admin_bp.route("/admin/api/students-for-fee")
+@admin_required
+@limiter.limit(READ_LIMIT)
+def get_students_for_fee():
+    school_id = get_school_id()
+
+    class_id = request.args.get("class_id")
+    student_type = request.args.get("student_type")
+    term_id = request.args.get("term_id")  # used to prefill existing fee amounts
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+
+    if not class_id or not student_type:
+        return jsonify({"error": "class_id and student_type are required"}), 400
+
+    query = Student.query.filter(
+        Student.school_id == school_id,
+        Student.class_id == class_id,
+        Student.student_type == student_type,
+    ).order_by(Student.id.asc())
+
+    total = query.count()
+    students = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    student_ids = [s.id for s in students]
+    streams_by_student = _current_stream_map(school_id, student_ids)
+    cls = Class.query.get(class_id)
+
+    # If a term is given, look up any fee amounts already saved for these
+    # students in that term, so the client can prefill instead of showing
+    # a blank input that looks like "no fee set yet".
+    existing_amounts = {}
+    if term_id and student_ids:
+        existing = StudentFeeStructure.query.filter(
+            StudentFeeStructure.school_id == school_id,
+            StudentFeeStructure.term_id == term_id,
+            StudentFeeStructure.student_id.in_(student_ids),
+        ).all()
+        existing_amounts = {e.student_id: e.total_amount for e in existing}
+
+    data = []
+    for s in students:
+        stream = streams_by_student.get(s.id)
+        class_stream = _class_stream_label(cls, stream)
+
+        data.append({
+            "id": s.id,                      # numeric PK — used internally for saving fees
+            "student_code": s.student_code,  # shown in the "Student ID" column
+            "name": f"{s.first_name} {s.last_name}",
+            "class_stream": class_stream,
+            "existing_amount": existing_amounts.get(s.id, 0),
+        })
+
+    return jsonify({
+        "students": data,
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "total_pages": max(1, (total + per_page - 1) // per_page),
+    })
+
+# =====================================================
+# STUDENT FEE STRUCTURES (per student)
+# =====================================================
+
+@admin_bp.route("/admin/api/student-fee-structures")
+@admin_required
+@limiter.limit(READ_LIMIT)
+def get_student_fee_structures():
     school_id = get_school_id()
 
     year_filter = request.args.get("year")
     term_filter = request.args.get("term")
+    class_id = request.args.get("class_id")
+    stream_id = request.args.get("stream_id")
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
 
-    query = FeeStructure.query.filter_by(school_id=school_id)
+    query = StudentFeeStructure.query.filter_by(school_id=school_id)
 
     if year_filter:
         year_obj = AcademicYear.query.filter_by(name=year_filter).first()
@@ -315,98 +458,168 @@ def get_fee_structures():
             Term.query.filter_by(school_id=school_id, name=term_filter).all()
         ]
         if term_ids:
-            query = query.filter(FeeStructure.term_id.in_(term_ids))
+            query = query.filter(StudentFeeStructure.term_id.in_(term_ids))
 
-    structures = query.order_by(FeeStructure.id.desc()).all()
+    if class_id or stream_id:
+        student_id_q = Student.query.filter_by(school_id=school_id)
+
+        if class_id:
+            student_id_q = student_id_q.filter_by(class_id=class_id)
+
+        if stream_id:
+            stream_student_ids = {
+                r.student_id for r in
+                StudentStream.query.filter_by(school_id=school_id, stream_id=stream_id).all()
+            }
+            if not stream_student_ids:
+                # No students on this stream — short-circuit to an empty result.
+                return jsonify({
+                    "fee_structures": [],
+                    "page": page,
+                    "per_page": per_page,
+                    "total": 0,
+                    "total_pages": 1,
+                })
+            student_id_q = student_id_q.filter(Student.id.in_(stream_student_ids))
+
+        matching_ids = [s.id for s in student_id_q.all()]
+        query = query.filter(StudentFeeStructure.student_id.in_(matching_ids))
+
+    total = query.count()
+    structures = (
+        query.order_by(StudentFeeStructure.id.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+
+    student_ids = [s.student_id for s in structures]
+    students_by_id = {s.id: s for s in Student.query.filter(Student.id.in_(student_ids)).all()}
+
+    class_ids = {s.class_id for s in students_by_id.values() if s.class_id}
+    classes_by_id = {c.id: c for c in Class.query.filter(Class.id.in_(class_ids)).all()}
+    streams_by_student = _current_stream_map(school_id, student_ids)
 
     data = []
     for s in structures:
-        term  = Term.query.get(s.term_id)
-        year  = AcademicYear.query.get(s.academic_year_id)
-        cls   = Class.query.get(s.class_id)
-        items = [{"fee_type": i.fee_type, "amount": i.amount} for i in s.items]
+        term = Term.query.get(s.term_id)
+        student = students_by_id.get(s.student_id)
+
+        cls = classes_by_id.get(student.class_id) if student and student.class_id else None
+        stream = streams_by_student.get(s.student_id)
+        class_stream = _class_stream_label(cls, stream)
 
         data.append({
-            "id":           s.id,
-            "class_name":   cls.name  if cls  else "",
-            "term_name":    term.name if term else "",
-            "year_name":    year.name if year else "",
-            "student_type": s.student_type,
-            "total_amount": s.total_amount,
-            "status":       term.status if term else "draft",
-            "items":        items,
+            "id":            s.id,
+            "student_id":    student.id if student else s.student_id,           # internal key, used by deleteStructure()
+            "student_code":  student.student_code if student else "",          # shown in the "Student ID" column
+            "student_name":  f"{student.first_name} {student.last_name}" if student else "",
+            "class_stream":  class_stream,
+            "total_amount":  s.total_amount,
+            "status":        term.status if term else "draft",
         })
 
-    return jsonify({"fee_structures": data})
+    return jsonify({
+        "fee_structures": data,
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "total_pages": max(1, (total + per_page - 1) // per_page),
+    })
 
 
-@admin_bp.route("/admin/api/fee-structures", methods=["POST"])
-@jwt_required()
+@admin_bp.route("/admin/api/student-fee-structures", methods=["POST"])
 @admin_required
 @limiter.limit(WRITE_LIMIT)
-def create_fee_structures():
-    data = request.get_json()
+def create_student_fee_structures():
     school_id = get_school_id()
+    data = request.get_json()
 
-    if isinstance(data, dict):
-        data = [data]
-    if not isinstance(data, list):
-        return jsonify({"error": "Invalid payload format"}), 400
     if not data:
         return jsonify({"error": "No data"}), 400
 
-    try:
-        for item in data:
-            term = Term.query.filter_by(id=item["term_id"], school_id=school_id).first()
-            if not term:
-                return jsonify({"error": "Invalid term"}), 400
-            if term.status == "active":
-                return jsonify({"error": "Cannot edit active term"}), 400
+    term_id = data.get("term_id")
+    class_id = data.get("class_id")
+    student_type = data.get("student_type")
+    fees = data.get("fees", [])
 
-            existing = FeeStructure.query.filter_by(
-                school_id=school_id,
-                class_id=item["class_id"],
-                term_id=item["term_id"],
-                student_type=item["student_type"],
-            ).first()
-            if existing:
+    if not term_id or not class_id or not fees:
+        return jsonify({"error": "term_id, class_id and fees are required"}), 400
+
+    term = Term.query.filter_by(id=term_id, school_id=school_id).first()
+    if not term:
+        return jsonify({"error": "Invalid term"}), 400
+    if term.status == "active":
+        return jsonify({"error": "Cannot edit active term"}), 400
+
+    # Validate submitted students actually belong to this class right now.
+    valid_student_ids = {
+        s.id for s in Student.query.filter_by(
+            school_id=school_id, class_id=class_id
+        ).with_entities(Student.id).all()
+    }
+
+    try:
+        for fee in fees:
+            student_id = fee.get("student_id")
+            amount = fee.get("amount", 0)
+
+            if not student_id or amount <= 0:
+                continue
+            if student_id not in valid_student_ids:
                 continue
 
-            structure = FeeStructure(
+            existing = StudentFeeStructure.query.filter_by(
                 school_id=school_id,
-                class_id=item["class_id"],
-                term_id=item["term_id"],
+                student_id=student_id,
+                term_id=term_id,
+            ).first()
+
+            if existing:
+                existing.total_amount = amount
+                StudentFeeItem.query.filter_by(
+                    student_fee_structure_id=existing.id
+                ).delete()
+                db.session.add(StudentFeeItem(
+                    student_fee_structure_id=existing.id,
+                    fee_type="tuition",
+                    amount=amount,
+                ))
+                continue
+
+            structure = StudentFeeStructure(
+                school_id=school_id,
+                student_id=student_id,
+                term_id=term_id,
                 academic_year_id=term.academic_year_id,
-                student_type=item["student_type"],
-                total_amount=item["total_amount"],
+                total_amount=amount,
                 status="draft",
             )
+            #print(f"{student_id} done")
             db.session.add(structure)
             db.session.flush()
 
-            for it in item.get("items", []):
-                db.session.add(FeeItem(
-                    fee_structure_id=structure.id,
-                    fee_type=it["fee_type"],
-                    amount=it["amount"],
-                ))
+            db.session.add(StudentFeeItem(
+                student_fee_structure_id=structure.id,
+                fee_type="tuition",
+                amount=amount,
+            ))
 
         db.session.commit()
         return jsonify({"message": "Fee structures saved"})
     except Exception:
         db.session.rollback()
-        logger.exception("create_fee_structures failed | school_id=%s", school_id)
+        logger.exception("create_student_fee_structures failed | school_id=%s", school_id)
         return jsonify({"error": "Failed to save fee structures. Please try again."}), 500
 
 
-@admin_bp.route("/admin/api/fee-structures/<int:id>", methods=["DELETE"])
-@jwt_required()
+@admin_bp.route("/admin/api/student-fee-structures/<int:id>", methods=["DELETE"])
 @admin_required
 @limiter.limit(WRITE_LIMIT)
-def delete_fee_structure(id):
+def delete_student_fee_structure(id):
     school_id = get_school_id()
 
-    fs   = FeeStructure.query.filter_by(id=id, school_id=school_id).first_or_404()
+    fs = StudentFeeStructure.query.filter_by(id=id, school_id=school_id).first_or_404()
     term = Term.query.filter_by(id=fs.term_id, school_id=school_id).first()
 
     if not term:
@@ -421,7 +634,7 @@ def delete_fee_structure(id):
         return jsonify({"message": "Deleted successfully"})
     except Exception:
         db.session.rollback()
-        logger.exception("delete_fee_structure failed | id=%s school_id=%s", id, school_id)
+        logger.exception("delete_student_fee_structure failed | id=%s school_id=%s", id, school_id)
         return jsonify({"error": "Failed to delete fee structure. Please try again."}), 500
 
 

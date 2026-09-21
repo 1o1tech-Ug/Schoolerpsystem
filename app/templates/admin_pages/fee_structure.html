@@ -5,54 +5,204 @@
 
 {% block content %}
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 
-/* ================= UI ================= */
+:root{
+    --brand-700:#4338ca;
+    --brand-600:#4f46e5;
+    --brand-500:#6366f1;
+    --brand-50:#eef2ff;
+
+    --ink-900:#0b1120;
+    --ink-800:#1e293b;
+    --ink-700:#334155;
+    --ink-500:#64748b;
+    --ink-400:#94a3b8;
+    --ink-300:#cbd5e1;
+
+    --border:#e2e8f0;
+    --border-soft:#eef1f6;
+    --surface:#ffffff;
+    --surface-soft:#f8fafc;
+
+    --success-bg:#ecfdf5;--success-text:#047857;--success-dot:#10b981;
+    --warn-bg:#fffbeb;--warn-text:#92400e;--warn-dot:#f59e0b;
+    --danger-bg:#fef2f2;--danger-text:#b91c1c;--danger-dot:#ef4444;
+
+    --radius-xl:20px;
+    --radius-lg:14px;
+    --radius-md:10px;
+    --radius-sm:8px;
+
+    --shadow-sm:0 1px 2px rgba(15,23,42,0.05);
+    --shadow-md:0 6px 16px rgba(15,23,42,0.08);
+    --shadow-lg:0 16px 40px rgba(15,23,42,0.16);
+    --shadow-brand:0 10px 24px rgba(79,70,229,0.28);
+}
+
+*{box-sizing:border-box;}
+
+body, .card, .modal, button, input, select{
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ================= HEADER ================= */
 
 .page-header{
-    background:linear-gradient(135deg,#0f172a,#1e293b);
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(135deg, var(--brand-700) 0%, var(--ink-900) 100%);
     color:white;
-    padding:24px;
-    border-radius:16px;
-    margin-bottom:20px;
+    padding:32px 30px;
+    border-radius:var(--radius-xl);
+    margin-bottom:24px;
+    box-shadow:var(--shadow-lg);
 }
+
+.page-header::before{
+    content:"";
+    position:absolute;
+    top:-60px;
+    right:-60px;
+    width:220px;
+    height:220px;
+    background:radial-gradient(circle, rgba(255,255,255,0.10) 0%, transparent 70%);
+    pointer-events:none;
+}
+
+.page-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:#c7d2fe;
+    margin-bottom:10px;
+}
+
+.page-header h1{
+    margin:0 0 6px 0;
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:-0.02em;
+}
+
+.page-header p{
+    margin:0;
+    color:#c7d2fe;
+    font-size:14px;
+    font-weight:500;
+}
+
+/* ================= CARD ================= */
 
 .card{
-    background:white;
-    border-radius:16px;
-    padding:20px;
-    border:1px solid #e5e7eb;
-    margin-bottom:20px;
+    background:var(--surface);
+    border-radius:var(--radius-xl);
+    padding:24px;
+    border:1px solid var(--border);
+    margin-bottom:22px;
+    box-shadow:var(--shadow-sm);
 }
+
+.card-title{
+    font-size:16.5px;
+    font-weight:700;
+    color:var(--ink-900);
+    margin:0;
+    letter-spacing:-0.01em;
+}
+
+.card-subtitle{
+    font-size:13px;
+    color:var(--ink-500);
+    margin:4px 0 0 0;
+    font-weight:500;
+}
+
+/* ================= BUTTONS ================= */
 
 .btn{
-    padding:10px 14px;
+    position:relative;
+    padding:11px 18px;
     border:none;
-    border-radius:10px;
+    border-radius:var(--radius-sm);
     cursor:pointer;
     font-weight:600;
-    transition:0.2s ease;
+    font-size:13.5px;
+    font-family:inherit;
+    transition:all 0.15s ease;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    white-space:nowrap;
 }
+
+.btn:active:not(.is-loading):not(:disabled){transform:translateY(1px);}
 
 .btn-primary{
-    background:#0f172a;
+    background:linear-gradient(135deg, var(--brand-600), var(--brand-700));
     color:white;
+    box-shadow:var(--shadow-brand);
 }
+.btn-primary:hover:not(:disabled){filter:brightness(1.06);box-shadow:0 12px 28px rgba(79,70,229,0.34);}
 
 .btn-outline{
-    background:white;
-    border:1px solid #e5e7eb;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--ink-700);
 }
+.btn-outline:hover:not(:disabled){background:var(--surface-soft);border-color:var(--ink-300);}
 
 .btn-danger{
-    background:#dc2626;
-    color:white;
+    background:var(--danger-bg);
+    color:var(--danger-text);
+    border:1px solid #fecaca;
 }
+.btn-danger:hover:not(:disabled){background:#fee2e2;}
+
+.btn:disabled{cursor:not-allowed;opacity:0.6;}
 
 .btn-disabled{
-    background: grey;
+    background:#e2e8f0 !important;
+    color:#94a3b8 !important;
     cursor:not-allowed;
+    border:none !important;
+    box-shadow:none !important;
 }
+
+.btn-sm{padding:8px 13px;font-size:12.5px;}
+
+.btn.is-loading{pointer-events:none;}
+
+.spinner{
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.35);
+    border-top-color:#ffffff;
+    animation:spin 0.65s linear infinite;
+    flex-shrink:0;
+}
+
+.btn-outline .spinner{
+    border-color:rgba(15,23,42,0.2);
+    border-top-color:var(--ink-900);
+}
+
+.btn-danger .spinner{
+    border-color:rgba(185,28,28,0.2);
+    border-top-color:var(--danger-text);
+}
+
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* ================= MODAL ================= */
 
@@ -60,235 +210,378 @@
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.5);
+    background:rgba(11,17,32,0.6);
     justify-content:center;
     align-items:center;
     z-index:999;
+    padding:16px;
+    backdrop-filter:blur(3px);
 }
 
 .modal-content{
-    background:white;
-    width:90%;
-    max-width:650px;
-    padding:20px;
-    border-radius:14px;
-}
-
-input,
-select{
+    background:var(--surface);
     width:100%;
-    padding:10px;
-    border:1px solid #e5e7eb;
-    border-radius:10px;
-    outline:none;
+    max-width:940px;
+    max-height:92vh;
+    overflow-y:auto;
+    padding:28px;
+    border-radius:var(--radius-xl);
+    box-shadow:0 24px 60px rgba(0,0,0,0.3);
 }
 
-.fee-row{
+.modal-header{
     display:flex;
-    gap:10px;
-    margin-top:10px;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:20px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--border-soft);
 }
 
-.fee-row select,
-.fee-row input{
-    flex:1;
+.modal-header h2{
+    margin:0 0 4px 0;
+    font-size:19px;
+    font-weight:800;
+    color:var(--ink-900);
+    letter-spacing:-0.01em;
+}
+
+.modal-header p{
+    margin:0;
+    font-size:13px;
+    color:var(--ink-500);
+    font-weight:500;
+}
+
+.modal-close{
+    background:var(--surface-soft);
+    border:1px solid var(--border);
+    border-radius:8px;
+    width:32px;
+    height:32px;
+    font-size:18px;
+    color:var(--ink-500);
+    cursor:pointer;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all 0.15s ease;
+}
+.modal-close:hover{color:var(--ink-900);background:#eef1f6;}
+
+/* ================= FORM ELEMENTS ================= */
+
+label{
+    display:block;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--ink-500);
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+}
+
+input,select{
+    width:100%;
+    padding:11px 13px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
+    outline:none;
+    font-size:14px;
+    font-weight:500;
+    color:var(--ink-900);
+    background:var(--surface);
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input::placeholder{color:var(--ink-400);font-weight:400;}
+
+input:focus,select:focus{
+    border-color:var(--brand-500);
+    box-shadow:0 0 0 4px var(--brand-50);
+}
+
+.filter-panel{
+    background:var(--surface-soft);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:20px;
+    margin-bottom:22px;
+}
+
+.selector-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+    gap:14px;
+    margin-bottom:16px;
+}
+
+.filter-actions{
+    display:flex;
+    justify-content:flex-end;
 }
 
 /* ================= TABLE ================= */
 
+.table-wrap{
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+}
+
 .table{
     width:100%;
     border-collapse:collapse;
+    font-size:13.5px;
 }
 
-.table th,
-.table td{
-    padding:12px;
-    border-bottom:1px solid #eee;
+.table thead th{
+    background:var(--surface-soft);
+    padding:13px 16px;
     text-align:left;
-}
-
-.badge{
-    padding:4px 10px;
-    border-radius:20px;
-    font-size:12px;
+    font-size:11px;
     font-weight:700;
     text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-500);
+    border-bottom:1px solid var(--border);
 }
 
-.badge-draft{
-    background:#fef3c7;
-    color:#92400e;
+.table td{
+    padding:13px 16px;
+    border-bottom:1px solid var(--border-soft);
+    color:var(--ink-800);
+    font-weight:500;
 }
 
-.badge-active{
-    background:#dcfce7;
-    color:#166534;
+.table td:first-child{
+    font-weight:700;
+    color:var(--ink-900);
+    font-variant-numeric:tabular-nums;
 }
 
-.badge-locked{
-    background:#fee2e2;
-    color:#991b1b;
+.table tbody tr:last-child td{border-bottom:none;}
+.table tbody tr{transition:background 0.1s ease;}
+.table tbody tr:hover{background:var(--surface-soft);}
+
+.badge{
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
 }
+
+.badge::before{
+    content:"";
+    width:6px;
+    height:6px;
+    border-radius:50%;
+}
+
+.badge-draft{background:var(--warn-bg);color:var(--warn-text);}
+.badge-draft::before{background:var(--warn-dot);}
+
+.badge-active{background:var(--success-bg);color:var(--success-text);}
+.badge-active::before{background:var(--success-dot);}
+
+.badge-locked{background:var(--danger-bg);color:var(--danger-text);}
+.badge-locked::before{background:var(--danger-dot);}
 
 .locked-text{
-    color:#64748b;
+    color:var(--ink-400);
     font-weight:600;
+    font-size:12.5px;
 }
 
-/* ================= FILTERS ================= */
+/* ================= FILTER BAR (existing section) ================= */
 
 .filter-bar{
     display:flex;
     justify-content:space-between;
-    align-items:center;
+    align-items:flex-start;
     flex-wrap:wrap;
-    gap:15px;
-    margin-bottom:20px;
+    gap:16px;
+    margin-bottom:18px;
 }
 
 .filter-group{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+    gap:12px;
+    flex:1;
+    min-width:300px;
 }
+
+.filter-group-actions{
+    display:flex;
+    align-items:flex-end;
+}
+
+/* ================= STATES ================= */
 
 .empty-state{
     text-align:center;
-    color:#64748b;
-    padding:30px;
+    color:var(--ink-500);
+    padding:48px 20px;
+    background:var(--surface-soft);
+    border:1.5px dashed var(--border);
+    border-radius:var(--radius-lg);
+    font-size:14px;
+    font-weight:500;
+}
+
+.empty-state .empty-icon{
+    font-size:30px;
+    display:block;
+    margin-bottom:10px;
+    opacity:0.55;
+}
+
+.fee-amount-input{max-width:170px;font-weight:600;}
+
+.pagination-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:16px;
+    font-size:12.5px;
+    color:var(--ink-500);
+    font-weight:600;
+}
+
+.section-divider{
+    height:1px;
+    background:var(--border);
+    border:none;
+    margin:22px 0;
+}
+
+/* ================= SKELETON LOADING ================= */
+
+.skeleton-line{
+    height:14px;
+    border-radius:6px;
+    background:linear-gradient(90deg, #eef1f6 25%, #e2e8f0 37%, #eef1f6 63%);
+    background-size:400% 100%;
+    animation:skeleton-shimmer 1.4s ease infinite;
+}
+
+.skeleton-line.short{width:60%;}
+.skeleton-line.tiny{width:40%;height:20px;border-radius:12px;}
+
+@keyframes skeleton-shimmer{
+    0%{background-position:100% 50%;}
+    100%{background-position:0 50%;}
 }
 
 /* ================= RESPONSIVE ================= */
 
 @media(max-width:768px){
 
-    .fee-row{
-        flex-direction:column;
-    }
+    .page-header{padding:22px;}
 
-    .filter-bar{
-        flex-direction:column;
-        align-items:flex-start;
-    }
+    .card{padding:18px;}
 
-    .table{
-        display:block;
-        overflow-x:auto;
-    }
+    .filter-bar{flex-direction:column;align-items:stretch;}
+
+    .filter-group{grid-template-columns:1fr 1fr;min-width:0;}
+
+    .filter-group-actions{justify-content:stretch;}
+    .filter-group-actions .btn{width:100%;justify-content:center;}
+
+    .selector-row{grid-template-columns:1fr;}
+
+    .table-wrap{overflow-x:auto;}
+    .table{min-width:640px;}
+
+    .modal-content{padding:20px;}
+
+    .pagination-bar{flex-direction:column;gap:10px;align-items:stretch;text-align:center;}
+}
+
+@media(max-width:480px){
+    .filter-group{grid-template-columns:1fr;}
 }
 
 </style>
 
-<!-- ================= HEADER ================= -->
-
 <div class="page-header">
-
+    <span class="page-eyebrow">Finance</span>
     <h1>Fee Structures</h1>
-
-    <p>
-        Manage tuition fee structures for students
-    </p>
-
+    <p>Manage tuition fee structures per student</p>
 </div>
 
 <!-- ================= CREATE ================= -->
 
 <div class="card">
-
-    <button
-        id="createFeeBtn"
-        class="btn btn-primary"
-        onclick="openModal()">
-
-        + Create Fee Structure
-
-    </button>
-
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+            <p class="card-title">Create Fee Structure</p>
+            <p class="card-subtitle">Set tuition fee amounts for individual students in a class</p>
+        </div>
+        <button id="createFeeBtn" class="btn btn-primary" onclick="openModal()">
+            + Create Fee Structure
+        </button>
+    </div>
 </div>
 
 <!-- ================= MODAL ================= -->
 
 <div class="modal" id="feeModal">
-
     <div class="modal-content">
 
-        <h2>Create Fee Structure</h2>
+        <div class="modal-header">
+            <div>
+                <h2>Create Fee Structure</h2>
+                <p>Select a term, class and student type, then apply filters to load students</p>
+            </div>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
 
-        <br>
+        <div class="filter-panel">
+            <div class="selector-row">
+                <div>
+                    <label>Term</label>
+                    <select id="termSelect"></select>
+                </div>
+                <div>
+                    <label>Class</label>
+                    <select id="classSelect"></select>
+                </div>
+                <div>
+                    <label>Student Type</label>
+                    <select id="typeSelect">
+                        <option value="day">Day</option>
+                        <option value="boarding">Boarding</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-primary" id="createApplyBtn" onclick="applyCreateFilters(this)">Apply Filters</button>
+            </div>
+        </div>
 
-        <label>Term</label>
+        <div id="createResultsArea">
+            <div class="empty-state">
+                <span class="empty-icon">&#128203;</span>
+                Select term, class and student type, then click Apply Filters
+            </div>
+        </div>
 
-        <select id="termSelect"></select>
+        <hr class="section-divider">
 
-        <br><br>
-
-        <label>Class</label>
-
-        <select id="classSelect"></select>
-
-        <br><br>
-
-        <label>Student Type</label>
-
-        <select id="typeSelect">
-
-            <option value="day">
-                Day
-            </option>
-
-            <option value="boarding">
-                Boarding
-            </option>
-
-        </select>
-
-        <hr>
-
-        <h3>Fee Items</h3>
-
-        <div id="feeItems"></div>
-
-        <button
-            class="btn btn-outline"
-            onclick="addFeeItem()">
-
-            + Add Item
-
-        </button>
-
-        <h3 id="totalText">
-            Total: UGX 0
-        </h3>
-
-        <br>
-
-        <div style="
-            display:flex;
-            justify-content:flex-end;
-            gap:10px;
-        ">
-
-            <button
-                class="btn btn-outline"
-                onclick="closeModal()">
-
-                Cancel
-
-            </button>
-
-            <button
-                class="btn btn-primary"
-                onclick="saveStructure()">
-
-                Save
-
-            </button>
-
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="saveBtn" onclick="saveStructure(this)">Save</button>
         </div>
 
     </div>
-
 </div>
 
 <!-- ================= EXISTING ================= -->
@@ -296,153 +589,168 @@ select{
 <div class="card">
 
     <div class="filter-bar">
-
-        <h3>Existing Fee Structures</h3>
-
-        <div class="filter-group">
-
-            <select id="filterYear">
-
-                <option value="2026">
-                    2026
-                </option>
-
-                <option value="2027">
-                    2027
-                </option>
-
-            </select>
-
-            <select id="filterTerm">
-
-                <option value="Term 1">
-                    Term 1
-                </option>
-
-                <option value="Term 2">
-                    Term 2
-                </option>
-
-                <option value="Term 3">
-                    Term 3
-                </option>
-
-            </select>
-
-            <button
-                class="btn btn-outline"
-                onclick="applyFilters()">
-
-                Apply Filter
-
-            </button>
-
+        <div>
+            <p class="card-title">Existing Fee Structures</p>
+            <p class="card-subtitle">Filter by year, term, class and stream to view saved fee structures</p>
         </div>
-
     </div>
 
-    <table class="table">
+    <div class="filter-bar" style="margin-top:0;">
+        <div class="filter-group">
+            <div>
+                <label>Year</label>
+                <select id="filterYear">
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                </select>
+            </div>
+            <div>
+                <label>Term</label>
+                <select id="filterTerm">
+                    <option value="Term 1">Term 1</option>
+                    <option value="Term 2">Term 2</option>
+                    <option value="Term 3">Term 3</option>
+                </select>
+            </div>
+            <div>
+                <label>Class</label>
+                <select id="filterClass" onchange="onFilterClassChange()">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div>
+                <label>Stream</label>
+                <select id="filterStream">
+                    <option value="">All Streams</option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-group-actions">
+            <button class="btn btn-primary" id="existingApplyBtn" onclick="applyFilters(this)">Apply Filter</button>
+        </div>
+    </div>
 
-        <thead>
-
-            <tr>
-                <th>Class</th>
-                <th>Term</th>
-                <th>Academic Year</th>
-                <th>Type</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-
-        </thead>
-
-        <tbody id="existingTable"></tbody>
-
-    </table>
+    <div id="existingResultsArea">
+        <div class="empty-state">
+            <span class="empty-icon">&#128269;</span>
+            Set your filters and click Apply Filter to view fee structures
+        </div>
+    </div>
 
 </div>
 
 <script>
 
-const TERM_API = "/admin/api/terms";
-const CLASS_API = "/admin/api/classes";
-const FEE_API = "/admin/api/fee-structures";
+const TERM_API    = "/admin/api/terms";
+const CLASS_API   = "/admin/api/classes";
+const STREAM_API  = "/admin/api/streams";
+const STUDENT_API = "/admin/api/students-for-fee";
+const FEE_API     = "/admin/api/student-fee-structures";
+
+const PAGE_SIZE = 20;
 
 let hasActiveTerm = false;
 
-/* ================= ONLY TUITION ================= */
+/* create-modal state */
+let createPage = 1;
+let createTotalPages = 1;
+let createFiltersApplied = false;
+let feeValues = {}; // student_id -> amount (persists across pages while modal is open)
 
-const FEE_TYPES = [
-    "tuition"
-];
+/* existing-table state */
+let existingPage = 1;
+let existingTotalPages = 1;
+let existingFiltersApplied = false;
+
+/* ================= BUTTON LOADING HELPER ================= */
+
+function setButtonLoading(btn, loading, loadingText){
+    if(!btn) return;
+    if(loading){
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.classList.add("is-loading");
+        btn.innerHTML = `<span class="spinner"></span><span>${loadingText || "Loading..."}</span>`;
+    }else{
+        btn.disabled = false;
+        btn.classList.remove("is-loading");
+        if(btn.dataset.originalHtml !== undefined){
+            btn.innerHTML = btn.dataset.originalHtml;
+        }
+    }
+}
+
+/* ================= SKELETON HELPERS ================= */
+
+function skeletonTable(headers, colCount, rowCount = 6){
+    let headHtml = headers.map(h => `<th>${h}</th>`).join("");
+    let rowHtml = Array.from({length: rowCount}).map(() => {
+        let cells = Array.from({length: colCount}).map((_, i) =>
+            `<td><div class="skeleton-line ${i === colCount - 2 ? 'tiny' : ''}"></div></td>`
+        ).join("");
+        return `<tr>${cells}</tr>`;
+    }).join("");
+
+    return `
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr>${headHtml}</tr></thead>
+                <tbody>${rowHtml}</tbody>
+            </table>
+        </div>
+    `;
+}
 
 /* ================= MODAL ================= */
 
 function openModal(){
-
     if(hasActiveTerm){
-
-        alert(
-            "Cannot create fee structures while a term is active"
-        );
-
+        alert("Cannot create fee structures while a term is active");
         return;
     }
+    feeValues = {};
+    createPage = 1;
+    createFiltersApplied = false;
+
+    document.getElementById("createResultsArea").innerHTML = `
+        <div class="empty-state">
+            <span class="empty-icon">&#128203;</span>
+            Select term, class and student type, then click Apply Filters
+        </div>
+    `;
 
     document.getElementById("feeModal").style.display = "flex";
 }
 
 function closeModal(){
-
     document.getElementById("feeModal").style.display = "none";
 }
 
-/* ================= LOAD ================= */
+/* ================= LOAD DROPDOWNS ================= */
 
 async function loadData(){
 
     let t = await fetch(TERM_API);
-
     let td = await t.json();
 
-    let termSelect =
-        document.getElementById("termSelect");
-
+    let termSelect = document.getElementById("termSelect");
     termSelect.innerHTML = "";
 
-    const createBtn =
-        document.getElementById("createFeeBtn");
-
+    const createBtn = document.getElementById("createFeeBtn");
     hasActiveTerm = td.has_active_term;
 
-    /* LOCK CREATE */
-
     if(hasActiveTerm){
-
         createBtn.disabled = true;
-
         createBtn.classList.add("btn-disabled");
-
-        createBtn.innerText =
-            "Active Term Running";
-
+        createBtn.innerText = "Active Term Running";
     }else{
-
         createBtn.disabled = false;
-
         createBtn.classList.remove("btn-disabled");
-
-        createBtn.innerText =
-            "+ Create Fee Structure";
+        createBtn.innerText = "+ Create Fee Structure";
     }
 
-    /* ONLY DRAFT TERMS */
-
     td.terms.forEach(term=>{
-
         if(term.status === "draft"){
-
             termSelect.innerHTML += `
                 <option value="${term.id}">
                     ${term.year} - ${term.name}
@@ -452,315 +760,320 @@ async function loadData(){
     });
 
     let c = await fetch(CLASS_API);
-
     let cd = await c.json();
 
-    let classSelect =
-        document.getElementById("classSelect");
-
+    let classSelect = document.getElementById("classSelect");
+    let filterClass = document.getElementById("filterClass");
     classSelect.innerHTML = "";
 
     cd.classes.forEach(cls=>{
-
-        classSelect.innerHTML += `
-            <option value="${cls.id}">
-                ${cls.name}
-            </option>
-        `;
+        classSelect.innerHTML += `<option value="${cls.id}">${cls.name}</option>`;
+        filterClass.innerHTML += `<option value="${cls.id}">${cls.name}</option>`;
     });
-
-    applyFilters();
 }
 
-/* ================= FEE ITEMS ================= */
+/* ================= STREAMS (existing filter) ================= */
 
-function addFeeItem(){
+async function onFilterClassChange(){
+    let classId = document.getElementById("filterClass").value;
+    let streamSelect = document.getElementById("filterStream");
+    streamSelect.innerHTML = `<option value="">All Streams</option>`;
 
-    let options = FEE_TYPES.map(t =>
+    if(!classId) return;
 
-        `<option value="${t}">${t}</option>`
+    let res = await fetch(`${STREAM_API}?class_id=${classId}`);
+    let data = await res.json();
 
-    ).join("");
+    (data.streams || []).forEach(s=>{
+        streamSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+    });
+}
 
-    document.getElementById("feeItems").innerHTML += `
+/* ================= CREATE: APPLY FILTERS ================= */
 
-        <div class="fee-row">
+async function applyCreateFilters(btn){
+    let classId = document.getElementById("classSelect").value;
+    let studentType = document.getElementById("typeSelect").value;
+    let termId = document.getElementById("termSelect").value;
 
-            <select class="fee-name">
-                ${options}
-            </select>
+    if(!termId || !classId || !studentType){
+        alert("Please select term, class and student type");
+        return;
+    }
 
-            <input
-                type="number"
-                class="fee-amount"
-                placeholder="Amount"
-                oninput="calcTotal()">
+    createFiltersApplied = true;
+    createPage = 1;
 
-            <button
-                class="btn btn-danger"
-                onclick="this.parentElement.remove();calcTotal();">
+    setButtonLoading(btn, true, "Loading...");
+    try{
+        await loadStudentsForCreate();
+    } finally {
+        setButtonLoading(btn, false);
+    }
+}
 
-                X
+async function loadStudentsForCreate(){
 
-            </button>
+    let classId = document.getElementById("classSelect").value;
+    let studentType = document.getElementById("typeSelect").value;
+    let termId = document.getElementById("termSelect").value;
+    let resultsArea = document.getElementById("createResultsArea");
 
+    resultsArea.innerHTML = skeletonTable(
+        ["Student ID", "Name", "Class & Stream", "Fee Amount (UGX)"], 4
+    );
+
+    let res = await fetch(
+        `${STUDENT_API}?class_id=${classId}&student_type=${studentType}&term_id=${termId}&page=${createPage}&per_page=${PAGE_SIZE}`
+    );
+    let data = await res.json();
+
+    if(!data.students || data.students.length === 0){
+        resultsArea.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">&#128683;</span>
+                No students found for this class and student type
+            </div>
+        `;
+        return;
+    }
+
+    createTotalPages = data.total_pages || 1;
+
+    // Prefill feeValues with any amount already saved for this term,
+    // without overwriting anything the user has already typed this session.
+    data.students.forEach(s=>{
+        if(feeValues[s.id] === undefined && s.existing_amount){
+            feeValues[s.id] = s.existing_amount;
+        }
+    });
+
+    let rows = data.students.map(s=>{
+        let existingVal = feeValues[s.id] !== undefined ? feeValues[s.id] : "";
+        return `
+            <tr>
+                <td>${s.student_code}</td>
+                <td>${s.name}</td>
+                <td>${s.class_stream}</td>
+                <td>
+                    <input
+                        type="number"
+                        class="fee-amount-input"
+                        placeholder="e.g. 300000"
+                        value="${existingVal}"
+                        oninput="feeValues[${s.id}] = this.value">
+                </td>
+            </tr>
+        `;
+    }).join("");
+
+    resultsArea.innerHTML = `
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Class &amp; Stream</th>
+                        <th>Fee Amount (UGX)</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <div class="pagination-bar">
+            <button class="btn btn-outline btn-sm" onclick="changeCreatePage(-1, this)">&laquo; Prev</button>
+            <span>Page ${data.page} of ${createTotalPages}</span>
+            <button class="btn btn-outline btn-sm" onclick="changeCreatePage(1, this)">Next &raquo;</button>
         </div>
     `;
 }
 
-function calcTotal(){
+async function changeCreatePage(delta, btn){
+    let next = createPage + delta;
+    if(next < 1 || next > createTotalPages) return;
+    createPage = next;
 
-    let total = 0;
-
-    document.querySelectorAll(".fee-amount")
-    .forEach(i=>{
-
-        total += parseFloat(i.value) || 0;
-    });
-
-    document.getElementById("totalText").innerText =
-        "Total: UGX " + total.toLocaleString();
+    setButtonLoading(btn, true, "");
+    try{
+        await loadStudentsForCreate();
+    } finally {
+        setButtonLoading(btn, false);
+    }
 }
 
 /* ================= SAVE ================= */
 
-async function saveStructure(){
+async function saveStructure(btn){
 
     if(hasActiveTerm){
-
-        alert(
-            "Cannot create fee structures while a term is active"
-        );
-
+        alert("Cannot create fee structures while a term is active");
         return;
     }
 
-    let term_id =
-        document.getElementById("termSelect").value;
+    if(!createFiltersApplied){
+        alert("Apply filters and load students before saving");
+        return;
+    }
 
-    let class_id =
-        document.getElementById("classSelect").value;
+    let term_id = document.getElementById("termSelect").value;
+    let class_id = document.getElementById("classSelect").value;
+    let student_type = document.getElementById("typeSelect").value;
 
-    let student_type =
-        document.getElementById("typeSelect").value;
+    let fees = Object.entries(feeValues)
+        .map(([student_id, amount]) => ({
+            student_id: parseInt(student_id),
+            amount: parseFloat(amount) || 0
+        }))
+        .filter(f => f.amount > 0);
 
-    let items = [];
+    if(!term_id || !class_id || fees.length === 0){
+        alert("Select term/class/type and enter at least one fee amount");
+        return;
+    }
 
-    document.querySelectorAll(".fee-row")
-    .forEach(r=>{
+    setButtonLoading(btn, true, "Saving...");
 
-        let fee_type =
-            r.querySelector(".fee-name").value;
+    try{
+        let res = await fetch(FEE_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ term_id, class_id, student_type, fees })
+        });
 
-        let amount = parseFloat(
-            r.querySelector(".fee-amount").value
-        ) || 0;
+        let data = await res.json();
 
-        if(amount > 0){
-
-            items.push({
-                fee_type,
-                amount
-            });
+        if(data.error){
+            alert(data.error);
+            return;
         }
-    });
 
-    if(!term_id || !class_id || items.length === 0){
+        alert(data.message || "Saved successfully");
+        closeModal();
 
-        alert("Fill all fields");
-
-        return;
+        if(existingFiltersApplied){
+            loadExisting();
+        }
+    } finally {
+        setButtonLoading(btn, false);
     }
-
-    let payload = {
-
-        term_id,
-
-        class_id,
-
-        student_type,
-
-        total_amount:
-            items.reduce((a,b)=>a+b.amount,0),
-
-        items
-    };
-
-    let res = await fetch(FEE_API,{
-
-        method:"POST",
-
-        headers:{
-            "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify(payload)
-    });
-
-    let data = await res.json();
-
-    if(data.error){
-
-        alert(data.error);
-
-        return;
-    }
-
-    alert("Saved successfully");
-
-    closeModal();
-
-    document.getElementById("feeItems").innerHTML = "";
-
-    document.getElementById("totalText").innerText =
-        "Total: UGX 0";
-
-    applyFilters();
 }
 
-/* ================= FILTER ================= */
+/* ================= EXISTING: APPLY FILTERS ================= */
 
-function applyFilters(){
+async function applyFilters(btn){
+    existingFiltersApplied = true;
+    existingPage = 1;
 
-    let year =
-        document.getElementById("filterYear").value;
-
-    let term =
-        document.getElementById("filterTerm").value;
-
-    loadExisting({
-        year,
-        term
-    });
+    setButtonLoading(btn, true, "Loading...");
+    try{
+        await loadExisting();
+    } finally {
+        setButtonLoading(btn, false);
+    }
 }
 
-/* ================= EXISTING ================= */
+async function changeExistingPage(delta, btn){
+    let next = existingPage + delta;
+    if(next < 1 || next > existingTotalPages) return;
+    existingPage = next;
 
-async function loadExisting(filters = {}){
-
-    let query = "";
-
-    if(filters.year || filters.term){
-
-        query = "?";
-
-        if(filters.year){
-
-            query +=
-                `year=${encodeURIComponent(filters.year)}`;
-        }
-
-        if(filters.term){
-
-            if(filters.year){
-                query += "&";
-            }
-
-            query +=
-                `term=${encodeURIComponent(filters.term)}`;
-        }
+    setButtonLoading(btn, true, "");
+    try{
+        await loadExisting();
+    } finally {
+        setButtonLoading(btn, false);
     }
+}
 
-    let res = await fetch(FEE_API + query);
+async function loadExisting(){
 
+    let resultsArea = document.getElementById("existingResultsArea");
+    resultsArea.innerHTML = skeletonTable(
+        ["Student ID", "Name", "Class & Stream", "Fee Amount", "Status", "Action"], 6
+    );
+
+    let year     = document.getElementById("filterYear").value;
+    let term     = document.getElementById("filterTerm").value;
+    let classId  = document.getElementById("filterClass").value;
+    let streamId = document.getElementById("filterStream").value;
+
+    let params = new URLSearchParams();
+    if(year) params.append("year", year);
+    if(term) params.append("term", term);
+    if(classId) params.append("class_id", classId);
+    if(streamId) params.append("stream_id", streamId);
+    params.append("page", existingPage);
+    params.append("per_page", PAGE_SIZE);
+
+    let res = await fetch(`${FEE_API}?${params.toString()}`);
     let data = await res.json();
 
-    let table =
-        document.getElementById("existingTable");
-
-    table.innerHTML = "";
-
-    if(!data.fee_structures ||
-       data.fee_structures.length === 0){
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="7" class="empty-state">
-                    No fee structures found
-                </td>
-            </tr>
+    if(!data.fee_structures || data.fee_structures.length === 0){
+        resultsArea.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">&#128683;</span>
+                No fee structures found
+            </div>
         `;
-
         return;
     }
 
-    data.fee_structures.forEach(f=>{
+    existingTotalPages = data.total_pages || 1;
 
-        table.innerHTML += `
+    let rows = data.fee_structures.map(f=>`
+        <tr>
+            <td>${f.student_code}</td>
+            <td>${f.student_name}</td>
+            <td>${f.class_stream}</td>
+            <td>UGX ${Number(f.total_amount).toLocaleString()}</td>
+            <td><span class="badge badge-${f.status}">${f.status}</span></td>
+            <td>
+                ${f.status === "draft" ? `
+                    <button class="btn btn-danger btn-sm" onclick="deleteStructure(${f.id}, this)">Delete</button>
+                ` : `
+                    <span class="locked-text">Locked</span>
+                `}
+            </td>
+        </tr>
+    `).join("");
 
-            <tr>
-
-                <td>${f.class_name}</td>
-
-                <td>${f.term_name}</td>
-
-                <td>${f.year_name}</td>
-
-                <td>${f.student_type}</td>
-
-                <td>
-                    UGX ${Number(f.total_amount)
-                        .toLocaleString()}
-                </td>
-
-                <td>
-
-                    <span
-                        class="badge badge-${f.status}">
-
-                        ${f.status}
-
-                    </span>
-
-                </td>
-
-                <td>
-
-                    ${f.status === "draft" ? `
-
-                        <button
-                            class="btn btn-danger"
-                            onclick="deleteStructure(${f.id})">
-
-                            Delete
-
-                        </button>
-
-                    ` : `
-
-                        <span class="locked-text">
-                            Locked
-                        </span>
-
-                    `}
-
-                </td>
-
-            </tr>
-        `;
-    });
+    resultsArea.innerHTML = `
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Class &amp; Stream</th>
+                        <th>Fee Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <div class="pagination-bar">
+            <button class="btn btn-outline btn-sm" onclick="changeExistingPage(-1, this)">&laquo; Prev</button>
+            <span>Page ${data.page} of ${existingTotalPages}</span>
+            <button class="btn btn-outline btn-sm" onclick="changeExistingPage(1, this)">Next &raquo;</button>
+        </div>
+    `;
 }
 
 /* ================= DELETE ================= */
 
-async function deleteStructure(id){
+async function deleteStructure(id, btn){
+    if(!confirm("Delete this student's fee structure?")) return;
 
-    if(!confirm(
-        "Delete this fee structure?"
-    )) return;
+    setButtonLoading(btn, true, "");
 
-    let res = await fetch(
-        `${FEE_API}/${id}`,
-        {
-            method:"DELETE"
-        }
-    );
-
+    let res = await fetch(`${FEE_API}/${id}`, { method: "DELETE" });
     let data = await res.json();
 
     alert(data.message || data.error);
-
-    applyFilters();
+    loadExisting(); // re-render replaces the button, no need to un-set loading
 }
 
 /* ================= INIT ================= */

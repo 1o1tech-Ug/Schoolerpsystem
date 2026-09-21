@@ -10,8 +10,13 @@ from app.utils.utilities import _get_previous_balance
 from app.models.core import UserModule
 from app.extensions import db, limiter
 from app.models.people import Student, Staff
-from app.models.finance import Invoice, InvoiceItem, Payment, Receipt, Expenses, FeeStructure
-from app.models.academic_structure import Term, AcademicYear, AcademicConfig, Class
+from app.models.finance import (
+    Invoice, InvoiceItem, Payment, Receipt, Expenses,
+    StudentFeeStructure, StudentFeeItem,
+)
+from app.models.academic_structure import (
+    Term, AcademicYear, AcademicConfig, Class, Stream, StudentStream,
+)
 from app.models.user import User
 from app.core.rate_limit import (
     READ_LIMIT, WRITE_LIMIT, PAYMENT_LIMIT,
@@ -44,6 +49,39 @@ def _active_term(school_id):
     return Term.query.filter_by(school_id=school_id, status="active").first()
 
 
+def _resolve_target_term(school_id, year_name=None, term_name=None):
+    """
+    Resolves which Term the Fees Collection view should operate on.
+
+    - If year_name and/or term_name are given, resolves the best
+      matching Term for those filters — even if that term is locked or
+      long past, so staff can look up historical invoices without an
+      active term running. If only one of the two is given, the most
+      recently created matching term wins. Returns (None, error_tuple)
+      if filters were given but nothing matches.
+    - If neither is given, falls back to the school's active term.
+      Returns (None, None) when there simply is no active term — this
+      is a normal, expected state (not an error); the caller should
+      render an empty state rather than treat it as a failure.
+    """
+    if year_name or term_name:
+        query = Term.query.filter_by(school_id=school_id)
+        if term_name:
+            query = query.filter_by(name=term_name)
+        if year_name:
+            year = AcademicYear.query.filter_by(name=year_name).first()
+            if not year:
+                return None, (jsonify({"error": f"Academic year '{year_name}' not found"}), 404)
+            query = query.filter_by(academic_year_id=year.id)
+
+        term = query.order_by(Term.id.desc()).first()
+        if not term:
+            return None, (jsonify({"error": "No matching term found for the selected filters"}), 404)
+        return term, None
+
+    return _active_term(school_id), None
+
+
 def _generate_receipt_number(school_id):
     count = db.session.query(func.count(Receipt.id)).join(
         Payment, Payment.id == Receipt.payment_id
@@ -60,6 +98,36 @@ def _build_term_filter(school_id, year_name=None, term_name=None):
         if year:
             query = query.filter_by(academic_year_id=year.id)
     return [t.id for t in query.all()]
+
+
+def _stream_map_for_students(school_id, student_ids):
+    """
+    Returns {student_id: Stream}, based on the StudentStream join table —
+    the same source admin.py uses for a student's current stream. If a
+    student has more than one StudentStream row, the most recently
+    created one wins (StudentStream has no explicit "current" flag).
+    """
+    if not student_ids:
+        return {}
+
+    rows = (
+        StudentStream.query
+        .filter(
+            StudentStream.school_id == school_id,
+            StudentStream.student_id.in_(student_ids),
+        )
+        .order_by(StudentStream.id.desc())
+        .all()
+    )
+
+    stream_ids    = {r.stream_id for r in rows}
+    streams_by_id = {s.id: s for s in Stream.query.filter(Stream.id.in_(stream_ids)).all()}
+
+    result = {}
+    for r in rows:
+        if r.student_id not in result:  # keep first hit = most recent (desc order)
+            result[r.student_id] = streams_by_id.get(r.stream_id)
+    return result
 
 
 def _pagination_meta(page, per_page, total):
@@ -135,6 +203,42 @@ def get_classes():
 
 
 # =====================================================
+# FEES COLLECTION — YEARS / TERMS  (for the filter bar)
+# =====================================================
+
+@finance_bp.route("/finance/api/fees/terms")
+@jwt_required()
+@limiter.limit(READ_LIMIT)
+def get_fee_terms():
+    """
+    Returns every term for this school — active, locked, and draft alike
+    — paired with its academic year, so the Fees Collection page can
+    offer a Year + Term filter that reaches locked/past terms too, not
+    just whichever term is currently active.
+    """
+    guard = staff_required()
+    if guard:
+        return guard
+
+    school_id = get_school_id()
+    try:
+        terms = Term.query.filter_by(school_id=school_id).order_by(Term.id.desc()).all()
+        result = []
+        for t in terms:
+            year = AcademicYear.query.get(t.academic_year_id)
+            result.append({
+                "id":        t.id,
+                "name":      t.name,
+                "year_name": year.name if year else "",
+                "status":    t.status,
+            })
+        return jsonify({"terms": result})
+    except Exception:
+        logger.exception("get_fee_terms failed | school_id=%s", school_id)
+        return jsonify({"error": "Failed to load terms."}), 500
+
+
+# =====================================================
 # FEES COLLECTION — STUDENTS  (paginated)
 # =====================================================
 
@@ -149,14 +253,19 @@ def get_students_fees():
     school_id = get_school_id()
     search    = request.args.get("search", "").strip()
     class_id  = request.args.get("class_id", "")
+    year_name = request.args.get("year", "").strip()
+    term_name = request.args.get("term", "").strip()
     page      = max(1, int(request.args.get("page", 1)))
 
     try:
-        term = _active_term(school_id)
+        term, err = _resolve_target_term(school_id, year_name, term_name)
+        if err:
+            return err
+
         if not term:
             return jsonify({
                 "students":   [],
-                "message":    "No active term",
+                "message":    "No active term right now. Use the Year/Term filters above to view a specific term.",
                 "pagination": _pagination_meta(1, PER_PAGE, 0),
             })
 
@@ -178,6 +287,9 @@ def get_students_fees():
             (page - 1) * PER_PAGE
         ).limit(PER_PAGE).all()
 
+        student_ids         = [s.id for s in students_page]
+        streams_by_student  = _stream_map_for_students(school_id, student_ids)
+
         result = []
 
         for s in students_page:
@@ -187,19 +299,21 @@ def get_students_fees():
                 term_id=term.id,
             ).first()
 
-            # ── AUTO-GENERATE INVOICE IF MISSING ─────────────────
+            # ── AUTO-GENERATE INVOICE FROM PER-STUDENT FEE STRUCTURE ──
+            # Fee structures now live on StudentFeeStructure (assigned
+            # per student — see admin.py), not the old class-wide
+            # FeeStructure table.
             if not invoice:
-                fee = FeeStructure.query.filter_by(
+                student_fee = StudentFeeStructure.query.filter_by(
                     school_id=school_id,
-                    class_id=s.class_id,
+                    student_id=s.id,
                     term_id=term.id,
-                    student_type=getattr(s, "student_type", "day"),
                 ).first()
 
-                if fee:
+                if student_fee:
                     try:
                         carried_balance = _get_previous_balance(school_id, s.id, term.id)
-                        total_amount    = fee.total_amount + carried_balance
+                        total_amount    = student_fee.total_amount + carried_balance
 
                         invoice = Invoice(
                             school_id=school_id,
@@ -211,7 +325,10 @@ def get_students_fees():
                         db.session.add(invoice)
                         db.session.flush()
 
-                        for item in fee.items:
+                        fee_items = StudentFeeItem.query.filter_by(
+                            student_fee_structure_id=student_fee.id
+                        ).all()
+                        for item in fee_items:
                             db.session.add(InvoiceItem(
                                 invoice_id=invoice.id,
                                 fee_type=item.fee_type,
@@ -234,29 +351,196 @@ def get_students_fees():
                         )
                         invoice = None
 
+            cls    = Class.query.get(s.class_id)
+            stream = streams_by_student.get(s.id)
+
             if invoice:
-                cls = Class.query.get(s.class_id)
                 result.append({
-                    "student_id":   s.id,
-                    "invoice_id":   invoice.id,
-                    "student_code": s.student_code,
-                    "first_name":   s.first_name,
-                    "last_name":    s.last_name,
-                    "class_name":   cls.name if cls else "",
-                    "total_amount": invoice.total_amount,
-                    "amount_paid":  invoice.amount_paid,
-                    "balance":      invoice.balance,
+                    "student_id":        s.id,
+                    "invoice_id":        invoice.id,
+                    "student_code":      s.student_code,
+                    "first_name":        s.first_name,
+                    "last_name":         s.last_name,
+                    "class_name":        cls.name if cls else "",
+                    "stream_name":       stream.name if stream else "",
+                    "total_amount":      invoice.total_amount,
+                    "amount_paid":       invoice.amount_paid,
+                    "balance":           invoice.balance,
+                    "has_fee_structure": True,
+                })
+            else:
+                # No fee structure has ever been set for this student for
+                # this term — surface them clearly instead of silently
+                # dropping them from the list, and let staff enter an
+                # amount inline to generate their invoice on the spot.
+                result.append({
+                    "student_id":        s.id,
+                    "invoice_id":        None,
+                    "student_code":      s.student_code,
+                    "first_name":        s.first_name,
+                    "last_name":         s.last_name,
+                    "class_name":        cls.name if cls else "",
+                    "stream_name":       stream.name if stream else "",
+                    "total_amount":      None,
+                    "amount_paid":       None,
+                    "balance":           None,
+                    "has_fee_structure": False,
+                    "message": (
+                        "No fee structure set for this student — "
+                        "enter an amount to generate their invoice."
+                    ),
                 })
 
         return jsonify({
-            "students":   result,
-            "term":       term.name,
-            "pagination": _pagination_meta(page, PER_PAGE, total_students),
+            "students":    result,
+            "term":        term.name,
+            "term_id":     term.id,
+            "term_status": term.status,
+            "pagination":  _pagination_meta(page, PER_PAGE, total_students),
         })
 
     except Exception:
         logger.exception("get_students_fees failed | school_id=%s", school_id)
         return jsonify({"error": "Failed to load student fee data."}), 500
+
+
+# =====================================================
+# FEES COLLECTION — SET FEE FOR A STUDENT MISSING ONE
+# =====================================================
+
+@finance_bp.route("/finance/api/fees/set-student-fee", methods=["POST"])
+@jwt_required()
+@limiter.limit(WRITE_LIMIT)
+def set_student_fee():
+    """
+    Staff-entered fix for a student who has no StudentFeeStructure (and
+    therefore no invoice) for a given term — e.g. a student who joined
+    mid-term after fee structures were bulk-assigned. Upserts the
+    StudentFeeStructure/StudentFeeItem for (school, student, term), then
+    immediately (re)generates the matching Invoice/InvoiceItems so the
+    student shows up normally in Fees Collection without waiting for a
+    page reload's auto-generation step.
+
+    For data integrity, this is restricted to the school's currently
+    ACTIVE term only — generating or backdating an invoice into a locked
+    (closed) or draft (not-yet-started) term is refused. A locked term's
+    figures are meant to stay exactly as they were when it was closed;
+    only the live, active term can gain new invoices.
+    """
+    guard = staff_required()
+    if guard:
+        return guard
+
+    school_id  = get_school_id()
+    data       = request.get_json() or {}
+    student_id = data.get("student_id")
+    term_id    = data.get("term_id")
+
+    if not student_id or not term_id:
+        return jsonify({"error": "student_id and term_id are required"}), 400
+
+    try:
+        amount = float(data.get("amount", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "A valid amount is required"}), 400
+
+    if amount <= 0:
+        return jsonify({"error": "Amount must be greater than zero"}), 400
+
+    student = Student.query.filter_by(id=student_id, school_id=school_id).first()
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    term = Term.query.filter_by(id=term_id, school_id=school_id).first()
+    if not term:
+        return jsonify({"error": "Term not found"}), 404
+
+    if term.status != "active":
+        return jsonify({
+            "error": "Cannot generate an invoice for a locked or inactive term. "
+                     "Switch to the active term to add a fee for this student."
+        }), 400
+
+    try:
+        # ── Upsert the StudentFeeStructure (the durable fee record) ──
+        structure = StudentFeeStructure.query.filter_by(
+            school_id=school_id, student_id=student_id, term_id=term_id,
+        ).first()
+
+        if structure:
+            structure.total_amount = amount
+            StudentFeeItem.query.filter_by(
+                student_fee_structure_id=structure.id
+            ).delete()
+        else:
+            structure = StudentFeeStructure(
+                school_id=school_id,
+                student_id=student_id,
+                term_id=term_id,
+                academic_year_id=term.academic_year_id,
+                total_amount=amount,
+                status="draft",
+            )
+            db.session.add(structure)
+            db.session.flush()
+
+        db.session.add(StudentFeeItem(
+            student_fee_structure_id=structure.id,
+            fee_type="tuition",
+            amount=amount,
+        ))
+
+        # ── (Re)generate the Invoice from this fee structure so the
+        #    student is immediately billable — mirrors the auto-invoice
+        #    logic in get_students_fees(). ─────────────────────────────
+        carried_balance = _get_previous_balance(school_id, student_id, term_id)
+        total_amount    = amount + carried_balance
+
+        invoice = Invoice.query.filter_by(
+            school_id=school_id, student_id=student_id, term_id=term_id,
+        ).first()
+
+        if invoice:
+            invoice.total_amount = total_amount
+            InvoiceItem.query.filter_by(invoice_id=invoice.id).delete()
+        else:
+            invoice = Invoice(
+                school_id=school_id,
+                student_id=student_id,
+                term_id=term_id,
+                year_id=term.academic_year_id,
+                total_amount=total_amount,
+            )
+            db.session.add(invoice)
+            db.session.flush()
+
+        db.session.add(InvoiceItem(
+            invoice_id=invoice.id,
+            fee_type="tuition",
+            amount=amount,
+        ))
+        if carried_balance > 0:
+            db.session.add(InvoiceItem(
+                invoice_id=invoice.id,
+                fee_type="Carried Forward Balance",
+                amount=carried_balance,
+            ))
+
+        db.session.commit()
+
+        return jsonify({
+            "message":      "Fee amount saved and invoice generated",
+            "invoice_id":   invoice.id,
+            "total_amount": invoice.total_amount,
+        })
+
+    except Exception:
+        db.session.rollback()
+        logger.exception(
+            "set_student_fee failed | student_id=%s term_id=%s school_id=%s",
+            student_id, term_id, school_id,
+        )
+        return jsonify({"error": "Failed to save fee amount. Please try again."}), 500
 
 
 # =====================================================

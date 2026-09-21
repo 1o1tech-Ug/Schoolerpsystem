@@ -4,80 +4,71 @@
 
 {% block content %}
 
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@600;800&display=swap" rel="stylesheet">
-
 <style>
 
-/* ── RESET & BASE ── */
-.dc-wrap *{ box-sizing:border-box; }
-
 .dc-wrap{
-    font-family:'Syne', sans-serif;
-    color:#0f172a;
     max-width:860px;
 }
 
-/* ── PAGE HEADER ── */
 .dc-header{
-    margin-bottom:32px;
+    margin-bottom:28px;
 }
 
 .dc-header h1{
-    font-size:28px;
+    font-size:26px;
     font-weight:800;
-    letter-spacing:-0.5px;
-    line-height:1.2;
+    letter-spacing:-0.02em;
+    color:var(--ink-900);
 }
 
 .dc-header p{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    color:#64748b;
+    font-size:13px;
+    color:var(--ink-500);
     margin-top:6px;
+    font-weight:500;
 }
 
-/* ── SECTION CARDS ── */
 .dc-section{
-    background:#fff;
-    border:1px solid #e2e8f0;
-    border-radius:20px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-xl);
     overflow:hidden;
-    margin-bottom:24px;
-    box-shadow:0 4px 20px rgba(15,23,42,0.06);
+    margin-bottom:22px;
+    box-shadow:var(--shadow-sm);
 }
 
 .dc-section-head{
     padding:22px 26px 18px;
-    border-bottom:1px solid #f1f5f9;
+    border-bottom:1px solid var(--border-soft);
     display:flex;
     align-items:flex-start;
     gap:16px;
 }
 
 .dc-icon{
-    width:48px;
-    height:48px;
-    border-radius:14px;
+    width:46px;
+    height:46px;
+    border-radius:12px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:22px;
+    font-size:20px;
     flex-shrink:0;
 }
 
-.dc-icon.blue  { background:#eff6ff; }
-.dc-icon.red   { background:#fef2f2; }
+.dc-icon.blue{ background:var(--brand-50); }
+.dc-icon.red{ background:var(--danger-bg); }
 
 .dc-section-head h2{
-    font-size:17px;
+    font-size:16.5px;
     font-weight:800;
+    color:var(--ink-900);
     margin-bottom:3px;
 }
 
 .dc-section-head p{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11.5px;
-    color:#64748b;
+    font-size:12.5px;
+    color:var(--ink-500);
     line-height:1.6;
 }
 
@@ -85,7 +76,6 @@
     padding:22px 26px;
 }
 
-/* ── EXPORT CHECKLIST ── */
 .export-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
@@ -98,107 +88,103 @@
     align-items:center;
     gap:10px;
     padding:10px 14px;
-    border:1px solid #e2e8f0;
-    border-radius:10px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-md);
     cursor:pointer;
-    transition:.15s;
+    transition:0.15s;
     font-size:13.5px;
     font-weight:600;
+    color:var(--ink-800);
     user-select:none;
 }
 
 .export-item:hover{
-    border-color:#94a3b8;
-    background:#f8fafc;
+    border-color:var(--brand-500);
+    background:var(--brand-50);
 }
 
 .export-item input[type=checkbox]{
-    accent-color:#0f172a;
+    accent-color:var(--brand-600);
     width:16px;
     height:16px;
     cursor:pointer;
 }
 
 .export-item.checked{
-    border-color:#0f172a;
-    background:#f8fafc;
+    border-color:var(--brand-600);
+    background:var(--brand-50);
 }
 
-/* ── INCLUDE FILES TOGGLE ── */
 .files-toggle{
     display:flex;
     align-items:center;
     gap:12px;
     padding:14px 16px;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    border-radius:12px;
+    background:var(--surface-soft);
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
     margin-bottom:20px;
     font-size:13.5px;
     font-weight:600;
+    color:var(--ink-800);
     cursor:pointer;
 }
 
 .files-toggle input[type=checkbox]{
-    accent-color:#0f172a;
+    accent-color:var(--brand-600);
     width:17px;
     height:17px;
 }
 
 .files-note{
-    font-family:'JetBrains Mono', monospace;
     font-size:11px;
-    color:#94a3b8;
+    color:var(--ink-400);
     margin-left:auto;
+    font-weight:500;
 }
 
-/* ── BUTTONS ── */
 .dc-btn{
     display:inline-flex;
     align-items:center;
     gap:8px;
-    padding:13px 24px;
+    padding:13px 22px;
     border:none;
-    border-radius:12px;
-    font-family:'Syne', sans-serif;
+    border-radius:var(--radius-sm);
     font-size:14px;
     font-weight:700;
     cursor:pointer;
-    transition:.2s;
+    transition:0.15s;
+    font-family:inherit;
 }
 
 .dc-btn:disabled{
-    opacity:.5;
+    opacity:0.6;
     cursor:not-allowed;
 }
 
 .btn-export{
-    background:#0f172a;
-    color:#fff;
+    background:linear-gradient(135deg, var(--brand-600), var(--brand-700));
+    color:white;
+    box-shadow:var(--shadow-brand);
 }
 
 .btn-export:hover:not(:disabled){
-    background:#1e293b;
-    transform:translateY(-1px);
-    box-shadow:0 6px 20px rgba(15,23,42,0.2);
+    filter:brightness(1.06);
 }
 
 .btn-reset{
-    background:#dc2626;
-    color:#fff;
+    background:var(--danger-solid);
+    color:white;
 }
 
 .btn-reset:hover:not(:disabled){
     background:#b91c1c;
-    transform:translateY(-1px);
-    box-shadow:0 6px 20px rgba(220,38,38,0.25);
 }
 
-/* ── PROGRESS BAR ── */
 .progress-wrap{
     display:none;
     margin-top:16px;
-    background:#f1f5f9;
+    background:var(--surface-soft);
     border-radius:99px;
     height:8px;
     overflow:hidden;
@@ -206,21 +192,20 @@
 
 .progress-bar{
     height:100%;
-    background:linear-gradient(90deg,#0f172a,#2563eb);
+    background:linear-gradient(90deg, var(--brand-600), var(--brand-500));
     border-radius:99px;
     width:0%;
-    transition:width .4s ease;
+    transition:width 0.4s ease;
 }
 
 .progress-label{
-    font-family:'JetBrains Mono', monospace;
-    font-size:11px;
-    color:#64748b;
+    font-size:11.5px;
+    color:var(--ink-500);
     margin-top:8px;
     display:none;
+    font-weight:500;
 }
 
-/* ── RESET DANGER ZONE ── */
 .danger-checklist{
     display:flex;
     flex-direction:column;
@@ -232,16 +217,16 @@
     display:flex;
     align-items:center;
     gap:12px;
-    font-size:13.5px;
-    font-family:'JetBrains Mono', monospace;
-    color:#64748b;
+    font-size:13px;
+    color:var(--ink-500);
+    font-weight:500;
 }
 
 .danger-item .dot{
-    width:8px;
-    height:8px;
+    width:7px;
+    height:7px;
     border-radius:50%;
-    background:#dc2626;
+    background:var(--danger-solid);
     flex-shrink:0;
 }
 
@@ -251,54 +236,55 @@
 
 .confirm-input-wrap label{
     display:block;
-    font-size:12.5px;
-    font-family:'JetBrains Mono', monospace;
-    color:#64748b;
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink-500);
     margin-bottom:8px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
 }
 
 .confirm-input-wrap label span{
-    font-weight:700;
-    color:#dc2626;
+    font-weight:800;
+    color:var(--danger-solid);
 }
 
 .confirm-input{
     width:100%;
     max-width:380px;
     padding:12px 16px;
-    border:2px solid #e2e8f0;
-    border-radius:10px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
+    font-size:13.5px;
     outline:none;
-    transition:.2s;
+    transition:0.15s;
 }
 
 .confirm-input:focus{
-    border-color:#dc2626;
+    border-color:var(--danger-solid);
+    box-shadow:0 0 0 4px var(--danger-bg);
 }
 
 .confirm-input.valid{
-    border-color:#16a34a;
-    background:#f0fdf4;
+    border-color:var(--success-dot);
+    background:var(--success-bg);
 }
 
-/* ── STATUS TOAST ── */
 .dc-toast{
     position:fixed;
     bottom:28px;
     right:28px;
     padding:14px 22px;
-    border-radius:12px;
+    border-radius:var(--radius-md);
     font-size:14px;
     font-weight:700;
-    font-family:'Syne', sans-serif;
-    color:#fff;
+    color:white;
     opacity:0;
     transform:translateY(12px);
-    transition:.3s ease;
-    z-index:9999;
+    transition:0.3s ease;
+    z-index:var(--z-modal);
     pointer-events:none;
+    box-shadow:var(--shadow-lg);
 }
 
 .dc-toast.show{
@@ -306,14 +292,13 @@
     transform:translateY(0);
 }
 
-.dc-toast.success{ background:#16a34a; }
-.dc-toast.error  { background:#dc2626; }
-.dc-toast.info   { background:#0f172a; }
+.dc-toast.success{ background:var(--success-dot); }
+.dc-toast.error{ background:var(--danger-solid); }
+.dc-toast.info{ background:var(--ink-900); }
 
-/* ── DIVIDER ── */
 .dc-divider{
     height:1px;
-    background:#f1f5f9;
+    background:var(--border-soft);
     margin:0 -26px 22px;
 }
 
@@ -326,31 +311,27 @@
 
 <div class="dc-wrap">
 
-    <!-- PAGE HEADER -->
     <div class="dc-header">
         <h1>Data Control</h1>
-        <p>// export your school data or perform a factory reset</p>
+        <p>Export your school data or perform a factory reset</p>
     </div>
 
-
-    <!-- ══════════════════════════════════════════
-         SECTION 1 — EXPORT
-    ═══════════════════════════════════════════ -->
+    <!-- ══════════ EXPORT ══════════ -->
     <div class="dc-section">
 
         <div class="dc-section-head">
             <div class="dc-icon blue">📦</div>
             <div>
                 <h2>Export School Data</h2>
-                <p>Download a ZIP archive containing CSV exports of your selected<br>
+                <p>Download a ZIP archive containing CSV exports of your selected
                    data tables and optionally all uploaded files (photos, documents).</p>
             </div>
         </div>
 
         <div class="dc-section-body">
 
-            <p style="font-size:13px;color:#64748b;margin-bottom:14px;font-family:'JetBrains Mono',monospace;">
-                SELECT TABLES TO INCLUDE:
+            <p style="font-size:12.5px;color:var(--ink-500);margin-bottom:14px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">
+                Select tables to include
             </p>
 
             <div class="export-grid" id="exportGrid">
@@ -406,25 +387,22 @@
         </div>
     </div>
 
-
-    <!-- ══════════════════════════════════════════
-         SECTION 2 — FACTORY RESET
-    ═══════════════════════════════════════════ -->
+    <!-- ══════════ FACTORY RESET ══════════ -->
     <div class="dc-section">
 
         <div class="dc-section-head">
             <div class="dc-icon red">⚠️</div>
             <div>
                 <h2>Factory Reset</h2>
-                <p>Permanently delete all school data. Your admin account will be<br>
-                   preserved. <strong style="color:#dc2626">This action cannot be undone.</strong></p>
+                <p>Permanently delete all school data. Your admin account will be
+                   preserved. <strong style="color:var(--danger-solid)">This action cannot be undone.</strong></p>
             </div>
         </div>
 
         <div class="dc-section-body">
 
-            <p style="font-size:12px;font-family:'JetBrains Mono',monospace;color:#64748b;margin-bottom:14px;">
-                THE FOLLOWING WILL BE PERMANENTLY DELETED:
+            <p style="font-size:12px;color:var(--ink-500);margin-bottom:14px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">
+                The following will be permanently deleted
             </p>
 
             <div class="danger-checklist">
@@ -464,20 +442,16 @@
 
 </div>
 
-<!-- TOAST -->
 <div class="dc-toast" id="toast"></div>
 
 <script>
 
-/* ── CHECKBOX STYLING ─────────────────────────── */
 document.querySelectorAll(".export-item input[type=checkbox]").forEach(cb => {
     cb.addEventListener("change", () => {
         cb.closest(".export-item").classList.toggle("checked", cb.checked);
     });
 });
 
-
-/* ── CONFIRM INPUT ────────────────────────────── */
 function checkResetConfirm(){
     const val = document.getElementById("resetConfirm").value;
     const btn = document.getElementById("resetBtn");
@@ -487,8 +461,6 @@ function checkResetConfirm(){
     inp.classList.toggle("valid", match);
 }
 
-
-/* ── TOAST ────────────────────────────────────── */
 function showToast(msg, type = "info"){
     const t = document.getElementById("toast");
     t.textContent = msg;
@@ -496,8 +468,6 @@ function showToast(msg, type = "info"){
     setTimeout(() => { t.classList.remove("show"); }, 3800);
 }
 
-
-/* ── EXPORT ───────────────────────────────────── */
 async function startExport(){
 
     const tables = [...document.querySelectorAll(".export-grid input:checked")]
@@ -515,12 +485,10 @@ async function startExport(){
     const bar      = document.getElementById("exportBar");
     const label    = document.getElementById("exportLabel");
 
-    btn.disabled      = true;
-    btn.textContent   = "⏳ Preparing...";
+    setButtonLoading(btn, true, "Preparing...");
     progress.style.display = "block";
     label.style.display    = "block";
 
-    // animate bar while waiting
     let pct = 0;
     const ticker = setInterval(() => {
         pct = Math.min(pct + Math.random() * 12, 88);
@@ -542,9 +510,8 @@ async function startExport(){
         }
 
         bar.style.width = "100%";
-        label.textContent = "✅ Export ready — downloading...";
+        label.textContent = "Export ready — downloading...";
 
-        // trigger download
         const blob = await res.blob();
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement("a");
@@ -558,11 +525,10 @@ async function startExport(){
     } catch(err){
         clearInterval(ticker);
         bar.style.width  = "0%";
-        label.textContent = "❌ " + err.message;
+        label.textContent = err.message;
         showToast(err.message, "error");
     } finally {
-        btn.disabled    = false;
-        btn.textContent = "⬇ Download ZIP";
+        setButtonLoading(btn, false);
         setTimeout(() => {
             progress.style.display = "none";
             label.style.display    = "none";
@@ -571,14 +537,12 @@ async function startExport(){
     }
 }
 
-
-/* ── FACTORY RESET ────────────────────────────── */
 async function startReset(){
 
     if(document.getElementById("resetConfirm").value !== "RESET MY SCHOOL") return;
 
     const confirmed = confirm(
-        "⚠️ FINAL WARNING\n\n" +
+        "FINAL WARNING\n\n" +
         "This will permanently delete ALL school data.\n" +
         "Your admin account will be the only thing kept.\n\n" +
         "Are you absolutely sure?"
@@ -587,8 +551,7 @@ async function startReset(){
     if(!confirmed) return;
 
     const btn = document.getElementById("resetBtn");
-    btn.disabled    = true;
-    btn.textContent = "⏳ Resetting...";
+    setButtonLoading(btn, true, "Resetting...");
 
     try {
         const res  = await fetch("/admin/api/data-control/reset", { method: "POST" });
@@ -604,8 +567,7 @@ async function startReset(){
 
     } catch(err){
         showToast(err.message, "error");
-        btn.disabled    = false;
-        btn.textContent = "🗑 Factory Reset";
+        setButtonLoading(btn, false);
     }
 }
 
