@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>1O1 School Management System — Login</title>
 
   <style>
     /* ── Reset & base ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -16,14 +18,46 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      padding: 24px 16px;
+      padding-top: calc(24px + env(safe-area-inset-top, 0px));
+      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
       background: linear-gradient(135deg, #0d1b2a 0%, #1a3a5c 60%, #1e5fa8 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 14s ease infinite;
+      overflow-x: hidden;
     }
+
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translateX(-1px); }
+      20%, 80% { transform: translateX(2px); }
+      30%, 50%, 70% { transform: translateX(-4px); }
+      40%, 60% { transform: translateX(4px); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Brand header ─────────────────────────────────────────── */
     .brand {
       text-align: center;
       margin-bottom: 28px;
       color: #fff;
+      animation: fadeSlideUp .6s ease both;
     }
 
     .brand-logo {
@@ -36,6 +70,12 @@
       background: linear-gradient(135deg, #2d6cdf, #1e9af3);
       margin-bottom: 12px;
       box-shadow: 0 4px 18px rgba(29,106,223,.45);
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+
+    .brand-logo:hover {
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 8px 26px rgba(29,106,223,.55);
     }
 
     .brand-logo svg {
@@ -65,15 +105,19 @@
     /* ── Card ─────────────────────────────────────────────────── */
     .card {
       width: 420px;
+      max-width: 100%;
       background: #fff;
       border-radius: 18px;
       box-shadow: 0 20px 60px rgba(0,0,0,.3);
       overflow: hidden;
+      animation: fadeSlideUp .6s .1s ease both;
+      transition: box-shadow .3s ease;
     }
 
     /* ── Tabs ─────────────────────────────────────────────────── */
     .tabs {
       display: flex;
+      position: relative;
     }
 
     .tab {
@@ -86,7 +130,7 @@
       background: #eef2f9;
       color: #5a6a85;
       border-bottom: 3px solid transparent;
-      transition: background .2s, color .2s, border-color .2s;
+      transition: background .2s ease, color .2s ease, border-color .2s ease;
       user-select: none;
     }
 
@@ -104,7 +148,10 @@
       padding: 32px 36px 28px;
     }
 
-    .panel.active { display: block; }
+    .panel.active {
+      display: block;
+      animation: fadeIn .35s ease both;
+    }
 
     .panel h3 {
       font-size: 1.15rem;
@@ -136,7 +183,7 @@
       font-size: .95rem;
       color: #1a2740;
       background: #f7f9fc;
-      transition: border-color .2s, box-shadow .2s;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
       outline: none;
     }
 
@@ -146,11 +193,59 @@
       box-shadow: 0 0 0 3px rgba(45,108,223,.12);
     }
 
+    /* ── Password field with show/hide toggle ────────────────── */
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 42px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 6px;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      color: #7d8ba6;
+      transition: color .15s ease, background .15s ease;
+      padding: 0;
+    }
+
+    .toggle-password:hover {
+      color: #2d6cdf;
+      background: rgba(45,108,223,.08);
+    }
+
+    .toggle-password svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .toggle-password .icon-eye-off { display: none; }
+    .toggle-password.is-visible .icon-eye     { display: none; }
+    .toggle-password.is-visible .icon-eye-off { display: flex; }
+
     /* ── Button ───────────────────────────────────────────────── */
     .btn {
       width: 100%;
       padding: 13px;
       background: linear-gradient(90deg, #2d6cdf, #1e9af3);
+      background-size: 160% 160%;
       color: #fff;
       border: none;
       border-radius: 9px;
@@ -158,39 +253,60 @@
       font-weight: 700;
       cursor: pointer;
       margin-top: 8px;
-      transition: opacity .2s, transform .1s;
+      transition: opacity .2s ease, transform .1s ease, box-shadow .2s ease, background-position .3s ease;
       letter-spacing: .3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
-    .btn:hover  { opacity: .92; }
-    .btn:active { transform: scale(.98); }
+    .btn:hover:not(:disabled) {
+      opacity: .95;
+      background-position: 100% 0;
+      box-shadow: 0 6px 18px rgba(29,106,223,.35);
+    }
+
+    .btn:active:not(:disabled) { transform: scale(.98); }
 
     .btn:disabled {
-      opacity: .65;
+      opacity: .7;
       cursor: not-allowed;
     }
 
     /* ── Messages ─────────────────────────────────────────────── */
     .msg {
-      min-height: 22px;
+      min-height: 0;
       font-size: .86rem;
-      margin-bottom: 10px;
+      margin-bottom: 0;
       border-radius: 7px;
       padding: 0;
-      transition: all .2s;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: all .25s ease;
+    }
+
+    .msg.error,
+    .msg.success {
+      max-height: 60px;
+      opacity: 1;
+      transform: translateY(0);
+      margin-bottom: 10px;
+      padding: 9px 12px;
     }
 
     .msg.error {
       color: #c0392b;
       background: #fdf0ee;
-      padding: 9px 12px;
       border-left: 3px solid #e74c3c;
+      animation: shake .35s ease;
     }
 
     .msg.success {
       color: #1e7e34;
       background: #edfbf1;
-      padding: 9px 12px;
       border-left: 3px solid #28a745;
     }
 
@@ -200,11 +316,18 @@
       text-align: center;
       font-size: .78rem;
       color: #7090b8;
+      animation: fadeIn .8s .2s ease both;
     }
 
     .footer a {
       color: #4fa3f7;
       text-decoration: none;
+      transition: color .15s ease;
+    }
+
+    .footer a:hover {
+      color: #fff;
+      text-decoration: underline;
     }
 
     /* ── Spinner inside button ────────────────────────────────── */
@@ -216,11 +339,42 @@
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin .6s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
+      flex-shrink: 0;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      body { padding: 16px 12px; }
+
+      .brand-logo { width: 56px; height: 56px; border-radius: 14px; }
+      .brand-logo svg { width: 30px; height: 30px; }
+      .brand-name { font-size: 1.3rem; }
+      .brand-tagline { font-size: .76rem; }
+
+      .card { border-radius: 14px; }
+
+      .panel { padding: 24px 20px 22px; }
+      .panel h3 { font-size: 1.05rem; margin-bottom: 18px; }
+
+      .tab { padding: 13px; font-size: .87rem; }
+
+      .field input { padding: 10px 12px; font-size: .92rem; }
+      .password-wrap input { padding-right: 40px; }
+
+      .btn { padding: 12px; font-size: .95rem; }
+    }
+
+    @media (max-width: 340px) {
+      .brand-name { font-size: 1.15rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
   </style>
 </head>
 
@@ -262,7 +416,13 @@
       </div>
       <div class="field">
         <label>Password</label>
-        <input id="staff_password" type="password" placeholder="Enter your password" autocomplete="current-password" />
+        <div class="password-wrap">
+          <input id="staff_password" type="password" placeholder="Enter your password" autocomplete="current-password" />
+          <button type="button" class="toggle-password" id="staff_toggle" onclick="togglePassword('staff_password','staff_toggle')" aria-label="Show password">
+            <svg class="icon-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="icon-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.6 20.6 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a20.7 20.7 0 0 1-2.29 3.36M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
       </div>
 
       <button class="btn" id="staff_btn" onclick="loginStaff()">Login</button>
@@ -284,7 +444,13 @@
       </div>
       <div class="field">
         <label>Password</label>
-        <input id="student_password" type="password" placeholder="Enter your password" autocomplete="current-password" />
+        <div class="password-wrap">
+          <input id="student_password" type="password" placeholder="Enter your password" autocomplete="current-password" />
+          <button type="button" class="toggle-password" id="student_toggle" onclick="togglePassword('student_password','student_toggle')" aria-label="Show password">
+            <svg class="icon-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="icon-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.6 20.6 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a20.7 20.7 0 0 1-2.29 3.36M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
       </div>
 
       <button class="btn" id="student_btn" onclick="loginStudent()">Login</button>
@@ -306,6 +472,17 @@
     });
   }
 
+  /* ── Password show/hide toggle ──────────────────────────── */
+  function togglePassword(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn   = document.getElementById(btnId);
+    const nowVisible = input.type === 'password';
+
+    input.type = nowVisible ? 'text' : 'password';
+    btn.classList.toggle('is-visible', nowVisible);
+    btn.setAttribute('aria-label', nowVisible ? 'Hide password' : 'Show password');
+  }
+
   /* ── Message helper ─────────────────────────────────────── */
   function showMessage(id, msg, type) {
     const el = document.getElementById(id);
@@ -323,11 +500,12 @@
   function setLoading(btnId, loading) {
     const btn = document.getElementById(btnId);
     if (loading) {
-      btn.disabled   = true;
-      btn.innerHTML  = '<span class="spinner"></span>Signing in…';
+      btn.dataset.originalText = btn.textContent;
+      btn.disabled  = true;
+      btn.innerHTML = '<span class="spinner"></span><span>Signing in…</span>';
     } else {
       btn.disabled   = false;
-      btn.textContent = 'Login';
+      btn.textContent = btn.dataset.originalText || 'Login';
     }
   }
 
@@ -363,11 +541,14 @@
 
       showMessage('staff_msg', 'Login successful — redirecting…', 'success');
       setTimeout(() => { window.location.href = data.redirect; }, 600);
+      return; // keep the button in its loading state through the redirect
 
     } catch (err) {
       showMessage('staff_msg', 'Network error. Please try again.', 'error');
     } finally {
-      setLoading('staff_btn', false);
+      if (!document.getElementById('staff_msg').classList.contains('success')) {
+        setLoading('staff_btn', false);
+      }
     }
   }
 
@@ -407,11 +588,14 @@
 
       showMessage('student_msg', 'Login successful — redirecting…', 'success');
       setTimeout(() => { window.location.href = data.redirect || '/protected'; }, 600);
+      return; // keep the button in its loading state through the redirect
 
     } catch (err) {
       showMessage('student_msg', 'Network error. Please try again.', 'error');
     } finally {
-      setLoading('student_btn', false);
+      if (!document.getElementById('student_msg').classList.contains('success')) {
+        setLoading('student_btn', false);
+      }
     }
   }
 

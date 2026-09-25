@@ -34,7 +34,12 @@
 
 body { background: var(--cream); font-family: 'DM Sans', sans-serif; color: var(--gray-800); }
 
-.reg-wrapper { max-width: 960px; margin: auto; padding: 36px 20px 60px; }
+.reg-wrapper { max-width: 960px; margin: auto; padding: 36px 20px 60px; animation: fadeInUp .4s ease; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 .page-header {
   display: flex; justify-content: space-between; align-items: flex-end;
@@ -55,9 +60,10 @@ body { background: var(--cream); font-family: 'DM Sans', sans-serif; color: var(
   background: var(--navy-light); color: white; border: none;
   padding: 10px 20px; border-radius: var(--radius-sm); cursor: pointer;
   font-weight: 600; font-size: .85rem; display: flex; align-items: center; gap: 8px;
-  transition: var(--transition);
+  transition: var(--transition), transform .12s ease;
 }
-.bulk-btn:hover { background: var(--navy); }
+.bulk-btn:hover { background: var(--navy); transform: translateY(-1px); }
+.bulk-btn:active { transform: scale(.96); }
 
 .form-container { background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); }
 
@@ -140,20 +146,25 @@ textarea { resize: vertical; min-height: 90px; }
 .document-row {
   display: grid; grid-template-columns: 1fr 1fr auto;
   gap: 12px; margin-bottom: 12px; align-items: center;
+  animation: fadeInUp .25s ease;
 }
 
 .doc-remove {
   background: var(--error); color: white; border: none;
   border-radius: 6px; padding: 10px 12px; cursor: pointer;
+  transition: var(--transition), transform .12s ease;
 }
+.doc-remove:hover { filter: brightness(1.1); }
+.doc-remove:active { transform: scale(.9); }
 
 .add-doc-btn {
   background: transparent; border: 1.5px dashed var(--navy-light);
   color: var(--navy-light); padding: 9px 18px;
   border-radius: var(--radius-sm); cursor: pointer; font-family: 'DM Sans', sans-serif;
-  transition: var(--transition);
+  transition: var(--transition), transform .12s ease;
 }
 .add-doc-btn:hover { background: rgba(42,74,127,.06); }
+.add-doc-btn:active { transform: scale(.96); }
 
 .existing-documents { margin-top: 24px; border-top: 1px solid var(--gray-100); padding-top: 20px; }
 .existing-documents h4 { margin-bottom: 14px; color: var(--navy); }
@@ -162,13 +173,20 @@ textarea { resize: vertical; min-height: 90px; }
   display: flex; justify-content: space-between; align-items: center;
   gap: 12px; background: var(--gray-50); border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 10px;
+  transition: opacity .2s ease, transform .2s ease;
 }
+.existing-doc.removing { opacity: 0; transform: translateX(12px); }
 .existing-doc a { color: var(--navy-light); text-decoration: none; font-size: .88rem; }
 
 .delete-doc-btn {
   background: var(--error); color: white; border: none;
   border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: .75rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-width: 58px; transition: var(--transition), transform .12s ease;
 }
+.delete-doc-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.delete-doc-btn:active:not(:disabled) { transform: scale(.94); }
+.delete-doc-btn:disabled { opacity: .75; cursor: not-allowed; }
 
 /* ── SUBMIT ── */
 .submit-bar {
@@ -181,9 +199,10 @@ textarea { resize: vertical; min-height: 90px; }
   background: var(--navy); color: white; border: none;
   padding: 12px 32px; border-radius: var(--radius-sm);
   cursor: pointer; font-weight: 600; font-family: 'DM Sans', sans-serif;
-  display: flex; align-items: center; gap: 10px; transition: var(--transition);
+  display: flex; align-items: center; gap: 10px; transition: var(--transition), transform .12s ease;
 }
-.submit-btn:hover:not(:disabled) { background: var(--navy-mid); }
+.submit-btn:hover:not(:disabled) { background: var(--navy-mid); transform: translateY(-1px); }
+.submit-btn:active:not(:disabled) { transform: scale(.97); }
 .submit-btn:disabled { opacity: .7; cursor: not-allowed; }
 
 .spinner {
@@ -192,6 +211,19 @@ textarea { resize: vertical; min-height: 90px; }
   border-radius: 50%; animation: spin .8s linear infinite; display: none;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── GENERIC INLINE SPINNER (small, for buttons that don't carry a
+   pre-built <span class="spinner"> element, e.g. delete-doc-btn and
+   the bulk-upload drop zone status) ── */
+.btn-inline-spinner {
+  display: inline-block; width: 12px; height: 12px;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+  border-radius: 50%; animation: spin .7s linear infinite;
+  vertical-align: middle;
+}
+.btn-inline-spinner.dark {
+  border: 2px solid rgba(42,74,127,.25); border-top-color: var(--navy-light);
+}
 
 /* ── TOAST ── */
 .toast {
@@ -230,9 +262,10 @@ textarea { resize: vertical; min-height: 90px; }
 .modal-close {
   width: 32px; height: 32px; border: none; background: var(--gray-100);
   border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex;
-  align-items: center; justify-content: center; transition: var(--transition);
+  align-items: center; justify-content: center; transition: var(--transition), transform .12s ease;
 }
 .modal-close:hover { background: var(--gray-200); }
+.modal-close:active { transform: scale(.88); }
 
 .modal-body { padding: 24px 28px; }
 
@@ -325,18 +358,19 @@ textarea { resize: vertical; min-height: 90px; }
 .drop-zone small { color: var(--gray-400); font-size: .78rem; }
 .drop-zone input[type="file"] { display: none; }
 
-.dz-chosen { margin-top: 10px; font-size: .82rem; color: var(--navy-light); font-weight: 600; }
+.dz-chosen { margin-top: 10px; font-size: .82rem; color: var(--navy-light); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 /* Template download */
 .template-link {
   display: inline-flex; align-items: center; gap: 6px;
   color: var(--navy-light); font-size: .82rem; text-decoration: none;
-  margin-top: 12px; font-weight: 600;
+  margin-top: 12px; font-weight: 600; transition: transform .12s ease;
 }
 .template-link:hover { text-decoration: underline; }
+.template-link:active { transform: scale(.96); }
 
 /* Validation table */
-.validation-wrap { margin-top: 24px; }
+.validation-wrap { margin-top: 24px; animation: fadeInUp .3s ease; }
 .validation-wrap h4 { font-family: 'Lora', serif; color: var(--navy); margin-bottom: 12px; font-size: .95rem; }
 
 .val-summary { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -362,17 +396,19 @@ textarea { resize: vertical; min-height: 90px; }
 .btn-secondary {
   background: var(--gray-100); color: var(--gray-800); border: none;
   padding: 10px 22px; border-radius: var(--radius-sm); cursor: pointer;
-  font-weight: 600; font-family: 'DM Sans', sans-serif; transition: var(--transition);
+  font-weight: 600; font-family: 'DM Sans', sans-serif; transition: var(--transition), transform .12s ease;
 }
 .btn-secondary:hover { background: var(--gray-200); }
+.btn-secondary:active { transform: scale(.96); }
 
 .btn-primary {
   background: var(--navy); color: white; border: none;
   padding: 10px 22px; border-radius: var(--radius-sm); cursor: pointer;
-  font-weight: 600; font-family: 'DM Sans', sans-serif; transition: var(--transition);
+  font-weight: 600; font-family: 'DM Sans', sans-serif; transition: var(--transition), transform .12s ease;
   display: flex; align-items: center; gap: 8px;
 }
 .btn-primary:hover:not(:disabled) { background: var(--navy-mid); }
+.btn-primary:active:not(:disabled) { transform: scale(.97); }
 .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
 
 .progress-bar-wrap {
@@ -794,14 +830,35 @@ function setLoading(loading = true) {
   document.getElementById("spinner").style.display = loading ? "inline-block" : "none";
 }
 
-/* ── DELETE DOCUMENT ── */
+/* ── DELETE DOCUMENT ──
+   [FIX] Button now shows an inline spinner and disables itself for
+   the duration of the request, instead of appearing to do nothing
+   until the fetch resolves. On failure the button's original label
+   is restored so the user can retry. */
 async function deleteDocument(docId, btn) {
   if (!confirm("Delete this document?")) return;
+
+  const originalLabel = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="btn-inline-spinner"></span> Deleting`;
+
   try {
     const res = await fetch(`/api/students/document/${docId}`, { method: "DELETE" });
-    if (res.ok) { btn.parentElement.remove(); showToast("Document deleted"); }
-    else         showToast("Failed to delete document", "error");
-  } catch (err) { showToast(err.message, "error"); }
+    if (res.ok) {
+      const row = btn.parentElement;
+      row.classList.add("removing");
+      setTimeout(() => row.remove(), 200);
+      showToast("Document deleted");
+    } else {
+      showToast("Failed to delete document", "error");
+      btn.disabled = false;
+      btn.innerHTML = originalLabel;
+    }
+  } catch (err) {
+    showToast(err.message, "error");
+    btn.disabled = false;
+    btn.innerHTML = originalLabel;
+  }
 }
 
 /* ── SUBMIT ── */
@@ -999,10 +1056,18 @@ function handleFile(file) {
   if (file.size > 5 * 1024 * 1024) {
     showToast("File exceeds 5 MB limit", "error"); return;
   }
-  document.getElementById("dzChosen").textContent = `✓ ${file.name}`;
+  const dzChosen = document.getElementById("dzChosen");
   if (name.endsWith(".csv")) {
+    dzChosen.innerHTML = `<span class="btn-inline-spinner dark"></span> Reading ${file.name}...`;
     const reader = new FileReader();
-    reader.onload = ev => parseAndValidate(ev.target.result);
+    reader.onload = ev => {
+      parseAndValidate(ev.target.result);
+      dzChosen.textContent = `✓ ${file.name}`;
+    };
+    reader.onerror = () => {
+      showToast("Could not read file", "error");
+      dzChosen.textContent = "";
+    };
     reader.readAsText(file);
   } else {
     handleExcelFile(file);
@@ -1010,6 +1075,8 @@ function handleFile(file) {
 }
 
 async function handleExcelFile(file) {
+  const dzChosen = document.getElementById("dzChosen");
+  dzChosen.innerHTML = `<span class="btn-inline-spinner dark"></span> Parsing ${file.name}...`;
   try {
     const XLSX = await loadXLSX();
     const reader = new FileReader();
@@ -1018,7 +1085,7 @@ async function handleExcelFile(file) {
         const wb = XLSX.read(ev.target.result, { type: "array", cellDates: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-        if (rows.length < 2) { showToast("Spreadsheet has no data rows", "error"); return; }
+        if (rows.length < 2) { showToast("Spreadsheet has no data rows", "error"); dzChosen.textContent = ""; return; }
         const headers = rows[0].map(h => String(h).trim().toLowerCase().replace(/\s+/g, "_"));
         const csvLines = rows.slice(1).map(cols =>
           headers.map((_, i) => {
@@ -1029,10 +1096,21 @@ async function handleExcelFile(file) {
           }).join(",")
         );
         parseAndValidate([headers.join(","), ...csvLines].join("\n"));
-      } catch (err) { showToast("Could not read spreadsheet: " + err.message, "error"); }
+        dzChosen.textContent = `✓ ${file.name}`;
+      } catch (err) {
+        showToast("Could not read spreadsheet: " + err.message, "error");
+        dzChosen.textContent = "";
+      }
+    };
+    reader.onerror = () => {
+      showToast("Could not read file", "error");
+      dzChosen.textContent = "";
     };
     reader.readAsArrayBuffer(file);
-  } catch (err) { showToast("Failed to load Excel parser: " + err.message, "error"); }
+  } catch (err) {
+    showToast("Failed to load Excel parser: " + err.message, "error");
+    dzChosen.textContent = "";
+  }
 }
 
 /* ── FLEXIBLE DATE PARSING ──

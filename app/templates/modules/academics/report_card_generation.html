@@ -51,6 +51,60 @@
 }
 
 /* ════════════════════════════════════════════
+   ANIMATIONS
+════════════════════════════════════════════ */
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rc-page > .school-type-notice { animation: cardFadeIn .35s ease both; }
+.rc-page > .rc-card            { animation: cardFadeIn .4s ease both; }
+.rc-page > .rc-card:nth-of-type(2) { animation-delay: .06s; }
+
+@keyframes rowFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rc-table tbody tr { animation: rowFadeIn .22s ease both; }
+.rc-table tbody tr:nth-child(1) { animation-delay: .01s; }
+.rc-table tbody tr:nth-child(2) { animation-delay: .03s; }
+.rc-table tbody tr:nth-child(3) { animation-delay: .05s; }
+.rc-table tbody tr:nth-child(4) { animation-delay: .07s; }
+.rc-table tbody tr:nth-child(5) { animation-delay: .09s; }
+.rc-table tbody tr:nth-child(n+6) { animation-delay: .1s; }
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-backdrop.open .modal-box { animation: modalPop .22s cubic-bezier(.34,1.4,.64,1) both; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Generic button spinner — reused by every async button on the page. */
+.spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255,255,255,.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+/* Darker spinner on light-background buttons so it stays visible. */
+.btn-secondary .spinner,
+.btn-config .spinner,
+.btn-view .spinner,
+.btn-download .spinner {
+  border-color: rgba(51,65,85,.3);
+  border-top-color: var(--slate-700);
+}
+.btn-delete .spinner { border-color: rgba(220,38,38,.3); border-top-color: var(--red); }
+
+/* ════════════════════════════════════════════
    SECTION CARDS
 ════════════════════════════════════════════ */
 .rc-card {
@@ -144,7 +198,7 @@
   font-weight: 600;
   margin-top: 16px;
 }
-.gen-lock-notice.visible { display: flex; }
+.gen-lock-notice.visible { display: flex; animation: cardFadeIn .25s ease both; }
 
 /* ════════════════════════════════════════════
    FILTER GRIDS
@@ -339,6 +393,20 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
 }
 
 /* ════════════════════════════════════════════
+   PAGINATION BAR
+════════════════════════════════════════════ */
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--slate-500);
+  font-weight: 600;
+}
+.pagination-bar .btn-sm .spinner { margin-right: 0; }
+
+/* ════════════════════════════════════════════
    BADGES
 ════════════════════════════════════════════ */
 .badge {
@@ -368,7 +436,6 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
 .badge-spinning .badge-dot {
   animation: spin .8s linear infinite;
   border-radius: 0;
@@ -382,6 +449,7 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
   padding: 56px 20px;
   text-align: center;
   color: var(--slate-400);
+  animation: cardFadeIn .3s ease both;
 }
 .empty-state-icon  { font-size: 48px; margin-bottom: 12px; opacity: .5; }
 .empty-state-title { font-size: 15px; font-weight: 600; color: var(--slate-500); margin-bottom: 6px; }
@@ -460,7 +528,7 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
   transition: var(--transition);
   color: var(--slate-600);
 }
-.modal-close:hover { background: var(--red-light); color: var(--red); }
+.modal-close:hover { background: var(--red-light); color: var(--red); transform: rotate(90deg); }
 
 .modal-body    { padding: 24px; overflow-y: auto; }
 .modal-footer  { padding: 18px 24px; border-top: 1px solid var(--slate-100); display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
@@ -622,6 +690,15 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
   .table-header-bar { flex-direction: column; align-items: stretch; }
   .sig-upload-row { grid-template-columns: 1fr; }
   .attendance-row { grid-template-columns: 1fr; }
+  .pagination-bar { flex-direction: column; gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
 }
 </style>
 
@@ -655,7 +732,7 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
           choose the correct template.
         </div>
       </div>
-      <button class="btn btn-config" onclick="openConfigModal()">
+      <button class="btn btn-config" id="cfg-open-btn" onclick="openConfigModal(this)">
         ⚙️ &nbsp;Configure
       </button>
     </div>
@@ -711,7 +788,7 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
 
       <div class="filter-bar">
         <span class="filter-note">All three filters are required to load students</span>
-        <button class="btn btn-primary" id="gen-load-btn" onclick="loadStudents()">
+        <button class="btn btn-primary" id="gen-load-btn" onclick="loadStudents(true, this)">
           <span id="load-btn-icon">🔍</span>
           <span id="load-btn-text">Load Students</span>
         </button>
@@ -745,6 +822,13 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
             </thead>
             <tbody id="gen-tbody"></tbody>
           </table>
+        </div>
+
+        <!-- [NEW][PAGINATION] 20 students per page -->
+        <div class="pagination-bar" id="gen-pagination-bar" style="display:none;">
+          <button class="btn btn-secondary btn-sm" id="gen-prev-btn" onclick="changeGenPage(-1, this)">&laquo; Prev</button>
+          <span id="gen-page-info">Page 1 of 1</span>
+          <button class="btn btn-secondary btn-sm" id="gen-next-btn" onclick="changeGenPage(1, this)">Next &raquo;</button>
         </div>
       </div>
 
@@ -841,7 +925,7 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
 
       <div class="filter-bar">
         <span class="filter-note">All filters are required</span>
-        <button class="btn btn-primary" id="saved-load-btn" onclick="loadSavedReports()">
+        <button class="btn btn-primary" id="saved-load-btn" onclick="loadSavedReports(this)">
           <span>🔍</span> Apply Filters
         </button>
       </div>
@@ -1005,7 +1089,7 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
             <label class="form-label">Signature Image</label>
             <input type="file" id="ht-sig-file" class="form-control" accept=".png,.jpg,.jpeg,.webp">
           </div>
-          <button class="btn btn-primary" id="ht-sig-save-btn" onclick="saveHeadteacherSignature()">
+          <button class="btn btn-primary" id="ht-sig-save-btn" onclick="saveHeadteacherSignature(this)">
             💾 Save
           </button>
         </div>
@@ -1039,7 +1123,7 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
 
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeConfigModal()">Close</button>
-      <button class="btn btn-primary" id="cfg-save-btn" onclick="saveConfig()">
+      <button class="btn btn-primary" id="cfg-save-btn" onclick="saveConfig(this)">
         💾 &nbsp;Save Configuration
       </button>
     </div>
@@ -1081,7 +1165,6 @@ textarea.form-control { resize: vertical; min-height: 76px; font-family: inherit
           💾 Save Only
         </button>
         <button class="btn btn-generate" id="edit-save-generate-btn" onclick="saveOverrideAndGenerate()" disabled>
-          <span id="edit-save-spinner" class="spinner" style="display:none;"></span>
           ⚡ Save &amp; Generate
         </button>
       </div>
@@ -1136,6 +1219,7 @@ const MAX_LOGO_BYTES  = 5 * 1024 * 1024;
 const ALLOWED_EXTS    = new Set(["png", "jpg", "jpeg", "webp"]);
 const POLL_INTERVAL   = 2500;   // ms between job status polls
 const POLL_MAX_TRIES  = 120;    // give up after ~5 minutes
+const GEN_PAGE_SIZE   = 20;     // [NEW][PAGINATION] students per page
 
 /* ─────────────────────────────────────
    STATE
@@ -1147,6 +1231,12 @@ let _reqInFlight      = false;
 
 let _generationInFlight = false;
 let _activeGenStudentId = null;
+
+// [NEW][PAGINATION] current page / totals for the generation list.
+let _genPage           = 1;
+let _genTotalPages     = 1;
+let _genTotal          = 0;
+let _genTotalGenerated = 0;
 
 // Edit modal state
 let _editModalStudentId = null;
@@ -1222,6 +1312,30 @@ const _esc = str =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c]);
 
 /* ─────────────────────────────────────
+   GENERIC BUTTON-LOADING HELPER
+   [NEW] Every button that triggers a network call routes through
+   this, so the whole page has one consistent spinner behaviour:
+   disable the button, swap its contents for a spinner (+ optional
+   label), and restore the original contents afterwards.
+───────────────────────────────────── */
+function setBtnLoading(btn, loading, loadingLabel) {
+  if (!btn) return;
+  if (loading) {
+    if (btn.dataset.originalHtml === undefined) btn.dataset.originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    btn.innerHTML = `<span class="spinner"></span>${loadingLabel ? `<span>${_esc(loadingLabel)}</span>` : ""}`;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove("is-loading");
+    if (btn.dataset.originalHtml !== undefined) {
+      btn.innerHTML = btn.dataset.originalHtml;
+      delete btn.dataset.originalHtml;
+    }
+  }
+}
+
+/* ─────────────────────────────────────
    TOAST
 ───────────────────────────────────── */
 function toast(msg, type = "info", ms = 4000) {
@@ -1239,10 +1353,12 @@ function toast(msg, type = "info", ms = 4000) {
 
 /* ─────────────────────────────────────
    VIEW / DOWNLOAD REPORT
+   [CHANGED] Both now accept the triggering button so they can show a
+   spinner on it for the duration of the fetch.
 ───────────────────────────────────── */
-async function viewReport(reportId) {
+async function viewReport(reportId, btn) {
   if (!reportId) { toast("No file available to view", "warning"); return; }
-  toast("Opening report…", "info", 1500);
+  setBtnLoading(btn, true);
   try {
     const res = await fetch(`/api/report-cards/${reportId}/view`, { headers: _auth(false) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || `Server returned ${res.status}`); }
@@ -1252,11 +1368,12 @@ async function viewReport(reportId) {
     if (!win) toast("Pop-up blocked — please allow pop-ups to view reports", "warning");
     setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
   } catch (e) { toast(e.message || "Could not open report", "error"); }
+  finally { setBtnLoading(btn, false); }
 }
 
-async function downloadReport(reportId, label) {
+async function downloadReport(reportId, label, btn) {
   if (!reportId) { toast("No file available to download", "warning"); return; }
-  toast("Preparing download…", "info", 2000);
+  setBtnLoading(btn, true);
   try {
     const res = await fetch(`/api/report-cards/${reportId}/download`, { headers: _auth(false) });
     if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || `Server returned ${res.status}`); }
@@ -1268,6 +1385,7 @@ async function downloadReport(reportId, label) {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
   } catch (e) { toast(e.message || "Download failed", "error"); }
+  finally { setBtnLoading(btn, false); }
 }
 
 /* ─────────────────────────────────────
@@ -1336,21 +1454,26 @@ function _buildStatusBadge(generated, generating = false) {
    student's report while another generation is in flight is fine;
    only *starting a new generation* should be blocked, so only Auto
    (which itself triggers generation) gets disabled in that case.
+   The "please wait" state now shows an actual spinner rather than
+   just an hourglass emoji.
 ───────────────────────────────────── */
 function _buildGenActions(s, generating = false) {
   if (generating)
-    return `<span style="font-size:12px;color:var(--slate-400);">⏳ Please wait…</span>`;
+    return `<span style="display:inline-flex;align-items:center;font-size:12px;color:var(--slate-400);">
+              <span class="spinner" style="border-color:rgba(37,99,235,.25); border-top-color:var(--blue);"></span>
+              Please wait…
+            </span>`;
 
   let html = `<div class="actions-cell">`;
 
   if (s.report_generated) {
     const label = _esc(s.student_code || s.name || "");
-    html += `<button class="btn btn-view btn-sm" onclick="viewReport(${s.report_id})">👁 View</button>`;
-    html += `<button class="btn btn-download btn-sm" onclick="downloadReport(${s.report_id},'${label}')">⬇ Download</button>`;
+    html += `<button class="btn btn-view btn-sm" onclick="viewReport(${s.report_id}, this)">👁 View</button>`;
+    html += `<button class="btn btn-download btn-sm" onclick="downloadReport(${s.report_id},'${label}', this)">⬇ Download</button>`;
     html += `<button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${s.report_id},'gen')">🗑 Delete</button>`;
   } else {
     const autoDisabled = _generationInFlight ? "disabled" : "";
-    html += `<button class="btn btn-secondary btn-sm" id="edit-btn-${s.id}" onclick="openEditModal(${s.id})">✏️ Edit</button>`;
+    html += `<button class="btn btn-secondary btn-sm" id="edit-btn-${s.id}" onclick="openEditModal(${s.id}, this)">✏️ Edit</button>`;
     html += `<button class="btn btn-auto btn-sm" id="auto-btn-${s.id}" onclick="autoGenerate(${s.id})" ${autoDisabled}>⚡ Auto</button>`;
   }
 
@@ -1385,53 +1508,85 @@ function _setGenerationLock(active, exceptStudentId = null) {
 
 /* ─────────────────────────────────────
    LOAD STUDENTS
+   [CHANGED][PAGINATION] Now requests page/per_page and resets to page
+   1 whenever the filters change (resetPage=true, the default when
+   called from the "Load Students" button); changeGenPage() below
+   calls this with resetPage=false to move between pages without
+   losing the current filters.
 ───────────────────────────────────── */
-async function loadStudents() {
+async function loadStudents(resetPage = true, btn = null) {
   if (_reqInFlight) return;
   if (!_validateGenSection()) { toast("Please fill all required filters","warning"); return; }
+
+  if (resetPage) _genPage = 1;
 
   const streamId = document.getElementById("gen-stream").value;
   const termId   = document.getElementById("gen-term").value;
   const examType = document.getElementById("gen-exam-type").value;
 
-  const btn  = document.getElementById("gen-load-btn");
-  const icon = document.getElementById("load-btn-icon");
-  const txt  = document.getElementById("load-btn-text");
+  const loadBtn = btn || document.getElementById("gen-load-btn");
 
-  _reqInFlight = true; btn.disabled = true;
-  icon.textContent = "⏳"; txt.textContent = "Loading…";
+  _reqInFlight = true;
+  setBtnLoading(loadBtn, true, "Loading…");
 
   document.getElementById("gen-tbody").innerHTML = _skeletons(5,6);
   document.getElementById("gen-table-wrap").style.display = "block";
   document.getElementById("gen-empty").style.display      = "none";
+  document.getElementById("gen-pagination-bar").style.display = "none";
 
   try {
-    const p   = new URLSearchParams({ stream_id:streamId, term_id:termId, exam_type:examType });
+    const p = new URLSearchParams({
+      stream_id: streamId, term_id: termId, exam_type: examType,
+      page: _genPage, per_page: GEN_PAGE_SIZE,
+    });
     const res = await fetch(`/api/report-cards/students?${p}`, { headers: _auth() });
     const d   = await res.json();
     if (!res.ok) throw new Error(d.message || "Failed to load students");
-    _renderStudents(d.students || []);
+    _renderStudents(d);
   } catch (e) {
     toast(e.message,"error");
     document.getElementById("gen-table-wrap").style.display = "none";
   } finally {
-    _reqInFlight = false; btn.disabled = false;
-    icon.textContent = "🔍"; txt.textContent = "Load Students";
+    _reqInFlight = false;
+    setBtnLoading(loadBtn, false);
   }
 }
 
 /* ─────────────────────────────────────
-   RENDER STUDENTS
+   [NEW][PAGINATION] CHANGE PAGE
 ───────────────────────────────────── */
-function _renderStudents(students) {
+async function changeGenPage(delta, btn) {
+  const next = _genPage + delta;
+  if (next < 1 || next > _genTotalPages) return;
+  _genPage = next;
+  await loadStudents(false, btn);
+}
+
+/* ─────────────────────────────────────
+   RENDER STUDENTS
+   [CHANGED][PAGINATION] Takes the full response object (not just the
+   students array) so it can track total/total_pages/total_generated
+   and drive the pagination bar.
+───────────────────────────────────── */
+function _renderStudents(data) {
+  const students = data.students || [];
   const wrap  = document.getElementById("gen-table-wrap");
   const empty = document.getElementById("gen-empty");
   const tbody = document.getElementById("gen-tbody");
+  const pager = document.getElementById("gen-pagination-bar");
 
   _loadedStudents = {};
   students.forEach(s => { _loadedStudents[s.id] = s; });
 
-  if (!students.length) { wrap.style.display="none"; empty.style.display="block"; return; }
+  _genPage           = data.page ?? 1;
+  _genTotalPages     = data.total_pages ?? 1;
+  _genTotal          = data.total ?? students.length;
+  _genTotalGenerated = data.total_generated ?? students.filter(s => s.report_generated).length;
+
+  if (!students.length) {
+    wrap.style.display="none"; empty.style.display="block"; pager.style.display="none";
+    return;
+  }
 
   wrap.style.display="block"; empty.style.display="none";
   _updateGenCounts();
@@ -1446,19 +1601,42 @@ function _renderStudents(students) {
       <td id="action-cell-${s.id}">${_buildGenActions(s)}</td>
     </tr>`
   ).join("");
+
+  // [NEW][PAGINATION] Show/update the pager whenever there's more than
+  // one page; hide it entirely for a single-page result so the UI
+  // doesn't clutter small streams with a no-op Prev/Next bar.
+  if (_genTotalPages > 1) {
+    pager.style.display = "flex";
+    document.getElementById("gen-page-info").textContent = `Page ${_genPage} of ${_genTotalPages}`;
+    document.getElementById("gen-prev-btn").disabled = _genPage <= 1;
+    document.getElementById("gen-next-btn").disabled = _genPage >= _genTotalPages;
+  } else {
+    pager.style.display = "none";
+  }
 }
 
+/* [CHANGED] Renders from the tracked total/total_generated counters
+   (which reflect the WHOLE stream) rather than recomputing from
+   whichever page of students happens to be loaded right now. */
 function _updateGenCounts() {
-  const all  = Object.values(_loadedStudents);
-  const done = all.filter(s => s.report_generated).length;
-  document.getElementById("gen-count").textContent           = all.length;
-  document.getElementById("gen-generated-count").textContent = `${done} generated`;
+  document.getElementById("gen-count").textContent           = _genTotal;
+  document.getElementById("gen-generated-count").textContent = `${_genTotalGenerated} generated`;
 }
 
 /* ─────────────────────────────────────
    PATCH ONE ROW IN-PLACE
+   [CHANGED] Also keeps _genTotalGenerated in sync when a student's
+   report_generated flag flips (e.g. after a successful generation, or
+   after a delete reverts it) — that counter reflects the whole
+   stream, so it moves by exactly the delta for the one student that
+   changed, regardless of which page is currently displayed.
 ───────────────────────────────────── */
 function _patchStudentRow(studentId, updatedObj, generating = false) {
+  const prev = _loadedStudents[studentId];
+  if (prev && !generating && prev.report_generated !== updatedObj.report_generated) {
+    _genTotalGenerated += updatedObj.report_generated ? 1 : -1;
+    _genTotalGenerated = Math.max(0, _genTotalGenerated);
+  }
   _loadedStudents[studentId] = updatedObj;
   _updateGenCounts();
   const sc = document.getElementById(`status-cell-${studentId}`);
@@ -1620,10 +1798,14 @@ function closeEditModal() {
 /* [CHANGED] Edit is always available — no longer blocked by an
    in-flight generation for another student. Comment options are now
    hardcoded client-side (CT_COMMENT_BANK / HT_COMMENT_BANK) instead
-   of being fetched from the server. */
-async function openEditModal(studentId) {
+   of being fetched from the server. Also shows a spinner on the Edit
+   button itself while the preview loads. */
+async function openEditModal(studentId, btn = null) {
   const student = _loadedStudents[studentId];
   if (!student) return;
+
+  const editBtn = btn || document.getElementById(`edit-btn-${studentId}`);
+  setBtnLoading(editBtn, true);
 
   _editModalStudentId = studentId;
   document.getElementById("editModal").classList.add("open");
@@ -1657,6 +1839,11 @@ async function openEditModal(studentId) {
   } catch (e) {
     document.getElementById("edit-modal-body").innerHTML = `
       <div class="alert alert-danger" style="margin:0;">⚠️ ${_esc(e.message)}</div>`;
+  } finally {
+    // The row may have been re-rendered (e.g. a page change) while the
+    // preview was loading — guard against patching a button that no
+    // longer exists.
+    if (document.body.contains(editBtn)) setBtnLoading(editBtn, false);
   }
 }
 
@@ -1826,7 +2013,7 @@ async function _saveOverride(studentId) {
 async function saveOverrideOnly() {
   if (!_editModalStudentId) return;
   const btn = document.getElementById("edit-save-only-btn");
-  btn.disabled = true;
+  setBtnLoading(btn, true, "Saving…");
   try {
     await _saveOverride(_editModalStudentId);
     toast("Changes saved", "success");
@@ -1834,7 +2021,7 @@ async function saveOverrideOnly() {
   } catch (e) {
     toast(e.message, "error");
   } finally {
-    btn.disabled = false;
+    setBtnLoading(btn, false);
   }
 }
 
@@ -1842,10 +2029,8 @@ async function saveOverrideAndGenerate() {
   if (!_editModalStudentId || !_editModalPreview) return;
   const studentId = _editModalStudentId;
 
-  const btn     = document.getElementById("edit-save-generate-btn");
-  const spinner = document.getElementById("edit-save-spinner");
-  btn.disabled = true;
-  spinner.style.display = "inline-block";
+  const btn = document.getElementById("edit-save-generate-btn");
+  setBtnLoading(btn, true, "Starting…");
 
   try {
     await _saveOverride(studentId);
@@ -1854,20 +2039,18 @@ async function saveOverrideAndGenerate() {
   } catch (e) {
     toast(e.message, "error");
   } finally {
-    btn.disabled = false;
-    spinner.style.display = "none";
+    setBtnLoading(btn, false);
   }
 }
 
 /* ─────────────────────────────────────
    LOAD SAVED REPORTS
 ───────────────────────────────────── */
-async function loadSavedReports() {
+async function loadSavedReports(btn) {
   if (!_validateSavedSection()) { toast("Please fill all required filters","warning"); return; }
 
-  const btn = document.getElementById("saved-load-btn");
-  btn.disabled  = true;
-  btn.innerHTML = "⏳ Loading…";
+  const loadBtn = btn || document.getElementById("saved-load-btn");
+  setBtnLoading(loadBtn, true, "Loading…");
 
   document.getElementById("saved-tbody").innerHTML = _skeletons(4,7);
   document.getElementById("saved-table-wrap").style.display = "block";
@@ -1888,8 +2071,7 @@ async function loadSavedReports() {
     toast(e.message,"error");
     document.getElementById("saved-table-wrap").style.display = "none";
   } finally {
-    btn.disabled  = false;
-    btn.innerHTML = "🔍 &nbsp;Apply Filters";
+    setBtnLoading(loadBtn, false);
   }
 }
 
@@ -1917,8 +2099,8 @@ function _renderSaved(reports) {
       <td>${_esc(r.academic_year||"—")}</td>
       <td>${date}</td>
       <td><div class="actions-cell">
-        <button class="btn btn-view btn-sm" onclick="viewReport(${r.id})">👁 View</button>
-        <button class="btn btn-download btn-sm" onclick="downloadReport(${r.id},'${label}')">⬇ Download</button>
+        <button class="btn btn-view btn-sm" onclick="viewReport(${r.id}, this)">👁 View</button>
+        <button class="btn btn-download btn-sm" onclick="downloadReport(${r.id},'${label}', this)">⬇ Download</button>
         <button class="btn btn-delete btn-sm" onclick="confirmDeleteReport(${r.id},'saved')">🗑 Delete</button>
       </div></td>
     </tr>`;
@@ -1937,12 +2119,12 @@ function confirmDeleteReport(id, src) {
 }
 function closeConfirmModal() { document.getElementById("confirmModal").classList.remove("open"); }
 
-document.getElementById("confirm-delete-btn").addEventListener("click", async () => {
+document.getElementById("confirm-delete-btn").addEventListener("click", async function () {
   if (!_pendingDeleteId) return;
   const deleteId  = _pendingDeleteId;
   const deleteSrc = _pendingDeleteSrc;
-  const btn       = document.getElementById("confirm-delete-btn");
-  btn.disabled    = true; btn.textContent = "⏳ Deleting…";
+  const btn       = this;
+  setBtnLoading(btn, true, "Deleting…");
   document.getElementById("confirmModal").classList.remove("open");
   _pendingDeleteId = null; _pendingDeleteSrc = null;
 
@@ -1970,13 +2152,13 @@ document.getElementById("confirm-delete-btn").addEventListener("click", async ()
       }
     }
   } catch (e) { toast(e.message,"error"); }
-  finally { btn.disabled=false; btn.textContent="🗑️ Delete Report"; }
+  finally { setBtnLoading(btn, false); }
 });
 
 /* ─────────────────────────────────────
    CONFIG MODAL  (general details + signatures)
 ───────────────────────────────────── */
-function openConfigModal()  {
+function openConfigModal(btn) {
   document.getElementById("configModal").classList.add("open");
   _loadStreamSignatures();
 }
@@ -2005,7 +2187,7 @@ function validateLogoFile(input) {
   return true;
 }
 
-async function saveConfig() {
+async function saveConfig(btn) {
   const c1  = document.getElementById("cfg-contact1");
   const ec1 = document.getElementById("err-contact1");
   if (!c1.value.trim()) { c1.classList.add("is-error"); ec1.classList.add("visible"); toast("Contact 1 is required","warning"); return; }
@@ -2014,8 +2196,7 @@ async function saveConfig() {
   const logoInput = document.getElementById("cfg-logo");
   if (logoInput.files[0] && !validateLogoFile(logoInput)) return;
 
-  const btn = document.getElementById("cfg-save-btn");
-  btn.disabled=true; btn.textContent="⏳ Saving…";
+  setBtnLoading(btn, true, "Saving…");
 
   try {
     const fd = new FormData();
@@ -2033,24 +2214,23 @@ async function saveConfig() {
     toast("Configuration saved successfully","success");
     if (d.logo_url) { const lp=document.getElementById("logo-preview"); if(lp){ lp.src=d.logo_url; lp.style.display="block"; } }
   } catch (e) { toast(e.message,"error"); }
-  finally { btn.disabled=false; btn.innerHTML="💾 &nbsp;Save Configuration"; }
+  finally { setBtnLoading(btn, false); }
 }
 
 /* ════════════════════════════════════════════
    [NEW] SIGNATURES  (now inside the Configure modal)
 ════════════════════════════════════════════ */
 
-async function saveHeadteacherSignature() {
+async function saveHeadteacherSignature(btn) {
   const fileInput = document.getElementById("ht-sig-file");
   const nameInput = document.getElementById("ht-teacher-name");
-  const btn       = document.getElementById("ht-sig-save-btn");
 
   if (!fileInput.files[0]) { toast("Please choose a signature image", "warning"); return; }
   const ext = fileInput.files[0].name.split(".").pop().toLowerCase();
   if (!ALLOWED_EXTS.has(ext)) { toast(`Invalid type ".${ext}". Allowed: PNG, JPG, JPEG, WEBP`, "error"); return; }
   if (fileInput.files[0].size > MAX_LOGO_BYTES) { toast("File exceeds 5MB limit", "error"); return; }
 
-  btn.disabled = true; btn.innerHTML = "⏳ Saving…";
+  setBtnLoading(btn, true, "Saving…");
 
   try {
     const fd = new FormData();
@@ -2069,7 +2249,7 @@ async function saveHeadteacherSignature() {
   } catch (e) {
     toast(e.message, "error");
   } finally {
-    btn.disabled = false; btn.innerHTML = "💾 Save";
+    setBtnLoading(btn, false);
   }
 }
 
@@ -2103,16 +2283,21 @@ function _renderStreamSignatures(streams) {
       </td>
       <td>
         <div class="actions-cell">
-          <button class="btn btn-secondary btn-sm" onclick="_openStreamSigUpload(${s.stream_id}, '${_esc(s.class_name)} — ${_esc(s.stream_name)}')">
+          <button class="btn btn-secondary btn-sm" id="stream-sig-upload-btn-${s.stream_id}"
+                  onclick="_openStreamSigUpload(${s.stream_id}, '${_esc(s.class_name)} — ${_esc(s.stream_name)}', this)">
             ${s.has_signature ? "🔄 Replace" : "⬆ Upload"}
           </button>
-          ${s.has_signature ? `<button class="btn btn-delete btn-sm" onclick="_deleteStreamSignature(${s.stream_id})">🗑</button>` : ""}
+          ${s.has_signature ? `<button class="btn btn-delete btn-sm" onclick="_deleteStreamSignature(${s.stream_id}, this)">🗑</button>` : ""}
         </div>
       </td>
     </tr>`).join("");
 }
 
-function _openStreamSigUpload(streamId, label) {
+/* [CHANGED] Now accepts the triggering button so a spinner can show on
+   it while the (post file-selection) upload request is in flight —
+   picking the file itself is instant/local so there's nothing to spin
+   on until the person actually chooses a file. */
+function _openStreamSigUpload(streamId, label, btn) {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".png,.jpg,.jpeg,.webp";
@@ -2125,6 +2310,7 @@ function _openStreamSigUpload(streamId, label) {
 
     const teacherName = prompt(`Class teacher's name for ${label} (optional):`, "");
 
+    setBtnLoading(btn, true);
     try {
       const fd = new FormData();
       fd.append("signature", file);
@@ -2135,21 +2321,30 @@ function _openStreamSigUpload(streamId, label) {
       if (!res.ok) throw new Error(d.message || "Failed to save signature");
 
       toast("Class teacher signature saved", "success");
-      _loadStreamSignatures();
-    } catch (e) { toast(e.message, "error"); }
+      await _loadStreamSignatures();
+    } catch (e) {
+      toast(e.message, "error");
+      setBtnLoading(btn, false);
+    }
+    // On success the whole row (including this button) is replaced by
+    // _loadStreamSignatures(), so there's nothing left to un-spin here.
   };
   input.click();
 }
 
-async function _deleteStreamSignature(streamId) {
+async function _deleteStreamSignature(streamId, btn) {
   if (!confirm("Remove this class teacher's signature?")) return;
+  setBtnLoading(btn, true);
   try {
     const res = await fetch(`/api/streams/${streamId}/signature`, { method: "DELETE", headers: _auth(false) });
     const d   = await res.json();
     if (!res.ok) throw new Error(d.message || "Failed to remove signature");
     toast("Signature removed", "success");
-    _loadStreamSignatures();
-  } catch (e) { toast(e.message, "error"); }
+    await _loadStreamSignatures();
+  } catch (e) {
+    toast(e.message, "error");
+    setBtnLoading(btn, false);
+  }
 }
 
 /* ─────────────────────────────────────

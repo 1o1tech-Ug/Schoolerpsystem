@@ -26,6 +26,15 @@ CHANGES vs original:
     `_is_nursery_stream()` and are shown regardless of which subject
     the teacher is currently marking. Every non-nursery class is
     completely untouched by this — see the helpers below.
+  - [NEW] Locked-term guard. Mirrors app/apis/academics_api_2.py:
+    save_marks() now resolves the school's current term (the same
+    AcademicConfig.current_term_id it already saves marks against) and
+    refuses the whole save with 403 if that term's status is "locked" —
+    checked before any TeachAssignment/Assessment/StudentMark or
+    StudentActivityComment writes happen. load_marks_entry() surfaces
+    the same `is_locked` flag as a UI hint so the marks-entry form can
+    be rendered read-only ahead of a submit attempt; that flag is not
+    itself an enforcement point.
 """
 
 import logging
@@ -64,6 +73,28 @@ ALL_ROLES = {"staff", "admin"}
 # Pagination defaults
 _STUDENTS_PER_PAGE  = 30
 _HISTORY_PER_PAGE   = 25
+
+
+# ═══════════════════════════════════════════════════════════════
+#  [NEW] TERM LOCK GUARD
+#
+#  Mirrors app/apis/academics_api_2.py's helpers of the same name. A
+#  locked term is read-only: no new marks, no edits to existing
+#  marks/comments, and no new/edited nursery activity comments.
+#  Enforced ONLY in save_marks (the single place writes happen) — this
+#  module has no separate term_id query param, it always saves against
+#  AcademicConfig.current_term_id, so that's what gets checked.
+# ═══════════════════════════════════════════════════════════════
+
+def _get_term_or_404(term_id, school_id):
+    term = Term.query.filter_by(id=term_id, school_id=school_id).first()
+    if not term:
+        return None, (jsonify({"message": "Term not found"}), 404)
+    return term, None
+
+
+def _is_term_locked(term):
+    return bool(term) and (term.status or "").strip().lower() == "locked"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -432,6 +463,14 @@ def load_marks_entry():
         config  = AcademicConfig.query.filter_by(school_id=school_id).first()
         term_id = config.current_term_id if config else None
 
+        # [NEW] Surfaced so the frontend can render the marks-entry form
+        # read-only for a locked term. This is a UI hint only — the
+        # actual enforcement is the 403 in save_marks below.
+        is_locked = False
+        if term_id:
+            term = Term.query.filter_by(id=term_id, school_id=school_id).first()
+            is_locked = _is_term_locked(term)
+
         saved_map      = {}
         saved_comments = {}   # (student_id, paper_id) -> comment
         if term_id:
@@ -525,6 +564,7 @@ def load_marks_entry():
             "students":     student_data,
             "activities":   activities_data,   # [NEW]
             "is_nursery":   is_nursery,         # [NEW]
+            "is_locked":    is_locked,          # [NEW]
         }), 200
 
     except Exception:
@@ -588,6 +628,20 @@ def save_marks():
     if not config or not config.current_term_id:
         return jsonify({"message": "Current academic term not configured"}), 400
 
+    # [NEW] Locked terms are read-only: no new marks, no edits to
+    # existing marks/comments, and no nursery activity comments either.
+    # Checked before any writes happen — this endpoint always saves
+    # against AcademicConfig.current_term_id (there's no separate
+    # term_id in the payload), so that's the term whose lock status
+    # gates the whole request.
+    term, err = _get_term_or_404(config.current_term_id, school_id)
+    if err:
+        return err
+    if _is_term_locked(term):
+        return jsonify({
+            "message": "This term is locked. Marks can no longer be entered or edited."
+        }), 403
+
     # [NEW] Activity comments are only ever persisted for nursery
     # streams — if a non-nursery request somehow includes them, they
     # are silently ignored rather than erroring the whole save.
@@ -640,17 +694,15 @@ def save_marks():
                 continue
 
             if paper_id not in assessment_cache:
-            	asmt = _get_or_create_assessment(
-        school_id=school_id,
-        stream_id=stream_id,
-        subject_id=subject_id,
-        term_id=config.current_term_id,
-        exam_type_enum=exam_enum,
-        paper_id=paper_id,
-        assignment=assignment,
-    )
-
-            assessment_cache[paper_id] = asmt
+                assessment_cache[paper_id] = _get_or_create_assessment(
+                    school_id=school_id,
+                    stream_id=stream_id,
+                    subject_id=subject_id,
+                    term_id=config.current_term_id,
+                    exam_type_enum=exam_enum,
+                    paper_id=paper_id,
+                    assignment=assignment,
+                )
 
             asmt = assessment_cache[paper_id]
 
@@ -1146,7 +1198,6 @@ def save_attendance():
             saved += 1
 
         db.session.commit()
-      
 
         try:
             student_ids = [r.get("student_id") for r in records if r.get("student_id")]
@@ -1157,7 +1208,6 @@ def save_attendance():
             logger.exception("daily attendance sync failed | assignment_id=%s date=%s", assignment_id, date_str)
             # don't fail the request — lesson attendance was already saved successfully
 
-        return jsonify({"message": f"Attendance saved — {saved} record(s)", "saved": saved}), 200
         return jsonify({"message": f"Attendance saved — {saved} record(s)", "saved": saved}), 200
 
     except Exception:

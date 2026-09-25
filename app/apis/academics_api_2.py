@@ -57,6 +57,29 @@ def _school_or_404(school_id):
 
 
 # ═══════════════════════════════════════════════════════════════
+#  [NEW] TERM LOCK GUARD
+#
+#  A locked term is read-only: no new marks, no edits to existing
+#  marks/comments, and no new/edited nursery activity comments. This
+#  is enforced ONLY in save_student_marks (the single place writes
+#  happen) — the three read/list endpoints below just surface
+#  `is_locked` in their JSON so the frontend can grey out inputs
+#  ahead of time, but the 403 in the save endpoint is the actual
+#  enforcement boundary.
+# ═══════════════════════════════════════════════════════════════
+
+def _get_term_or_404(term_id, school_id):
+    term = Term.query.filter_by(id=term_id, school_id=school_id).first()
+    if not term:
+        return None, (jsonify({"message": "Term not found"}), 404)
+    return term, None
+
+
+def _is_term_locked(term):
+    return bool(term) and (term.status or "").strip().lower() == "locked"
+
+
+# ═══════════════════════════════════════════════════════════════
 #  SHARED HELPERS
 # ═══════════════════════════════════════════════════════════════
 
@@ -238,6 +261,14 @@ def load_marks_students():
     if not Stream.query.get(stream_id):
         return jsonify({"message": "Stream not found"}), 404
 
+    # [NEW] Surfaced so the frontend can render the grid read-only for a
+    # locked term. This is a UI hint only — the actual enforcement is
+    # the 403 in save_student_marks below.
+    term, err = _get_term_or_404(term_id, school_id)
+    if err:
+        return err
+    is_locked = _is_term_locked(term)
+
     # [NEW] Only Nursery (Daycare/KG1/KG2/KG3) streams carry Learning
     # Activities — every other class is handled exactly as before.
     is_nursery = _is_nursery_stream(stream_id, school_id)
@@ -250,6 +281,7 @@ def load_marks_students():
             return jsonify({
                 "students": [], "subjects": [],
                 "activities": [], "is_nursery": is_nursery,
+                "is_locked": is_locked,
             }), 200
 
         students = (
@@ -392,6 +424,7 @@ def load_marks_students():
             "subjects":   subject_data,
             "activities": activities_data,   # [NEW]
             "is_nursery": is_nursery,         # [NEW]
+            "is_locked":  is_locked,          # [NEW]
         }), 200
 
     except Exception:
@@ -434,6 +467,13 @@ def get_student_marks_entry():
 
     if not Student.query.get(student_id):
         return jsonify({"message": "Student not found"}), 404
+
+    # [NEW] UI hint only — see note in load_marks_students. Enforcement
+    # lives in save_student_marks.
+    term, err = _get_term_or_404(term_id, school_id)
+    if err:
+        return err
+    is_locked = _is_term_locked(term)
 
     # [NEW] Resolved once up front so we can still return activities
     # even for a nursery student who (unusually) has no StudentSubject
@@ -542,6 +582,7 @@ def get_student_marks_entry():
             "subjects":   results,
             "activities": activities_result,   # [NEW]
             "is_nursery": is_nursery,           # [NEW]
+            "is_locked":  is_locked,            # [NEW]
         }), 200
 
     except Exception:
@@ -582,6 +623,19 @@ def save_student_marks():
 
     if not Student.query.get(student_id):
         return jsonify({"message": "Student not found"}), 404
+
+    # [NEW] Locked terms are read-only: no new marks, no edits to
+    # existing marks/comments, and no nursery activity comments either.
+    # Checked before any writes happen (marks loop and activity_comments
+    # loop below both key off this same term_id), so a locked term
+    # blocks the whole save atomically — nothing is partially written.
+    term, err = _get_term_or_404(term_id, school_id)
+    if err:
+        return err
+    if _is_term_locked(term):
+        return jsonify({
+            "message": "This term is locked. Marks can no longer be entered or edited."
+        }), 403
 
     assignments = TeachAssignment.query.filter_by(
         school_id=school_id,
@@ -773,6 +827,13 @@ def load_saved_marks():
     if exam_enum is None:
         return jsonify({"message": f"Invalid exam_type '{exam_type}'. Use BOT, MID or EOT"}), 400
 
+    # [NEW] UI hint only — see note in load_marks_students. Enforcement
+    # lives in save_student_marks.
+    term, err = _get_term_or_404(term_id, school_id)
+    if err:
+        return err
+    is_locked = _is_term_locked(term)
+
     is_nursery = _is_nursery_stream(stream_id, school_id)   # [NEW]
 
     try:
@@ -783,6 +844,7 @@ def load_saved_marks():
             return jsonify({
                 "columns": [], "students": [],
                 "activity_columns": [], "is_nursery": is_nursery,
+                "is_locked": is_locked,
             }), 200
 
         students = (
@@ -938,6 +1000,7 @@ def load_saved_marks():
             "students":         student_rows,
             "activity_columns": activity_columns,   # [NEW]
             "is_nursery":       is_nursery,           # [NEW]
+            "is_locked":        is_locked,            # [NEW]
         }), 200
 
     except Exception:

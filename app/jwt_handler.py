@@ -80,6 +80,7 @@ def add_claims(identity):
 @jwt.expired_token_loader
 def expired_token_callback(jwt_header, jwt_payload):
     if (
+    print("Expired token detected...."),
         request.blueprint != "auth"
         and "text/html" in request.headers.get("Accept", "")
     ):
@@ -114,6 +115,7 @@ from flask import redirect, url_for
 
 @jwt.unauthorized_loader
 def missing_token_callback(error):
+    print("missing token....")
     return redirect(url_for("auth.login_page"))
 
 
@@ -148,4 +150,5 @@ def check_if_token_revoked(jwt_header, jwt_payload):
 
 @jwt.revoked_token_loader
 def revoked_callback(jwt_header, jwt_payload):
+    print("revoked token....")
     return redirect(url_for("auth.login_page"))

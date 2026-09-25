@@ -65,6 +65,24 @@ CHANGES vs original:
     reused on every report card rendered for that school/stream until
     replaced. See upload_headteacher_signature(), list_class_signatures(),
     upload_class_teacher_signature(), delete_class_teacher_signature().
+  - [FIX][SIGNATURE-CDN-CACHE] upload_headteacher_signature() and
+    upload_class_teacher_signature() previously re-uploaded every
+    replacement signature to the exact same static remote_path (e.g.
+    "uploads/signatures/school_1_headteacher.png") with a 30-day
+    Cache-Control. This is the identical CDN-edge-cache problem that
+    report card PDFs used to have (see [FIX][CDN-CACHE] above): a CDN
+    edge PoP that already cached the OLD file at that path keeps
+    serving those bytes for its TTL regardless of what gets uploaded
+    to that same path afterwards — a storage overwrite is not an edge
+    purge. This is why staff re-uploading a signature (including after
+    background removal) could still see the OLD image on generated
+    report cards. Both upload endpoints now fold a short unique token
+    into the remote filename on every upload, exactly like
+    _upload_report_pdf() already does, so a replacement always lands
+    on a path the edge has never served and there is nothing stale to
+    return. The DB row is updated to point at the new path, and the
+    OLD path is deleted from Bunny only after the new upload succeeds
+    (unchanged from before).
   - [NEW][OVERRIDES] Staff can review and edit a report card BEFORE the
     PDF is generated: attendance counts, class-teacher/headteacher
     comments, and initials. Marks/grades/positions are intentionally
@@ -98,6 +116,34 @@ CHANGES vs original:
       * Deletes use the stored relative path directly as the Bunny
         object key — no URL parsing is involved anymore, since there's
         no full URL to parse in the first place.
+  - [NEW][PAGINATION] GET /api/report-cards/students now returns a
+    paginated page of students (20 per page by default) instead of the
+    entire stream in one response, mirroring the page/per_page/total/
+    total_pages shape used elsewhere in the app (see
+    app/routes/admin.py's get_students_for_fee). The "generated" count
+    shown in the UI needs to reflect the WHOLE stream, not just the
+    current page, so this endpoint also returns total_generated,
+    computed from the full (unpaginated) set of ReportCard rows for
+    this stream/term/exam_type — independent of which page is sliced
+    out for display.
+  - [NEW][TERM-LOCK] Report card generation (manual and auto) is now
+    blocked once a Term's status is "locked". This is checked at
+    request time in both generate_report_card() and
+    auto_generate_report_card() — immediately after the term is
+    fetched — and returns HTTP 403 with a clear message rather than
+    silently starting a job. It is deliberately re-checked again
+    inside the background thread (_do_generate) right before the PDF
+    is rendered: because generation is asynchronous and briefly queued
+    behind the per-school lock, it's possible (if unlikely, given jobs
+    run almost immediately) for a term to be locked in the gap between
+    the request-time check and the thread actually running. Catching
+    it there too means a job started just before a lock can't slip a
+    freshly-rendered report onto Bunny after the fact. Preview
+    (get_report_card_preview) and saving overrides
+    (save_report_card_override) are deliberately NOT blocked by a
+    locked term — reviewing computed data and drafting comments ahead
+    of/after a lock is harmless since neither step writes a report
+    card or touches storage; only actual generation is gated.
 """
 
 import requests as http_requests
@@ -158,6 +204,11 @@ ALLOWED_LOGO_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 MAX_LOGO_SIZE_BYTES     = 5 * 1024 * 1024
 VALID_EXAM_TYPES        = {"BOT", "MID", "EOT"}
 
+# Default page size for GET /report-cards/students — mirrors the
+# pagination shape used elsewhere in the app (see admin.py's
+# get_students_for_fee).
+DEFAULT_STUDENTS_PAGE_SIZE = 20
+
 # Signatures reuse the logo's constraints — same kind of small image
 # upload, same reasoning (rarely changes → long cache lifetime is fine).
 ALLOWED_SIGNATURE_EXTENSIONS = ALLOWED_LOGO_EXTENSIONS
@@ -170,6 +221,12 @@ _SIGNATURE_CACHE_CONTROL     = "public, max-age=2592000"  # 30 days — same as 
 # set this so any given file is never cached indefinitely by the edge
 # or the browser.
 _REPORT_CACHE_CONTROL = "no-cache, no-store, must-revalidate"
+
+# Term.status values that must block new report card generation. A
+# locked term is considered finalized — its marks/records are meant
+# to be frozen, so no new report card PDF should be produced against
+# it (whether that's the very first generation or a regeneration).
+_BLOCKED_TERM_STATUSES = {"locked"}
 
 _SECTION_LABELS = {
     "nursery": "Nursery",
@@ -320,6 +377,25 @@ def _school_or_404(school_id):
     if not school:
         return None, (jsonify({"message": "School not found"}), 404)
     return school, None
+
+
+def _term_generation_block(term):
+    """
+    [NEW][TERM-LOCK] Returns a (message, status_code) response tuple if
+    this term's status means new report card generation must be
+    refused, or None if generation may proceed. Centralised here so
+    generate_report_card(), auto_generate_report_card() and the
+    background thread's own re-check all apply the exact same rule.
+    """
+    if term and term.status in _BLOCKED_TERM_STATUSES:
+        return (
+            jsonify({
+                "success": False,
+                "message": "This term is locked. Report cards can no longer be generated for it.",
+            }),
+            403,
+        )
+    return None
 
 
 def _validate_logo_extension(filename: str) -> bool:
@@ -512,6 +588,14 @@ def report_cards_page():
 
 # ═══════════════════════════════════════════════════════════════
 #  GET STUDENTS FOR GENERATION  —  GET /api/report-cards/students
+#
+#  [NEW][PAGINATION] Returns a page of students (default 20 per page)
+#  instead of the entire stream at once, via standard page/per_page
+#  query params. total/total_pages describe the full stream, and
+#  total_generated is computed from the FULL (unpaginated) set of
+#  ReportCard rows for this stream/term/exam_type — not just whichever
+#  page happens to be sliced out — so the "X generated" summary the
+#  UI shows stays accurate regardless of which page is being viewed.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/students", methods=["GET"])
@@ -531,6 +615,13 @@ def get_students_for_generation():
     stream_id = request.args.get("stream_id", type=int)
     term_id   = request.args.get("term_id",   type=int)
     exam_type = request.args.get("exam_type", "").strip().upper()
+    page      = request.args.get("page", 1, type=int)
+    per_page  = request.args.get("per_page", DEFAULT_STUDENTS_PAGE_SIZE, type=int)
+
+    if page < 1:
+        page = 1
+    if per_page < 1:
+        per_page = DEFAULT_STUDENTS_PAGE_SIZE
 
     if not stream_id:
         return jsonify({"message": "stream_id is required"}), 400
@@ -550,22 +641,36 @@ def get_students_for_generation():
         student_ids = [ss.student_id for ss in ss_rows]
 
         if not student_ids:
-            return jsonify({"success": True, "students": []}), 200
+            return jsonify({
+                "success": True,
+                "students": [],
+                "page": page,
+                "per_page": per_page,
+                "total": 0,
+                "total_pages": 1,
+                "total_generated": 0,
+            }), 200
 
-        students = (
+        base_query = (
             Student.query
             .filter(Student.school_id == school_id, Student.id.in_(student_ids))
             .order_by(Student.first_name.asc(), Student.last_name.asc())
-            .all()
         )
 
+        total = base_query.count()
+        students = base_query.offset((page - 1) * per_page).limit(per_page).all()
+
+        # Report cards for the WHOLE stream (not just this page) — used
+        # both to look up each displayed student's own report AND to
+        # compute an accurate total_generated count across all pages.
         existing = ReportCard.query.filter(
             ReportCard.school_id  == school_id,
             ReportCard.term_id    == term_id,
             ReportCard.exam_type  == exam_type,
             ReportCard.student_id.in_(student_ids),
         ).all()
-        report_map = {rc.student_id: rc for rc in existing}
+        report_map      = {rc.student_id: rc for rc in existing}
+        total_generated = len(report_map)
 
         class_name  = stream.class_.name if stream.class_ else ""
         stream_name = stream.name or ""
@@ -594,7 +699,15 @@ def get_students_for_generation():
                 ),
             })
 
-        return jsonify({"success": True, "students": results}), 200
+        return jsonify({
+            "success": True,
+            "students": results,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": max(1, (total + per_page - 1) // per_page),
+            "total_generated": total_generated,
+        }), 200
 
     except Exception:
         logger.exception("get_students_for_generation failed | school_id=%s stream_id=%s", school_id, stream_id)
@@ -633,6 +746,10 @@ def get_job_status(job_id: str):
 #  edit modal before generation: academic fields render read-only,
 #  attendance/comments/initials render as editable inputs pre-filled
 #  with either the saved override or the computed default.
+#
+#  [TERM-LOCK] Deliberately NOT blocked by a locked term — this is a
+#  read-only computation with no write to storage, so staff can still
+#  review a locked term's data; only actual generation is gated.
 #
 #  NOTE: this calls ReportCardService.compute_preview(), a new method
 #  that needs to exist alongside the current .generate() — it should
@@ -766,6 +883,10 @@ def get_report_card_preview():
                 else computed.get("default_headteacher_initials", "")
             ),
             "has_saved_override": override is not None,
+            # [NEW][TERM-LOCK] Surfaced so the frontend can disable the
+            # Generate/Auto-Generate buttons in the edit modal even
+            # though this read-only endpoint itself doesn't block.
+            "term_locked": term.status in _BLOCKED_TERM_STATUSES,
         }
 
         return jsonify({"success": True, "preview": merged}), 200
@@ -788,6 +909,10 @@ def get_report_card_preview():
 #  this row and applies it on top of the computed defaults.
 #  Saved independently of generation so staff can revise a comment and
 #  regenerate later without retyping everything.
+#
+#  [TERM-LOCK] Deliberately NOT blocked — drafting/adjusting comments
+#  doesn't write a report card or touch storage, so this stays open
+#  even for a locked term; only actual generation is gated.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/overrides", methods=["POST"])
@@ -1012,6 +1137,10 @@ def delete_comment_bank_entry(comment_id: int):
 #  have no sensible auto-derivation from marks alone and are left for
 #  staff to fill in via the Edit modal if the school cares about them
 #  on a given report.
+#
+#  [TERM-LOCK] Blocked the same as generate_report_card() — a locked
+#  term must not gain either a comment-bank write here OR a generated
+#  PDF, so the check happens before either side effect runs.
 # ═══════════════════════════════════════════════════════════════
 
 def _pronoun(gender) -> dict:
@@ -1167,6 +1296,13 @@ def auto_generate_report_card():
     if not term:
         return jsonify({"message": "Term not found"}), 404
 
+    # [NEW][TERM-LOCK] Refuse BEFORE the comment auto-derivation/save
+    # below runs, not just before _start_generation_job() — a locked
+    # term shouldn't gain a new/changed override row either.
+    blocked = _term_generation_block(term)
+    if blocked:
+        return blocked
+
     if not stream_id:
         ss_row    = StudentStream.query.filter_by(student_id=student_id, school_id=school_id).first()
         stream_id = ss_row.stream_id if ss_row else None
@@ -1251,6 +1387,12 @@ def auto_generate_report_card():
 #  at a time. If another staff member at the same school already has
 #  a job running, this returns 409 immediately rather than starting a
 #  second heavy render/upload on a resource-constrained server.
+#
+#  [NEW][TERM-LOCK] A term with status "locked" refuses generation
+#  outright with HTTP 403 — checked here, before any job/thread is
+#  even started, and re-checked again inside the background thread
+#  (see _do_generate) in case the term gets locked while a job is
+#  briefly queued behind the per-school concurrency lock.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/generate", methods=["POST"])
@@ -1290,6 +1432,12 @@ def generate_report_card():
     if not term:
         return jsonify({"message": "Term not found"}), 404
 
+    # [NEW][TERM-LOCK] Refuse outright before touching the stream lookup
+    # or starting a job — a locked term must never get a new report.
+    blocked = _term_generation_block(term)
+    if blocked:
+        return blocked
+
     if not stream_id:
         ss_row    = StudentStream.query.filter_by(student_id=student_id, school_id=school_id).first()
         stream_id = ss_row.stream_id if ss_row else None
@@ -1311,8 +1459,9 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
     Shared job-starting logic used by both generate_report_card() (manual
     "Edit → Save & Generate" flow) and auto_generate_report_card() (the
     single-click "Auto Generate" flow). Callers are responsible for all
-    validation (student/term/stream existence, exam_type) before calling
-    this — it assumes its inputs are already valid.
+    validation (student/term/stream existence, exam_type, and the
+    [NEW][TERM-LOCK] check via _term_generation_block()) before calling
+    this — it assumes its inputs are already valid at request time.
 
     Returns (response_body_dict, http_status_code) — caller wraps with
     jsonify().
@@ -1351,6 +1500,26 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                 _term    = Term.query.filter_by(id=term_id, school_id=school_id).first()
                 _stream  = Stream.query.get(stream_id)
                 _ay      = _get_academic_year_for_term(_term)
+
+                # [NEW][TERM-LOCK] Re-check right before rendering. The
+                # request-time check in generate_report_card() /
+                # auto_generate_report_card() covers the common case,
+                # but this job runs asynchronously and can sit briefly
+                # behind the per-school concurrency lock — if the term
+                # gets locked in that window, this stops the thread
+                # from rendering and uploading a report against it
+                # anyway. No DB row is touched and no file is uploaded
+                # when this fires.
+                if _term is None or _term.status in _BLOCKED_TERM_STATUSES:
+                    logger.info(
+                        "generate thread aborted — term locked | student_id=%s term_id=%s",
+                        student_id, term_id,
+                    )
+                    _update_job(
+                        job_id, status="error",
+                        error="This term is locked. Report cards can no longer be generated for it.",
+                    )
+                    return
 
                 # [NEW][OVERRIDES] Pull any staff-saved edits for this
                 # exact (student, term, exam_type) — attendance counts,
@@ -1799,12 +1968,63 @@ def save_school_details():
 #  specific case (dark ink on a light, fairly uniform background).
 # ═══════════════════════════════════════════════════════════════
 
-# Perceived-brightness (0-255, from grayscale conversion) at/above which
-# a pixel is treated as background paper and made fully transparent.
-_SIGNATURE_BG_THRESHOLD = 235
-# Width of the soft ramp below the threshold over which alpha fades in,
-# so stroke edges anti-alias instead of leaving a hard cutout edge.
-_SIGNATURE_BG_BAND = 25
+# [FIX][ADAPTIVE-BG] Real signature photos (phone camera, ink on
+# paper) essentially never have a background pixel that hits a fixed
+# near-white brightness cutoff on every pixel — shadows, slightly
+# off-white/cream paper, uneven lighting, and JPEG compression noise
+# all keep genuine background pixels below any single fixed threshold
+# (the previous version used >=235). That made the "remove
+# background" feature silently do nothing on real-world uploads: the
+# code ran successfully, but every background pixel was judged
+# "not white enough" to be treated as background, so nothing was ever
+# made transparent.
+#
+# Fix: sample the ACTUAL background color from this specific image's
+# own border (a thin strip around the edge, where the background
+# reliably dominates — ink/subject essentially never touches the very
+# edge of a signature photo), then measure how far each pixel is from
+# that sampled color rather than from an assumed absolute white value.
+# This adapts per-photo to whatever the real paper color and lighting
+# happen to be.
+_SIGNATURE_BORDER_MARGIN_FRAC = 0.04   # border strip width, as a fraction of image size
+# Per-pixel distance (0-255 scale, luminance-weighted channel diff)
+# from the sampled background color, below which a pixel is treated
+# as background (fully transparent) and above which it's treated as
+# ink (fully opaque). Values in between fade smoothly.
+_SIGNATURE_DIFF_LOW  = 18
+_SIGNATURE_DIFF_HIGH = 55
+
+
+def _sample_background_color(img):
+    """
+    Estimates the background color of a signature photo by sampling a
+    thin strip around the image's border, where the background
+    reliably dominates (a signature essentially never touches the very
+    edge of the frame). Returns the per-channel MEDIAN of the sampled
+    border pixels as an (r, g, b) tuple — median rather than mean so a
+    minority of edge pixels that happen to catch a stray ink mark or a
+    shadow corner don't skew the estimate.
+    """
+    from PIL import ImageChops  # local import; only this helper needs it
+
+    w, h = img.size
+    mx = max(1, int(w * _SIGNATURE_BORDER_MARGIN_FRAC))
+    my = max(1, int(h * _SIGNATURE_BORDER_MARGIN_FRAC))
+
+    pixels = []
+    pixels += list(img.crop((0, 0, w, my)).getdata())          # top strip
+    pixels += list(img.crop((0, h - my, w, h)).getdata())      # bottom strip
+    pixels += list(img.crop((0, 0, mx, h)).getdata())          # left strip
+    pixels += list(img.crop((w - mx, 0, w, h)).getdata())      # right strip
+
+    if not pixels:
+        return (255, 255, 255)
+
+    rs = sorted(p[0] for p in pixels)
+    gs = sorted(p[1] for p in pixels)
+    bs = sorted(p[2] for p in pixels)
+    mid = len(pixels) // 2
+    return (rs[mid], gs[mid], bs[mid])
 
 
 def _strip_signature_background(image_bytes: bytes) -> bytes:
@@ -1813,13 +2033,18 @@ def _strip_signature_background(image_bytes: bytes) -> bytes:
     of an uploaded signature and returns PNG bytes with the background
     made transparent, keeping only the ink strokes.
 
-    How it works: the image is converted to grayscale to get a
-    brightness value per pixel, then that's mapped to an alpha value —
-    bright/near-white pixels (paper) become fully transparent, dark
-    pixels (ink) stay fully opaque, and pixels in between fade smoothly
-    so edges aren't jagged. The mapping is applied via PIL's point()
-    with a 256-entry lookup table, so this stays fast regardless of
-    image resolution (no manual per-pixel Python loop).
+    [FIX][ADAPTIVE-BG] Unlike the original fixed-brightness-threshold
+    version, this first samples the image's OWN background color from
+    its border (see _sample_background_color()), then computes each
+    pixel's distance from that sampled color (via ImageChops.difference
+    + a luminance-weighted grayscale reduction — no numpy dependency
+    needed) and maps that distance to an alpha value: pixels close to
+    the sampled background color become fully transparent, pixels far
+    from it (ink) stay fully opaque, with a smooth fade in between so
+    edges anti-alias instead of leaving a hard cutout. This adapts to
+    whatever the real paper color/lighting are for THIS photo, instead
+    of assuming every background will cross a fixed absolute
+    brightness cutoff — which real phone photos routinely don't.
 
     The result is then cropped to the bounding box of whatever ink
     remains, so the signature drops into the report's sign-off box
@@ -1831,20 +2056,26 @@ def _strip_signature_background(image_bytes: bytes) -> bytes:
     should treat the upload as failed (same as any other image
     processing error) rather than silently storing an unprocessed file.
     """
-    img  = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    gray = img.convert("L")
+    from PIL import ImageChops  # local import; only this function needs it
 
-    lower = max(_SIGNATURE_BG_THRESHOLD - _SIGNATURE_BG_BAND, 0)
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    bg_color = _sample_background_color(img)
 
-    def _alpha_from_brightness(b):
-        if b >= _SIGNATURE_BG_THRESHOLD:
+    flat_bg = Image.new("RGB", img.size, bg_color)
+    # Per-channel absolute difference from the sampled background,
+    # then reduced to a single-channel "distance" via .convert("L")
+    # (a standard luminance-weighted combination of the channels —
+    # fast, and avoids a numpy dependency for a proper Euclidean norm).
+    diff = ImageChops.difference(img, flat_bg).convert("L")
+
+    def _alpha_from_diff(d):
+        if d <= _SIGNATURE_DIFF_LOW:
             return 0
-        if b <= lower:
+        if d >= _SIGNATURE_DIFF_HIGH:
             return 255
-        # Linear ramp between lower and threshold.
-        return int(255 * (_SIGNATURE_BG_THRESHOLD - b) / (_SIGNATURE_BG_THRESHOLD - lower))
+        return int(255 * (d - _SIGNATURE_DIFF_LOW) / (_SIGNATURE_DIFF_HIGH - _SIGNATURE_DIFF_LOW))
 
-    alpha_mask = gray.point(_alpha_from_brightness)
+    alpha_mask = diff.point(_alpha_from_diff)
 
     rgba = img.convert("RGBA")
     rgba.putalpha(alpha_mask)
@@ -1866,9 +2097,18 @@ def _strip_signature_background(image_bytes: bytes) -> bytes:
 #  HEADTEACHER SIGNATURE  —  POST /api/school/headteacher-signature
 #  [NEW][SIGNATURES] One signature per school, uploaded once and reused
 #  on every report card. Same storage pattern as the school logo:
-#  BunnyCDN only, long cache lifetime (rarely changes), replace-in-place
-#  (old file deleted after the new one uploads successfully), stored in
-#  the database as a RELATIVE path only.
+#  BunnyCDN only, replace-in-place (old file deleted after the new one
+#  uploads successfully), stored in the database as a RELATIVE path
+#  only.
+#  [FIX][SIGNATURE-CDN-CACHE] Unlike the school logo, the remote path
+#  now includes a short unique token on every upload (see module
+#  docstring) instead of a fixed "school_<id>_headteacher.png" path.
+#  Reusing a static path meant a CDN edge that had already cached the
+#  OLD signature at that path kept serving those bytes for its
+#  30-day TTL after a replacement upload, regardless of the DB row
+#  being updated — this is exactly why a re-uploaded signature could
+#  appear unchanged on generated reports. A fresh path per upload
+#  removes the dependency on any purge mechanism.
 #  [NEW][BG-REMOVAL] Background is stripped via _strip_signature_background()
 #  before upload — the stored file is always a transparent PNG regardless
 #  of what format was uploaded, so only the ink shows on the report.
@@ -1915,9 +2155,14 @@ def upload_headteacher_signature():
         return jsonify({"success": False, "message": "Could not process signature image. Please try a different file."}), 400
 
     teacher_name = (request.form.get("teacher_name", "") or "").strip() or None
-    # Output is always a transparent PNG after background removal,
-    # regardless of the uploaded file's original extension.
-    remote_path = f"uploads/signatures/school_{school_id}_headteacher.png"
+    # [FIX][SIGNATURE-CDN-CACHE] Output is always a transparent PNG
+    # after background removal, regardless of the uploaded file's
+    # original extension. A short unique token is folded into the
+    # filename on every upload so a replacement always lands on a CDN
+    # path the edge has never served — see module docstring and the
+    # comment above this route for why a static path was the bug.
+    token       = uuid.uuid4().hex[:8]
+    remote_path = f"uploads/signatures/school_{school_id}_headteacher_{token}.png"
 
     try:
         record  = HeadteacherSignature.query.filter_by(school_id=school_id).first()
@@ -1938,7 +2183,9 @@ def upload_headteacher_signature():
     try:
         if record:
             # old_path is already a stored relative path — passed
-            # straight to _delete_cdn_file, no URL parsing needed.
+            # straight to _delete_cdn_file, no URL parsing needed. Only
+            # deleted now that the NEW file is confirmed live on Bunny
+            # at its own fresh path.
             if old_path and old_path != sig_relative_path:
                 _delete_cdn_file(old_path)
             record.signature_url = sig_relative_path
@@ -2066,9 +2313,12 @@ def upload_class_teacher_signature(stream_id: int):
         return jsonify({"success": False, "message": "Could not process signature image. Please try a different file."}), 400
 
     teacher_name = (request.form.get("teacher_name", "") or "").strip() or None
-    # Output is always a transparent PNG after background removal,
-    # regardless of the uploaded file's original extension.
-    remote_path = f"uploads/signatures/stream_{stream_id}_teacher.png"
+    # [FIX][SIGNATURE-CDN-CACHE] Same fix as the headteacher signature
+    # above: a short unique token folded into the filename on every
+    # upload, instead of a static "stream_<id>_teacher.png" path, so a
+    # replacement always lands on a CDN path the edge has never served.
+    token       = uuid.uuid4().hex[:8]
+    remote_path = f"uploads/signatures/stream_{stream_id}_teacher_{token}.png"
 
     try:
         record   = ClassTeacherSignature.query.filter_by(stream_id=stream_id).first()
@@ -2088,7 +2338,9 @@ def upload_class_teacher_signature(stream_id: int):
     try:
         if record:
             # old_path is already a stored relative path — passed
-            # straight to _delete_cdn_file, no URL parsing needed.
+            # straight to _delete_cdn_file, no URL parsing needed. Only
+            # deleted now that the NEW file is confirmed live on Bunny
+            # at its own fresh path.
             if old_path and old_path != sig_relative_path:
                 _delete_cdn_file(old_path)
             record.signature_url = sig_relative_path

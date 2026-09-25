@@ -225,11 +225,32 @@ def bunny_delete(remote_path: str) -> bool:
     through.
 
     Returns True on success, False on failure.
+
+    [DIAGNOSTIC] Logs the exact URL and response for *every* call now
+    (not just failures), including a clear WARNING-level line whenever
+    _ZONE/_PASSWORD/remote_path are missing and the request is skipped
+    entirely. Deletes that silently no-op (e.g. because remote_path was
+    empty) used to look identical to successful deletes from the
+    caller's point of view — this makes that distinction visible in
+    the logs.
     """
     if not _ZONE or not _PASSWORD or not remote_path:
+        logger.warning(
+            "bunny_delete: SKIPPED (nothing sent to BunnyCDN) — "
+            "zone_set=%s password_set=%s remote_path=%r",
+            bool(_ZONE), bool(_PASSWORD), remote_path,
+        )
         return False
 
     url = f"{_STORAGE_ENDPOINT}/{_ZONE}/{remote_path.lstrip('/')}"
+
+    # [DIAGNOSTIC] print(), not just logger.info() — logger.info() isn't
+    # showing up in this console, which is exactly why "deleted" appeared
+    # with no path attached to it last time. This makes the *exact* URL
+    # and the raw HTTP response visible no matter how logging is
+    # configured, so it can be compared directly against what's actually
+    # sitting in the Storage browser.
+  #  print(f"[bunny_delete] DELETE {url}")
 
     try:
         response = requests.delete(
@@ -237,12 +258,28 @@ def bunny_delete(remote_path: str) -> bool:
             headers={"AccessKey": _PASSWORD},
             timeout=30,
         )
+        #print(f"[bunny_delete] HTTP {response.status_code} for {url}")
+        if response.status_code == 404:
+            # [DIAGNOSTIC] A 404 here means Bunny found NOTHING at this
+            # exact path — the file wasn't removed, there was simply
+            # nothing there to remove. We still return True for this
+            # (a missing file is a fine outcome for a delete), but if
+            # you're seeing "deleted" in the console while the real file
+            # is still visible in the Storage browser, THIS is almost
+            # certainly why: the path being deleted doesn't match the
+            # path of the file you're actually looking at.
+            print(f"[bunny_delete] ⚠ 404 — nothing existed at this path. ")
+          #        f"If a file with a similar name is still visible in your "
+          #        f"Storage browser, compare its exact path/filename "
+           #       f"against the URL printed above — they don't match.")
         if response.status_code in (200, 204, 404):
             logger.info("bunny_delete: removed %s (HTTP %s)", url, response.status_code)
             return True
         else:
             logger.warning(
-                "bunny_delete: DELETE %s → HTTP %s  body=%s",
+                "bunny_delete: DELETE %s → HTTP %s  body=%s "
+                "(check the AccessKey has delete permission on this zone, "
+                "and that the path matches exactly what was uploaded)",
                 url, response.status_code, response.text[:200],
             )
             return False
@@ -264,12 +301,28 @@ def bunny_remote_path_from_url(stored_value: str) -> str:
     still hold a full URL), otherwise it returns the value unchanged
     with any leading slash removed. Either result is safe to pass
     straight to bunny_delete().
+
+    [FIX] This used to look up ONLY current_app.config["CDN_BASE_URL"]
+    to find the prefix to strip, and silently fell back to "" if that
+    config key wasn't set — even though BUNNY_BASE_URL is set as an
+    env var (see .env: BUNNY_BASE_URL=https://filestore4.b-cdn.net/filestore4).
+    Because that env var was never checked here, legacy full-URL rows
+    fell through to the generic "strip scheme+host only" fallback,
+    which doesn't know this Pull Zone's URL has an extra "/filestore4"
+    path segment beyond just the hostname — that segment got left in
+    as if it were part of the real storage path, producing delete URLs
+    like ".../filestore4/filestore4/filestore4/uploads/..." (one from
+    _STORAGE_ENDPOINT, one from BUNNY_STORAGE_ZONE, one erroneously left
+    over from the base URL) that 404'd against Bunny every time. Now
+    this calls the same _resolve_cdn_base_url() that public_file_url()
+    already uses — which does check BUNNY_BASE_URL — so the *entire*
+    configured base, extra path segment included, gets stripped.
     """
     if not stored_value:
         return stored_value
     if stored_value.startswith("http://") or stored_value.startswith("https://"):
         try:
-            base = current_app.config.get("CDN_BASE_URL", "")
+            base = _resolve_cdn_base_url()
         except RuntimeError:
             base = ""
         if base and stored_value.startswith(base.rstrip("/")):
