@@ -126,24 +126,40 @@ CHANGES vs original:
     computed from the full (unpaginated) set of ReportCard rows for
     this stream/term/exam_type — independent of which page is sliced
     out for display.
-  - [NEW][TERM-LOCK] Report card generation (manual and auto) is now
-    blocked once a Term's status is "locked". This is checked at
-    request time in both generate_report_card() and
-    auto_generate_report_card() — immediately after the term is
-    fetched — and returns HTTP 403 with a clear message rather than
-    silently starting a job. It is deliberately re-checked again
-    inside the background thread (_do_generate) right before the PDF
-    is rendered: because generation is asynchronous and briefly queued
-    behind the per-school lock, it's possible (if unlikely, given jobs
-    run almost immediately) for a term to be locked in the gap between
-    the request-time check and the thread actually running. Catching
-    it there too means a job started just before a lock can't slip a
-    freshly-rendered report onto Bunny after the fact. Preview
-    (get_report_card_preview) and saving overrides
-    (save_report_card_override) are deliberately NOT blocked by a
-    locked term — reviewing computed data and drafting comments ahead
-    of/after a lock is harmless since neither step writes a report
-    card or touches storage; only actual generation is gated.
+  - [TERM-LOCK] Report card generation (manual and auto) is blocked
+    once a Term's status is "locked". This is checked at request time
+    in both generate_report_card() and auto_generate_report_card() —
+    immediately after the term is fetched — and returns HTTP 403 with
+    a clear message rather than silently starting a job. It is
+    deliberately re-checked again inside the background thread
+    (_do_generate) right before the PDF is rendered: because
+    generation is asynchronous and briefly queued behind the
+    per-school lock, it's possible (if unlikely, given jobs run almost
+    immediately) for a term to be locked in the gap between the
+    request-time check and the thread actually running. Catching it
+    there too means a job started just before a lock can't slip a
+    freshly-rendered report onto Bunny after the fact.
+  - [NEW][TERM-LOCK-WRITES] A locked term now also blocks every OTHER
+    write against its records, not just new/regenerated PDFs:
+      * save_report_card_override() — a locked term's attendance
+        counts, comments, and initials are meant to be frozen along
+        with everything else once the term is finalized, so this now
+        refuses with 403 before touching ReportCardOverride at all
+        (previously this endpoint was deliberately left open on the
+        reasoning that it doesn't touch storage — that reasoning still
+        holds for whether it's *safe*, but a locked term should mean
+        "no further edits", full stop, so it's blocked now too).
+      * delete_report_card() — deleting an already-generated report
+        card for a locked term is refused with 403 before the CDN file
+        or the DB row are touched. A locked term's report cards are
+        the finalized record; removing one should require unlocking
+        the term first.
+    get_report_card_preview() remains intentionally UNblocked — it is
+    a pure read with no write of any kind, so staff can still review a
+    locked term's computed data at any time.
+    Both new checks share _term_write_block(), a small variant of the
+    existing _term_generation_block() with write-appropriate wording
+    ("added, edited, or deleted" rather than "generated").
 """
 
 import requests as http_requests
@@ -222,10 +238,11 @@ _SIGNATURE_CACHE_CONTROL     = "public, max-age=2592000"  # 30 days — same as 
 # or the browser.
 _REPORT_CACHE_CONTROL = "no-cache, no-store, must-revalidate"
 
-# Term.status values that must block new report card generation. A
-# locked term is considered finalized — its marks/records are meant
-# to be frozen, so no new report card PDF should be produced against
-# it (whether that's the very first generation or a regeneration).
+# Term.status values that must block new report card generation AND
+# any other write (edit/delete) against records belonging to that
+# term. A locked term is considered finalized — its marks/records are
+# meant to be frozen, so nothing more should be produced, changed, or
+# removed against it.
 _BLOCKED_TERM_STATUSES = {"locked"}
 
 _SECTION_LABELS = {
@@ -379,19 +396,51 @@ def _school_or_404(school_id):
     return school, None
 
 
+def _term_is_locked(term) -> bool:
+    """
+    [TERM-LOCK] Single source of truth for "is this term locked",
+    shared by both block-helpers below so generation and
+    edit/delete writes can never disagree on what counts as locked.
+    """
+    return bool(term) and term.status in _BLOCKED_TERM_STATUSES
+
+
 def _term_generation_block(term):
     """
-    [NEW][TERM-LOCK] Returns a (message, status_code) response tuple if
+    [TERM-LOCK] Returns a (message, status_code) response tuple if
     this term's status means new report card generation must be
     refused, or None if generation may proceed. Centralised here so
     generate_report_card(), auto_generate_report_card() and the
     background thread's own re-check all apply the exact same rule.
     """
-    if term and term.status in _BLOCKED_TERM_STATUSES:
+    if _term_is_locked(term):
         return (
             jsonify({
                 "success": False,
                 "message": "This term is locked. Report cards can no longer be generated for it.",
+            }),
+            403,
+        )
+    return None
+
+
+def _term_write_block(term):
+    """
+    [NEW][TERM-LOCK-WRITES] Generic counterpart to
+    _term_generation_block() for writes that aren't specifically "start
+    a generation job" — saving a report card override and deleting an
+    already-generated report card also mutate records that belong to a
+    term, and both must be refused once that term is locked, same as
+    generation itself. Kept as a separate helper (rather than reusing
+    _term_generation_block()) purely so the message accurately
+    describes what's being refused instead of always saying
+    "generated".
+    """
+    if _term_is_locked(term):
+        return (
+            jsonify({
+                "success": False,
+                "message": "This term is locked. Records can no longer be added, edited, or deleted for it.",
             }),
             403,
         )
@@ -749,7 +798,8 @@ def get_job_status(job_id: str):
 #
 #  [TERM-LOCK] Deliberately NOT blocked by a locked term — this is a
 #  read-only computation with no write to storage, so staff can still
-#  review a locked term's data; only actual generation is gated.
+#  review a locked term's data; only actual writes (generation, saving
+#  an override, deleting a report card) are gated.
 #
 #  NOTE: this calls ReportCardService.compute_preview(), a new method
 #  that needs to exist alongside the current .generate() — it should
@@ -883,10 +933,10 @@ def get_report_card_preview():
                 else computed.get("default_headteacher_initials", "")
             ),
             "has_saved_override": override is not None,
-            # [NEW][TERM-LOCK] Surfaced so the frontend can disable the
-            # Generate/Auto-Generate buttons in the edit modal even
-            # though this read-only endpoint itself doesn't block.
-            "term_locked": term.status in _BLOCKED_TERM_STATUSES,
+            # [TERM-LOCK] Surfaced so the frontend can disable the
+            # Generate/Auto-Generate/Save/Delete affordances in the UI
+            # even though this read-only endpoint itself doesn't block.
+            "term_locked": _term_is_locked(term),
         }
 
         return jsonify({"success": True, "preview": merged}), 200
@@ -910,9 +960,11 @@ def get_report_card_preview():
 #  Saved independently of generation so staff can revise a comment and
 #  regenerate later without retyping everything.
 #
-#  [TERM-LOCK] Deliberately NOT blocked — drafting/adjusting comments
-#  doesn't write a report card or touch storage, so this stays open
-#  even for a locked term; only actual generation is gated.
+#  [TERM-LOCK-WRITES] Blocked once the term is locked — a locked term's
+#  attendance counts, comments and initials are meant to be frozen
+#  along with everything else, so this now refuses with 403 before
+#  touching ReportCardOverride at all. Checked immediately after the
+#  term is fetched, same placement as generate_report_card()'s check.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/overrides", methods=["POST"])
@@ -947,6 +999,13 @@ def save_report_card_override():
     term = Term.query.filter_by(id=term_id, school_id=school_id).first()
     if not term:
         return jsonify({"message": "Term not found"}), 404
+
+    # [NEW][TERM-LOCK-WRITES] Refuse before touching ReportCardOverride
+    # at all — a locked term's saved edits are meant to be frozen too,
+    # not just its generated PDFs.
+    blocked = _term_write_block(term)
+    if blocked:
+        return blocked
 
     def _clean_int(val):
         if val in (None, ""):
@@ -1031,6 +1090,10 @@ def save_report_card_override():
 #    GET    /api/report-comments?comment_type=class_teacher|headteacher
 #    POST   /api/report-comments        { comment_type, text }
 #    DELETE /api/report-comments/<id>
+#
+#  [TERM-LOCK] NOT term-scoped — these are reusable canned phrases at
+#  the school level, not records tied to any one term/student, so a
+#  locked term has no bearing on this bank.
 # ═══════════════════════════════════════════════════════════════
 
 _VALID_COMMENT_TYPES = {"class_teacher", "headteacher"}
@@ -1296,9 +1359,9 @@ def auto_generate_report_card():
     if not term:
         return jsonify({"message": "Term not found"}), 404
 
-    # [NEW][TERM-LOCK] Refuse BEFORE the comment auto-derivation/save
-    # below runs, not just before _start_generation_job() — a locked
-    # term shouldn't gain a new/changed override row either.
+    # [TERM-LOCK] Refuse BEFORE the comment auto-derivation/save below
+    # runs, not just before _start_generation_job() — a locked term
+    # shouldn't gain a new/changed override row either.
     blocked = _term_generation_block(term)
     if blocked:
         return blocked
@@ -1388,11 +1451,11 @@ def auto_generate_report_card():
 #  a job running, this returns 409 immediately rather than starting a
 #  second heavy render/upload on a resource-constrained server.
 #
-#  [NEW][TERM-LOCK] A term with status "locked" refuses generation
-#  outright with HTTP 403 — checked here, before any job/thread is
-#  even started, and re-checked again inside the background thread
-#  (see _do_generate) in case the term gets locked while a job is
-#  briefly queued behind the per-school concurrency lock.
+#  [TERM-LOCK] A term with status "locked" refuses generation outright
+#  with HTTP 403 — checked here, before any job/thread is even
+#  started, and re-checked again inside the background thread (see
+#  _do_generate) in case the term gets locked while a job is briefly
+#  queued behind the per-school concurrency lock.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/generate", methods=["POST"])
@@ -1432,8 +1495,8 @@ def generate_report_card():
     if not term:
         return jsonify({"message": "Term not found"}), 404
 
-    # [NEW][TERM-LOCK] Refuse outright before touching the stream lookup
-    # or starting a job — a locked term must never get a new report.
+    # [TERM-LOCK] Refuse outright before touching the stream lookup or
+    # starting a job — a locked term must never get a new report.
     blocked = _term_generation_block(term)
     if blocked:
         return blocked
@@ -1460,7 +1523,7 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
     "Edit → Save & Generate" flow) and auto_generate_report_card() (the
     single-click "Auto Generate" flow). Callers are responsible for all
     validation (student/term/stream existence, exam_type, and the
-    [NEW][TERM-LOCK] check via _term_generation_block()) before calling
+    [TERM-LOCK] check via _term_generation_block()) before calling
     this — it assumes its inputs are already valid at request time.
 
     Returns (response_body_dict, http_status_code) — caller wraps with
@@ -1501,7 +1564,7 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                 _stream  = Stream.query.get(stream_id)
                 _ay      = _get_academic_year_for_term(_term)
 
-                # [NEW][TERM-LOCK] Re-check right before rendering. The
+                # [TERM-LOCK] Re-check right before rendering. The
                 # request-time check in generate_report_card() /
                 # auto_generate_report_card() covers the common case,
                 # but this job runs asynchronously and can sit briefly
@@ -1510,7 +1573,7 @@ def _start_generation_job(*, school_id, user_id, student_id, term_id, stream_id,
                 # from rendering and uploading a report against it
                 # anyway. No DB row is touched and no file is uploaded
                 # when this fires.
-                if _term is None or _term.status in _BLOCKED_TERM_STATUSES:
+                if _term is None or _term_is_locked(_term):
                     logger.info(
                         "generate thread aborted — term locked | student_id=%s term_id=%s",
                         student_id, term_id,
@@ -1762,6 +1825,12 @@ def get_report_cards():
 
 # ═══════════════════════════════════════════════════════════════
 #  DELETE REPORT CARD  —  DELETE /api/report-cards/<id>
+#
+#  [NEW][TERM-LOCK-WRITES] Refused with 403 if the report's term is
+#  locked — checked before either the CDN file or the DB row are
+#  touched, via the report's own term_id (there is no term_id in the
+#  URL/query for this endpoint, so it's looked up from the report
+#  itself rather than being supplied by the caller).
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/<int:report_id>", methods=["DELETE"])
@@ -1779,6 +1848,14 @@ def delete_report_card(report_id: int):
         report = ReportCard.query.filter_by(id=report_id, school_id=school_id).first()
         if not report:
             return jsonify({"message": "Report card not found"}), 404
+
+        # [NEW][TERM-LOCK-WRITES] Look up the report's own term (not
+        # supplied by the caller) and refuse the delete before touching
+        # Bunny or the DB row if that term is locked.
+        term = Term.query.filter_by(id=report.term_id, school_id=school_id).first()
+        blocked = _term_write_block(term)
+        if blocked:
+            return blocked
 
         # Bunny is the sole storage location — nothing else to clean up.
         # firebase_path (no leading slash) is the exact Bunny object
@@ -1805,7 +1882,8 @@ def delete_report_card(report_id: int):
 #  SAVE SCHOOL CONFIGURATION  —  POST /api/school/details
 #  (Logos are a separate concern from report cards, but they too are
 #  stored solely on BunnyCDN as a RELATIVE path — no local disk copy,
-#  no full URL in the database — here either.)
+#  no full URL in the database — here either. Not term-scoped, so no
+#  lock check applies here.)
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/school/details", methods=["POST"])
@@ -2099,7 +2177,8 @@ def _strip_signature_background(image_bytes: bytes) -> bytes:
 #  on every report card. Same storage pattern as the school logo:
 #  BunnyCDN only, replace-in-place (old file deleted after the new one
 #  uploads successfully), stored in the database as a RELATIVE path
-#  only.
+#  only. Not term-scoped (school-wide, persists across terms), so no
+#  lock check applies here.
 #  [FIX][SIGNATURE-CDN-CACHE] Unlike the school logo, the remote path
 #  now includes a short unique token on every upload (see module
 #  docstring) instead of a fixed "school_<id>_headteacher.png" path.
@@ -2221,6 +2300,8 @@ def upload_headteacher_signature():
 #    GET    /api/streams/signatures            — list all streams + status
 #    POST   /api/streams/<id>/signature         — upload/replace
 #    DELETE /api/streams/<id>/signature         — remove
+#  Not term-scoped (per-stream, persists across terms), so no lock
+#  check applies to any of these three routes.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/streams/signatures", methods=["GET"])
@@ -2439,6 +2520,9 @@ def _resolve_report_source(report) -> str:
 #  after regeneration + our Cache-Control fix at upload time —
 #  routing through the server sidesteps that entirely, the same way
 #  download_report_card already does for downloads.
+#  [TERM-LOCK] Not blocked — viewing an existing PDF is a pure read
+#  and doesn't touch storage, so this works regardless of term lock
+#  status (same reasoning as get_report_card_preview()).
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/<int:report_id>/view", methods=["GET"])
@@ -2476,6 +2560,8 @@ def view_report_card(report_id: int):
 
 # ═══════════════════════════════════════════════════════════════
 #  DOWNLOAD REPORT CARD  —  GET /api/report-cards/<id>/download
+#  [TERM-LOCK] Not blocked — same reasoning as view_report_card()
+#  above, a pure read of an existing file.
 # ═══════════════════════════════════════════════════════════════
 
 @report_cards_api.route("/report-cards/<int:report_id>/download", methods=["GET"])
