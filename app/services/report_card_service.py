@@ -2069,6 +2069,21 @@ def get_template_name(school_id: int, report_type: str, exam_type: Optional[str]
 #  MAIN SERVICE CLASS
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _format_next_term_date(value) -> str:
+    """
+    [NEW][PROMOTION] Turns a stored ISO date (YYYY-MM-DD) into the same
+    style as `generated_date` (e.g. "12 January 2027"). Returns "" when
+    nothing was entered; falls back to the raw text if it isn't ISO.
+    """
+    if not value:
+        return ""
+    s = str(value).strip()
+    try:
+        return datetime.strptime(s[:10], "%Y-%m-%d").strftime("%d %B %Y")
+    except ValueError:
+        return s
+
+
 class ReportCardService:
     """
     Orchestrates the full report-card generation pipeline for all four
@@ -2533,6 +2548,11 @@ class ReportCardService:
                 "headteacher_comment":    overrides.get("headteacher_comment")    or "",
                 "class_teacher_initials": overrides.get("class_teacher_initials") or "",
                 "headteacher_initials":   overrides.get("headteacher_initials")   or "",
+                # [NEW][PROMOTION] Footer fields. Empty string when not
+                # entered (e.g. auto-generated cards) so the template
+                # prints a blank line for hand-writing.
+                "promotion_status":       (overrides.get("promotion_status") or "").strip(),
+                "next_term_begins":       _format_next_term_date(overrides.get("next_term_begins")),
                 # [NEW] Signatures — school-wide headteacher + per-stream
                 # class teacher. None when not yet uploaded; templates
                 # already guard with {% if ... %}.
