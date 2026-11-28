@@ -1930,6 +1930,22 @@ function _renderEditModalBody(preview) {
       </div>
     </div>
 
+    <div class="edit-section-label">🎓 Promotion &amp; Next Term <span class="readonly-pill">Optional — left blank if empty</span></div>
+    <div class="attendance-row">
+      <div class="form-group">
+        <label class="form-label">Promotion Status</label>
+        <select class="form-control" id="edit-promotion-status">
+          <option value="">— Leave blank —</option>
+          ${_promotionOptions(preview.promotion_status)}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Next Term Begins On</label>
+        <input type="date" class="form-control" id="edit-next-term-begins"
+               value="${_esc(preview.next_term_begins || "")}">
+      </div>
+    </div>
+
     <div class="edit-section-label">✏️ Per-Subject Initials <span class="readonly-pill">Marking teacher</span></div>
     ${initialsRowsHtml}
 
@@ -1980,6 +1996,16 @@ function _applyBankComment(which) {
   if (idx !== "" && bank[idx] !== undefined) textareaEl.value = bank[idx];
 }
 
+/* [NEW][PROMOTION] Dropdown choices for the promotion status. If a value
+   outside this list was saved earlier it is still shown (selected) so it
+   isn't silently lost when the modal is re-opened and saved. */
+const _PROMOTION_CHOICES = ["Promoted", "Demoted", "Unpromoted"];
+function _promotionOptions(current) {
+  const cur = current || "";
+  const list = (cur && !_PROMOTION_CHOICES.includes(cur)) ? [..._PROMOTION_CHOICES, cur] : _PROMOTION_CHOICES;
+  return list.map(v => `<option value="${_esc(v)}" ${v === cur ? "selected" : ""}>${_esc(v)}</option>`).join("");
+}
+
 function _collectOverridePayload(studentId) {
   const subjectInitials = {};
   document.querySelectorAll(".subject-initials-input").forEach(inp => {
@@ -1993,6 +2019,8 @@ function _collectOverridePayload(studentId) {
     exam_type:  document.getElementById("gen-exam-type").value,
     attendance_present:     document.getElementById("edit-attendance-present").value || null,
     attendance_total:       document.getElementById("edit-attendance-total").value   || null,
+    promotion_status:       document.getElementById("edit-promotion-status").value,
+    next_term_begins:       document.getElementById("edit-next-term-begins").value,
     class_teacher_comment:  document.getElementById("edit-ct-comment").value,
     headteacher_comment:    document.getElementById("edit-ht-comment").value,
     class_teacher_initials: document.getElementById("edit-ct-initials").value,
