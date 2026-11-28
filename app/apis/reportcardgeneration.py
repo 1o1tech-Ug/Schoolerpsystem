@@ -932,6 +932,12 @@ def get_report_card_preview():
                 override.headteacher_initials if override and override.headteacher_initials
                 else computed.get("default_headteacher_initials", "")
             ),
+            # [NEW][PROMOTION] Optional footer fields — blank when never entered.
+            "promotion_status": (override.promotion_status or "") if override else "",
+            "next_term_begins": (
+                override.next_term_begins.isoformat()
+                if override and override.next_term_begins else ""
+            ),
             "has_saved_override": override is not None,
             # [TERM-LOCK] Surfaced so the frontend can disable the
             # Generate/Auto-Generate/Save/Delete affordances in the UI
@@ -1022,6 +1028,15 @@ def save_report_card_override():
         s = str(val).strip()
         return s[:max_len] if s else None
 
+    def _clean_date(val):
+        """[NEW][PROMOTION] Accepts YYYY-MM-DD (HTML date input); anything else -> None."""
+        if val in (None, ""):
+            return None
+        try:
+            return datetime.strptime(str(val).strip()[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
     def _clean_subject_initials(val):
         """
         [NEW] Expects {"<subject_id>": "XY", ...}. Silently drops any
@@ -1067,6 +1082,14 @@ def save_report_card_override():
         # [NEW] Per-subject marking-teacher initials — Primary report's
         # "INITIAL" column, e.g. {"14": "JN", "15": "RK"}.
         override.subject_initials       = _clean_subject_initials(data.get("subject_initials"))
+        # [NEW][PROMOTION] Only touched when the client actually sends the
+        # key, so an older client that doesn't know about these fields can't
+        # accidentally wipe a value someone already saved. Empty -> NULL ->
+        # printed as a blank line on the report.
+        if "promotion_status" in data:
+            override.promotion_status = _clean_str(data.get("promotion_status"), 30)
+        if "next_term_begins" in data:
+            override.next_term_begins = _clean_date(data.get("next_term_begins"))
         override.updated_by             = int(user_id) if user_id else None
 
         db.session.commit()
