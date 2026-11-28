@@ -15,6 +15,7 @@ New tables supporting report-card editing features:
          * attendance_present / attendance_total
          * class_teacher_comment / headteacher_comment (free text)
          * class_teacher_initials / headteacher_initials (sign-off initials)
+         * promotion_status / next_term_begins (footer fields, optional)
          * subject_initials — a JSON dict {subject_id: "XY"}, since the
            Primary report has a per-subject "INITIAL" column (the marking
            teacher's initials for that specific subject), which is a
@@ -79,6 +80,14 @@ class ReportCardOverride(db.Model):
     class_teacher_initials = db.Column(db.String(20))
     headteacher_initials   = db.Column(db.String(20))
 
+    # [NEW][PROMOTION] Printed in the report footer. Both are optional:
+    # NULL means "not entered" and the template prints a blank line for
+    # the class teacher to fill in by hand.
+    #   promotion_status : "Promoted" | "Demoted" | "Unpromoted"
+    #   next_term_begins : date the next term starts (printed as 12 January 2027)
+    promotion_status = db.Column(db.String(30))
+    next_term_begins = db.Column(db.Date)
+
     # [NEW] Per-subject marking-teacher initials, e.g. Primary report's
     # "INITIAL" column. Stored as {"<subject_id>": "XY", ...} rather than
     # a whole extra table, since it's a small, sparse, per-report set of
@@ -105,6 +114,8 @@ class ReportCardOverride(db.Model):
             "class_teacher_initials": self.class_teacher_initials or "",
             "headteacher_initials":   self.headteacher_initials or "",
             "subject_initials":       self.subject_initials or {},
+            "promotion_status":       self.promotion_status or "",
+            "next_term_begins":       self.next_term_begins.isoformat() if self.next_term_begins else "",
         }
 
 
